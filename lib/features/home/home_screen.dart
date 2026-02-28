@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Service model
+/// Service Model
 class Service {
   final String name;
   final IconData icon;
@@ -16,22 +16,25 @@ class Service {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // Theme colors (easy to change later)
+  // Theme Colors
   static const Color kPrimary = Color(0xFF0284C7);
   static const Color kAccent = Color(0xFF38BDF8);
   static const Color kBackground = Color(0xFFF0F7FF);
   static const Color kTextDark = Color(0xFF0F172A);
 
-  // All services in one place
+  // নতুন ১১টা সার্ভিস + iOS স্টাইল আইকন
   static const List<Service> _services = [
-    Service(name: 'Ride', icon: Icons.drive_eta, color: Colors.blue),
-    Service(name: 'Food', icon: Icons.fastfood, color: Colors.orange),
-    Service(name: 'Mart', icon: Icons.shopping_bag, color: Colors.green),
-    Service(name: 'Courier', icon: Icons.local_shipping, color: Colors.purple),
-    Service(name: 'Pay', icon: Icons.account_balance_wallet, color: Colors.teal),
-    Service(name: 'Health', icon: Icons.medical_services, color: Colors.red),
-    Service(name: 'Tickets', icon: Icons.confirmation_number, color: Colors.indigo),
-    Service(name: 'More', icon: Icons.grid_view_rounded, color: Colors.blueGrey),
+    Service(name: 'Mobile Recharge', icon: Icons.phone_iphone, color: Color(0xFF6366F1)),
+    Service(name: 'Drive Offers', icon: Icons.directions_car_filled, color: Color(0xFF0284C7)),
+    Service(name: 'Reselling', icon: Icons.storefront_outlined, color: Color(0xFFEA580C)),
+    Service(name: 'Microjobs', icon: Icons.work_outline, color: Color(0xFF14B8A6)),
+    Service(name: 'Loan Services', icon: Icons.payments_outlined, color: Color(0xFF22C55E)),
+    Service(name: 'Campaigns', icon: Icons.campaign_outlined, color: Color(0xFF8B5CF6)),
+    Service(name: 'Education Support', icon: Icons.school_outlined, color: Color(0xFFF59E0B)),
+    Service(name: 'Easy Bus', icon: Icons.directions_bus_filled, color: Color(0xFF3B82F6)),
+    Service(name: 'Easy Courier', icon: Icons.local_shipping_outlined, color: Color(0xFFF97316)),
+    Service(name: 'Agro Projects', icon: Icons.agriculture, color: Color(0xFF4ADE80)),
+    Service(name: 'Used Products', icon: Icons.inventory_2_outlined, color: Color(0xFF78716C)),
   ];
 
   @override
@@ -41,76 +44,32 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: kBackground,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(context),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSearchBar(),
-                  const SizedBox(height: 25),
-                  _buildPromoBanner(context),
-                  const SizedBox(height: 30),
-                  const Text(
-                    'Our Services',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: kTextDark,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPromoBanner(context),
+                    const SizedBox(height: 40),
+                    const Text(
+                      'Our Services',
+                      style: TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
+                        color: kTextDark,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 15),
-                  _buildCategoriesGrid(isTablet),
-                ],
+                    const SizedBox(height: 24),
+                    _buildCategoriesGrid(isTablet),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return SliverAppBar(
-      floating: true,
-      backgroundColor: kBackground,
-      elevation: 0,
-      title: const Text(
-        'Vexylon Super App',
-        style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold),
-      ),
-      actions: [
-        IconButton(
-          onPressed: () => _showSnack(context, 'No new notifications 🎉'),
-          icon: const Icon(Icons.notifications_active_outlined, color: kPrimary),
-        ),
-        const SizedBox(width: 10),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: const TextField(
-        decoration: InputDecoration(
-          icon: Icon(Icons.search, color: kPrimary),
-          hintText: "Search services...",
-          border: InputBorder.none,
+          ],
         ),
       ),
     );
@@ -119,26 +78,24 @@ class HomeScreen extends StatelessWidget {
   Widget _buildPromoBanner(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 160,
+      height: 172,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [kPrimary, kAccent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(26),
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -20,
-            bottom: -20,
-            child: Icon(
-              Icons.bolt,
-              size: 150,
-              color: Colors.white.withOpacity(0.2),
-            ),
+            right: -45,
+            bottom: -45,
+            child: Icon(Icons.bolt, size: 190, color: Colors.white.withOpacity(0.16)),
           ),
           Padding(
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.all(28),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -147,23 +104,14 @@ class HomeScreen extends StatelessWidget {
                   'Summer Sale!',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 27,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                const SizedBox(height: 8),
                 const Text(
                   'Get up to 40% cashback',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 15),
-                ElevatedButton(
-                  onPressed: () => _showSnack(context, 'Summer Sale activated! 🎉'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: kPrimary,
-                    elevation: 0,
-                  ),
-                  child: const Text('Get Now'),
+                  style: TextStyle(color: Colors.white70, fontSize: 16.5),
                 ),
               ],
             ),
@@ -178,24 +126,18 @@ class HomeScreen extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isTablet ? 6 : 4,
-        mainAxisSpacing: 20,
-        crossAxisSpacing: 15,
-        childAspectRatio: 0.85,
+        crossAxisCount: isTablet ? 5 : 4,
+        mainAxisSpacing: 30,
+        crossAxisSpacing: 22,
+        childAspectRatio: 0.78,
       ),
       itemCount: _services.length,
       itemBuilder: (context, index) => _ServiceCard(service: _services[index]),
     );
   }
-
-  void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 1)),
-    );
-  }
 }
 
-/// Reusable service card with ripple effect
+/// iOS স্টাইলের সুন্দর সার্ভিস কার্ড
 class _ServiceCard extends StatelessWidget {
   final Service service;
 
@@ -203,48 +145,49 @@ class _ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
+    return GestureDetector(
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${service.name} service coming soon 🚀'),
+            content: Text('${service.name} আসছে শীঘ্রই 🚀'),
+            behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 1),
           ),
         );
-        // TODO: Replace with Navigator.pushNamed('/ride') etc.
       },
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(26),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blueGrey.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
             child: Icon(
               service.icon,
               color: service.color,
-              size: 32,
+              size: 42,   // বড় ও আকর্ষণীয় iOS স্টাইল
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             service.name,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 13.8,
               fontWeight: FontWeight.w600,
               color: HomeScreen.kTextDark,
+              height: 1.3,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
