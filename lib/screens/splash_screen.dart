@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart';   // তোমার মেইন স্ক্রিন যেখানে আছে (যদি ভিন্ন হয় তাহলে পরে চেঞ্জ করবো)
+import '../layout/main_wrapper.dart';  // তোমার মেইন স্ক্রিনের পাথ
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MyHomePage()), // ← তোমার মেইন স্ক্রিনের নাম
+          MaterialPageRoute(builder: (_) => MainWrapper()),
         );
       }
       return;
@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MyHomePage()), // ← এখানেও একই নাম
+          MaterialPageRoute(builder: (_) => MainWrapper()),
         );
       }
     });
@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0E21), // সুন্দর ডার্ক ব্যাকগ্রাউন্ড
+      backgroundColor: const Color(0xFF0A0E21), // ডার্ক ব্যাকগ্রাউন্ড (চাইলে চেঞ্জ করো)
       body: Center(
         child: AnimatedBuilder(
           animation: _controller,
