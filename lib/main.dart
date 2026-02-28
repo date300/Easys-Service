@@ -26,8 +26,8 @@ class SplashOrWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SplashScreen(
-      nextScreen: const MainWrapper(),
+    return const SplashScreen(
+      nextScreen: MainWrapper(),
     );
   }
 }
