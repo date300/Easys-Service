@@ -32,7 +32,7 @@ class _MainWrapperState extends State<MainWrapper> {
         foregroundColor: Colors.white,
         elevation: 0,                    // shadow কমিয়ে সুন্দর লাগবে
         title: const Text(
-          'Life Good',
+          'Easy Service',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
