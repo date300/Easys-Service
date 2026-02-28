@@ -21,6 +21,7 @@ class HomeScreen extends StatelessWidget {
   static const Color kAccent = Color(0xFF38BDF8);
   static const Color kBackground = Color(0xFFF0F7FF);
   static const Color kTextDark = Color(0xFF0F172A);
+  static const Color kSkyBlue = Color(0xFFBAE6FD);   // ← আকাশী রঙ (এটাই বক্সের জন্য)
 
   // নতুন ১১টা সার্ভিস + iOS স্টাইল আইকন
   static const List<Service> _services = [
@@ -49,7 +50,10 @@ class HomeScreen extends StatelessWidget {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 30 : 20,
+                  vertical: 24,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -94,13 +98,13 @@ class HomeScreen extends StatelessWidget {
             bottom: -45,
             child: Icon(Icons.bolt, size: 190, color: Colors.white.withOpacity(0.16)),
           ),
-          Padding(
-            padding: const EdgeInsets.all(28),
+          const Padding(
+            padding: EdgeInsets.all(28),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'Summer Sale!',
                   style: TextStyle(
                     color: Colors.white,
@@ -108,8 +112,8 @@ class HomeScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'Get up to 40% cashback',
                   style: TextStyle(color: Colors.white70, fontSize: 16.5),
                 ),
@@ -125,11 +129,11 @@ class HomeScreen extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isTablet ? 5 : 4,
-        mainAxisSpacing: 30,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 130,        // এটা দিয়ে সব ডিভাইসে অটো রেস্পনসিভ
+        mainAxisSpacing: 28,
         crossAxisSpacing: 22,
-        childAspectRatio: 0.78,
+        childAspectRatio: 0.80,
       ),
       itemCount: _services.length,
       itemBuilder: (context, index) => _ServiceCard(service: _services[index]),
@@ -137,7 +141,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// iOS স্টাইলের সুন্দর সার্ভিস কার্ড
+/// iOS স্টাইলের আকাশী বক্স সহ সার্ভিস কার্ড
 class _ServiceCard extends StatelessWidget {
   final Service service;
 
@@ -160,20 +164,20 @@ class _ServiceCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: HomeScreen.kSkyBlue,     // ← আকাশী রঙ
               borderRadius: BorderRadius.circular(26),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.06),
-                  blurRadius: 22,
-                  offset: const Offset(0, 10),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
             child: Icon(
               service.icon,
               color: service.color,
-              size: 42,   // বড় ও আকর্ষণীয় iOS স্টাইল
+              size: 42,
             ),
           ),
           const SizedBox(height: 14),
