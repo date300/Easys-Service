@@ -23,17 +23,17 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/splash_logo.png
+    - assets/splash_tv.png
 
-# Splash Screen Configuration
+# Static splash (optional, for very first launch)
 flutter_native_splash:
-  color: "#87CEEB";
-  image: assets/splash_logo.png
+  color: "#87CEEB"
+  image: assets/splash_tv.png
   android: true
   ios: true
 
-# App Icon Configuration
+# App Icon
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/splash_logo.png"
+  image_path: "assets/splash_tv.png"
