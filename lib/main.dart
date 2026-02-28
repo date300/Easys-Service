@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'layout/main_wrapper.dart';
-import 'screens/splash_screen.dart';   // ← এটা যোগ করো
+import 'layout/main_wrapper.dart'; // এটা আগের মতো থাকবে
 
 void main() => runApp(const MyApp());
 
@@ -15,7 +14,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF0284C7),
       ),
-      home: const SplashScreen(),   // ← এটা চেঞ্জ করো
+      home: const MainWrapper(), // SplashScreen এর জায়গায় MainWrapper
     );
   }
 }
