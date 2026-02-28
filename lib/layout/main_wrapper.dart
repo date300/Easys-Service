@@ -23,11 +23,14 @@ class _MainWrapperState extends State<MainWrapper> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 🌟 আকাশি কালারের AppBar (Life Good অ্যাপের স্টাইলে)
+      // স্ক্যাফোল্ডের ব্যাকগ্রাউন্ড আকাশি রাখলাম যাতে gap না দেখায়
+      backgroundColor: const Color(0xFF29B6F6),
+
+      // আকাশি AppBar (আগের মতোই)
       appBar: AppBar(
-        backgroundColor: const Color(0xFF29B6F6), // আকাশি রং (sky blue)
+        backgroundColor: const Color(0xFF29B6F6),
         foregroundColor: Colors.white,
-        elevation: 2,
+        elevation: 0,                    // shadow কমিয়ে সুন্দর লাগবে
         title: const Text(
           'Life Good',
           style: TextStyle(
@@ -37,7 +40,6 @@ class _MainWrapperState extends State<MainWrapper> {
         ),
         leading: IconButton(
           onPressed: () {
-            // এখানে Drawer খুলবে (পরে যোগ করবো চাইলে)
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Drawer খুলবে')),
             );
@@ -46,18 +48,25 @@ class _MainWrapperState extends State<MainWrapper> {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              // নোটিফিকেশন স্ক্রিনে যাবে
-            },
+            onPressed: () {},
             icon: const Icon(Icons.notifications_outlined),
           ),
         ],
       ),
 
-      // পেজগুলো মেমরিতে থাকবে
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      // 🌟 এখানেই ম্যাজিক! কুনা বাঁকানো white body
+      body: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
+        child: Container(
+          color: Colors.white,
+          child: IndexedStack(
+            index: _currentIndex,
+            children: _pages,
+          ),
+        ),
       ),
 
       bottomNavigationBar: NavigationBar(
