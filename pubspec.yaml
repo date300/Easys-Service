@@ -18,21 +18,24 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4  # <-- Add this
 
 flutter:
   uses-material-design: true
 
   assets:
-    - assets/splash_tv.png
+    - assets/easylogo.png   # <-- New splash logo
 
-# ---------------- SPLASH SCREEN ----------------
 flutter_native_splash:
-  color: "#0096C7"   # Darker Sky Blue
+  color: "#0096C7"
   image: assets/easylogo.png
-
   android: true
   ios: true
-
   android_12:
     color: "#0096C7"
     image: assets/easylogo.png
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/splash_tv.png"  # <-- New App Icon

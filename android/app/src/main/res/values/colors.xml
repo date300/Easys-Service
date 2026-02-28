@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Darker Sky Blue for splash screen -->
     <color name="launch_background">#0096C7</color>
 </resources>
