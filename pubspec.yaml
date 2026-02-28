@@ -24,20 +24,20 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/easylogo.png
+    - assets/ultra.png
 
 flutter_native_splash:
   color: "#0096C7"
-  image: assets/easylogo.png
+  image: assets/ultra.png
   android: true
   ios: true
 
   android_12:
     color: "#0096C7"
-    image: assets/easylogo.png
+    image: assets/ultra.png
     icon_background_color: "#0096C7"
 
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/splash_tv.png"
+  image_path: "assets/EasyService.png"
