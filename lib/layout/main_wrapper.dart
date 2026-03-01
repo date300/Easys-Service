@@ -5,7 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-// ১. স্টেট ম্যানেজমেন্ট (Riverpod Provider)
+// ফিচার পেজগুলোর ইমপোর্ট
+import '../features/home/home_screen.dart';
+import '../features/reselling/reselling_screen.dart';
+import '../features/microjobs/microjobs_screen.dart';
+import '../features/campaigns/campaigns_screen.dart';
+import '../features/drive/drive_screen.dart';
+
 final navIndexProvider = StateProvider<int>((ref) => 0);
 
 void main() {
@@ -14,7 +20,6 @@ void main() {
   );
 }
 
-// ২. GoRouter সেটআপ
 final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
@@ -30,9 +35,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ৩. ScreenUtilInit (এটি না দিলে স্ক্রিন সাদা হয়ে থাকে)
     return ScreenUtilInit(
-      designSize: const Size(360, 800), 
+      designSize: const Size(360, 800),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
@@ -41,7 +45,6 @@ class MyApp extends StatelessWidget {
           title: 'Easy Service',
           theme: ThemeData(
             useMaterial3: true,
-            // Google Fonts সেটআপ
             textTheme: GoogleFonts.poppinsTextTheme(),
           ),
           routerConfig: _router,
@@ -59,20 +62,17 @@ class MainWrapper extends ConsumerWidget {
     final currentIndex = ref.watch(navIndexProvider);
     const Color skyBlue = Color(0xFF29B6F6);
 
-    // ৫টি পেজের লিস্ট
+    // আপডেট করা ৫টি পেজের লিস্ট
     final List<Widget> pages = [
-      _buildPageContent("Home Screen"),
-      _buildPageContent("Reselling Screen"),
-      _buildPageContent("Microjobs Screen"),
-      _buildPageContent("Campaigns Screen"),
-      _buildPageContent("Drive Offers Screen"),
+      const HomeScreen(),
+      const ResellingScreen(),
+      const MicrojobsScreen(),
+      const CampaignsScreen(),
+      const DriveScreen(),
     ];
 
     return Scaffold(
-      // আপনার দেওয়া সেই লেআউট ব্যাকগ্রাউন্ড
       backgroundColor: skyBlue,
-
-      // সাইডবার (Drawer) - যা খোলার ব্যবস্থা আছে
       drawer: Drawer(
         child: Column(
           children: [
@@ -100,7 +100,6 @@ class MainWrapper extends ConsumerWidget {
           ],
         ),
       ),
-
       appBar: AppBar(
         backgroundColor: skyBlue,
         foregroundColor: Colors.white,
@@ -110,10 +109,9 @@ class MainWrapper extends ConsumerWidget {
           'Easy Service',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
-            fontSize: 20.sp, // ScreenUtil size
+            fontSize: 20.sp,
           ),
         ),
-        // সাইডবার খোলার বাটন
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu_open_rounded, size: 28),
@@ -127,8 +125,6 @@ class MainWrapper extends ConsumerWidget {
           ),
         ],
       ),
-
-      // 🌟 আপনার প্রিয় বাঁকানো (Rounded Top) বডি লেআউট
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -145,13 +141,11 @@ class MainWrapper extends ConsumerWidget {
             topRight: Radius.circular(32.r),
           ),
           child: pages[currentIndex]
-              .animate(key: ValueKey(currentIndex)) // flutter_animate যোগ করা হয়েছে
+              .animate(key: ValueKey(currentIndex))
               .fadeIn(duration: 400.ms)
               .moveY(begin: 10, end: 0),
         ),
       ),
-
-      // ৫টি বাটন সহ প্রফেশনাল নেভিগেশন বার
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           indicatorColor: skyBlue.withOpacity(0.15),
@@ -172,7 +166,7 @@ class MainWrapper extends ConsumerWidget {
           backgroundColor: Colors.white,
           height: 70.h,
           selectedIndex: currentIndex,
-          onDestinationSelected: (index) => 
+          onDestinationSelected: (index) =>
               ref.read(navIndexProvider.notifier).state = index,
           destinations: const [
             NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
@@ -182,16 +176,6 @@ class MainWrapper extends ConsumerWidget {
             NavigationDestination(icon: Icon(Icons.directions_car_outlined), selectedIcon: Icon(Icons.directions_car), label: 'Drive'),
           ],
         ),
-      ),
-    );
-  }
-
-  // পেজের ভেতরের কন্টেন্ট
-  Widget _buildPageContent(String title) {
-    return Center(
-      child: Text(
-        title,
-        style: GoogleFonts.poppins(fontSize: 20.sp, fontWeight: FontWeight.w500, color: Colors.grey),
       ),
     );
   }
