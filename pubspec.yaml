@@ -24,17 +24,17 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/ultra.png
+    - assets/ultra5G.png
 
 flutter_native_splash:
   color: "#0096C7"
-  image: assets/ultra.png
+  image: assets/ultra5G.png
   android: true
   ios: true
 
   android_12:
     color: "#0096C7"
-    image: assets/ultra.png
+    image: assets/ultra5G.png
     icon_background_color: "#0096C7"
 
 flutter_icons:
