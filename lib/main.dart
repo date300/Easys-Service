@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // এখানে hooks সরিয়ে flutter_riverpod করা হয়েছে
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// আপনার নিজের ফাইলগুলো ইমপোর্ট করুন
+import 'layout/main_wrapper.dart'; 
 
 // ১. GoRouter কনফিগারেশন
 final _router = GoRouter(
@@ -15,8 +18,8 @@ final _router = GoRouter(
       builder: (context, state) => const SplashScreen(),
     ),
     GoRoute(
-      path: '/main',
-      builder: (context, state) => const MainWrapper(),
+      path: '/main', // এই পাথে আমরা নেভিগেট করবো
+      builder: (context, state) => const MainWrapper(), // আপনার layout/main_wrapper.dart ফাইল থেকে আসবে
     ),
   ],
 );
@@ -73,9 +76,11 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _navigateToNext() async {
+    // ৩ সেকেন্ড পর হোমপেজে যাবে
     await Future.delayed(const Duration(milliseconds: 3000));
     if (mounted) {
-      context.go('/main');
+      // GoRouter ব্যবহার করে /main রাউটে পাঠানো হচ্ছে
+      context.go('/main'); 
     }
   }
 
@@ -91,14 +96,15 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             const Spacer(flex: 4),
 
+            // লোগো সেকশন
             Image.asset(
               "assets/ultra5G.png",
               width: 200.w,
               errorBuilder: (context, error, stackTrace) => 
-                  Icon(Icons.flash_on, size: 100.w, color: Colors.white), // ইমেজ না পেলে আইকন দেখাবে
+                  Icon(Icons.flash_on, size: 100.w, color: Colors.white),
             ).animate()
              .fade(duration: 600.ms)
-             .scale(delay: 200.ms, curve: Curves.easeOutBack), // ফিক্স করা হয়েছে
+             .scale(delay: 200.ms, curve: Curves.easeOutBack),
 
             SizedBox(height: 12.h),
 
@@ -116,8 +122,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
             const Spacer(flex: 3),
 
+            // লোডিং ডটস
             Padding(
-              padding: EdgeInsets.only(bottom: 60.h), // .bottom সরিয়ে .only(bottom: ...) করা হয়েছে
+              padding: EdgeInsets.only(bottom: 60.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(4, (index) {
@@ -143,20 +150,6 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class MainWrapper extends StatelessWidget {
-  const MainWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Easy Service Home")),
-      body: const Center(
-        child: Text("Welcome to Main Screen!"),
       ),
     );
   }
