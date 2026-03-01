@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">@drawable/launch_background</item>
+        <!-- লোগো/Drawable লাইনটি মুছে দিলাম -->
+        <item name="android:windowBackground">#ffffff</item> <!-- এখানে শুধু background color দিতে পারো -->
         <item name="android:statusBarColor">#0096C7</item>
         <item name="android:navigationBarColor">#0096C7</item>
         <item name="android:windowLightStatusBar">false</item>
@@ -10,6 +11,7 @@
         <item name="android:windowDrawsSystemBarBackgrounds">false</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
+
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
