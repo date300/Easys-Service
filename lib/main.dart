@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // এখানে hooks সরিয়ে flutter_riverpod করা হয়েছে
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ১. GoRouter কনফিগারেশন (Navigation System)
+// ১. GoRouter কনফিগারেশন
 final _router = GoRouter(
   initialLocation: '/',
   routes: [
@@ -16,20 +16,16 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/main',
-      builder: (context, state) => const MainWrapper(), // আপনার মেইন স্ক্রিন
+      builder: (context, state) => const MainWrapper(),
     ),
   ],
 );
 
 void main() async {
-  // ২. হোয়াইট স্ক্রিন ইস্যু ফিক্স করার জন্য বাইন্ডিং এনসিওর করা
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // ৩. শেয়ারড প্রেফারেন্স এবং অন্যান্য প্লাগইন লোড হতে সময় দিলে এই ওয়েট টুকু দরকার
   await SharedPreferences.getInstance();
 
   runApp(
-    // ৪. Riverpod ব্যবহারের জন্য ProviderScope দিয়ে র‍্যাপ করা
     const ProviderScope(
       child: MyApp(),
     ),
@@ -41,9 +37,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ৫. ScreenUtilInit দিয়ে রেসপন্সিভ ডিজাইন সেটআপ
     return ScreenUtilInit(
-      designSize: const Size(360, 800), // স্ট্যান্ডার্ড ডিজাইন সাইজ
+      designSize: const Size(360, 800),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
@@ -54,7 +49,6 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             colorSchemeSeed: const Color(0xFF0284C7),
-            // ৬. Google Fonts সেটআপ
             textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
           ),
         );
@@ -63,7 +57,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// --- SplashScreen Section ---
+// --- SplashScreen ---
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -79,10 +73,9 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _navigateToNext() async {
-    // এখানে চাইলে Dio দিয়ে ডাটা ফেচিং বা Prefs চেক করতে পারেন
     await Future.delayed(const Duration(milliseconds: 3000));
     if (mounted) {
-      context.go('/main'); // GoRouter দিয়ে পরের পেজে যাওয়া
+      context.go('/main');
     }
   }
 
@@ -98,17 +91,17 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             const Spacer(flex: 4),
 
-            // লোগো অ্যানিমেশন (Flutter Animate ব্যবহার করা হয়েছে)
             Image.asset(
               "assets/ultra5G.png",
               width: 200.w,
+              errorBuilder: (context, error, stackTrace) => 
+                  Icon(Icons.flash_on, size: 100.w, color: Colors.white), // ইমেজ না পেলে আইকন দেখাবে
             ).animate()
              .fade(duration: 600.ms)
-             .scale(delay: 200.ms, curve: Curves.backOut),
+             .scale(delay: 200.ms, curve: Curves.easeOutBack), // ফিক্স করা হয়েছে
 
             SizedBox(height: 12.h),
 
-            // টেক্সট অ্যানিমেশন
             Text(
               "Easy Service",
               style: TextStyle(
@@ -123,9 +116,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
             const Spacer(flex: 3),
 
-            // ফেসবুক স্টাইল লোডিং ডটস (Flutter Animate দিয়ে সিম্পল করা হয়েছে)
             Padding(
-              padding: EdgeInsets.bottom(60.h),
+              padding: EdgeInsets.only(bottom: 60.h), // .bottom সরিয়ে .only(bottom: ...) করা হয়েছে
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(4, (index) {
@@ -156,7 +148,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// --- MainWrapper (এটি আপনার অ্যাপের মূল লেআউট হবে) ---
 class MainWrapper extends StatelessWidget {
   const MainWrapper({super.key});
 
