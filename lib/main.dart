@@ -14,7 +14,6 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF0284C7),
-        // SF Pro ফন্ট যোগ করলে আরও আসল iOS ফিল আসবে
       ),
       home: const SplashScreen(),
     );
@@ -45,12 +44,10 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1400),
     );
 
-    // Logo spring bounce animation
     _scaleAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
     );
 
-    // Text fade
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -58,7 +55,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Text slide up
     _slideAnimation = Tween<double>(begin: 40, end: 0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -68,7 +64,6 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // 1.8 সেকেন্ড পর Home-এ যাবে (সুন্দর fade transition সহ)
     Timer(const Duration(milliseconds: 1800), () {
       if (mounted) {
         Navigator.pushReplacement(
@@ -99,11 +94,11 @@ class _SplashScreenState extends State<SplashScreen>
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF0F172A), // Deep indigo
-              Color(0xFF020617), // Almost black
+              Color(0xFFBAE6FD), // হালকা আকাশী
+              Color(0xFF0EA5E9), // জীবন্ত আকাশী
             ],
           ),
         ),
@@ -111,7 +106,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Glowing Logo with spring animation
+              // লোগো স্প্রিং অ্যানিমেশন
               AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
@@ -122,9 +117,9 @@ class _SplashScreenState extends State<SplashScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.cyan.withOpacity(0.5),
-                            blurRadius: 40,
-                            spreadRadius: 10,
+                            color: Colors.white.withOpacity(0.6),
+                            blurRadius: 35,
+                            spreadRadius: 8,
                           ),
                         ],
                       ),
@@ -139,7 +134,7 @@ class _SplashScreenState extends State<SplashScreen>
 
               const SizedBox(height: 32),
 
-              // Elegant "Splash" text with slide + fade
+              // Easy Service টেক্সট
               AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
@@ -148,17 +143,17 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Opacity(
                       opacity: _fadeAnimation.value,
                       child: const Text(
-                        "Splash",
+                        "Easy Service",
                         style: TextStyle(
-                          fontSize: 42,
+                          fontSize: 38,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
-                          letterSpacing: 3,
+                          letterSpacing: 2.5,
                           shadows: [
                             Shadow(
                               color: Colors.black26,
                               offset: Offset(0, 4),
-                              blurRadius: 12,
+                              blurRadius: 10,
                             ),
                           ],
                         ),
