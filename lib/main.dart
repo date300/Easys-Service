@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'layout/main_wrapper.dart';
+import 'layout/main_wrapper.dart'; // পাথ সঠিক আছে কিনা নিশ্চিত হয়ে নিন
 
 void main() => runApp(const MyApp());
 
@@ -99,16 +99,18 @@ class _SplashScreenState extends State<SplashScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Spacer(flex: 3),
+                
+                // লোগো এবং টেক্সট সেকশন
                 Transform.scale(
                   scale: 0.95 + (0.05 * _appearanceAnimation.value),
                   child: Column(
                     children: [
                       Image.asset(
                         "assets/ultra5G.png",
-                        width: 170,
+                        width: 170, // আপনার চাহিদা মতো বড় সাইজ
                       ),
-                      const SizedBox(height: 12),
-                      // টেক্সট ডিজাইন ফিক্সড
+                      const SizedBox(height: 12), // লোগো ও টেক্সটের মাঝে কম দূরত্ব
+                      
                       Text(
                         "Easy Service",
                         style: TextStyle(
@@ -122,10 +124,10 @@ class _SplashScreenState extends State<SplashScreen>
                                 Color(0xFFFFB900),
                                 Color(0xFFFFD700),
                               ],
-                            ).createShader(const Rect.fromLTWH(0.0, 0.0, 250.0, 70.0)),
+                            ).createShader(const Rect.fromLTWH(0.0, 0.0, 300.0, 70.0)),
                           shadows: [
                             const Shadow(
-                              color: Colors.black26,
+                              color: Colors.black38,
                               offset: Offset(1, 2),
                               blurRadius: 4,
                             ),
@@ -135,15 +137,22 @@ class _SplashScreenState extends State<SplashScreen>
                     ],
                   ),
                 ),
+
                 const Spacer(flex: 2),
-                // ফেসবুক স্টাইল লোডিং এনিমেশন
+
+                // ফেসবুক স্টাইল ডট লোডিং সিস্টেম
                 FadeTransition(
                   opacity: _loadAnimation,
                   child: Padding(
-                    padding: const EdgeInsets.bottom(50.0), // সংশোধিত প্যাডিং
+                    padding: const EdgeInsets.only(bottom: 60.0), // সংশোধিত প্যাডিং
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(4, (index) => _buildLoadingDot(delay: index * 0.15)),
+                      children: [
+                        _buildLoadingDot(delay: 0.0),
+                        _buildLoadingDot(delay: 0.2),
+                        _buildLoadingDot(delay: 0.4),
+                        _buildLoadingDot(delay: 0.6),
+                      ],
                     ),
                   ),
                 ),
@@ -159,18 +168,20 @@ class _SplashScreenState extends State<SplashScreen>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        double opacity = 0.3;
         double scale = 1.0;
+        double opacity = 0.3;
         
-        if (_controller.value > (0.6 + delay) && _controller.value < (1.0)) {
-          opacity = 1.0;
-          scale = 1.2;
+        // ডট এনিমেশন লজিক
+        if (_controller.value > (0.6 + delay) && _controller.value < (0.9 + delay)) {
+          double progress = (_controller.value - (0.6 + delay)) / 0.3;
+          scale = 1.0 + 0.3 * (progress < 0.5 ? progress * 2 : (1 - progress) * 2);
+          opacity = 0.3 + 0.7 * (progress < 0.5 ? progress * 2 : (1 - progress) * 2);
         }
 
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: 10,
-          height: 10,
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white.withOpacity(opacity),
