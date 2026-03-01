@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'layout/main_wrapper.dart'; // পাথ সঠিক আছে কিনা নিশ্চিত হয়ে নিন
+import 'layout/main_wrapper.dart'; // পাথটি ঠিক আছে কিনা দেখে নিন
 
 void main() => runApp(const MyApp());
 
@@ -98,37 +98,34 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Spacer(flex: 3),
+                const Spacer(flex: 4), // লোগোকে একটু নিচের দিকে নামানোর জন্য
                 
                 // লোগো এবং টেক্সট সেকশন
                 Transform.scale(
                   scale: 0.95 + (0.05 * _appearanceAnimation.value),
                   child: Column(
                     children: [
+                      // ১. লোগো সাইজ বড় (মোটা) করা হয়েছে
                       Image.asset(
                         "assets/ultra5G.png",
-                        width: 170, // আপনার চাহিদা মতো বড় সাইজ
+                        width: 210, // ২১০ করা হয়েছে যাতে মোটা দেখায়
                       ),
-                      const SizedBox(height: 12), // লোগো ও টেক্সটের মাঝে কম দূরত্ব
                       
-                      Text(
+                      // ২. লোগো ও টেক্সটের মাঝখানের দূরত্ব কমানো হয়েছে
+                      const SizedBox(height: 4), 
+                      
+                      // ৩. টেক্সট সাদা কালার এবং সাইজ ছোট করা হয়েছে
+                      const Text(
                         "Easy Service",
                         style: TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                          foreground: Paint()
-                            ..shader = const LinearGradient(
-                              colors: [
-                                Color(0xFFFFD700),
-                                Color(0xFFFFB900),
-                                Color(0xFFFFD700),
-                              ],
-                            ).createShader(const Rect.fromLTWH(0.0, 0.0, 300.0, 70.0)),
+                          fontSize: 28, // ৪২ থেকে কমিয়ে ২৮ করা হয়েছে
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white, // হলুদ থেকে সাদা করা হয়েছে
+                          letterSpacing: 1.2,
                           shadows: [
-                            const Shadow(
-                              color: Colors.black38,
-                              offset: Offset(1, 2),
+                            Shadow(
+                              color: Colors.black12,
+                              offset: Offset(0, 2),
                               blurRadius: 4,
                             ),
                           ],
@@ -138,21 +135,16 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
 
-                const Spacer(flex: 2),
+                const Spacer(flex: 3),
 
-                // ফেসবুক স্টাইল ডট লোডিং সিস্টেম
+                // ফেসবুক স্টাইল ডট লোডিং
                 FadeTransition(
                   opacity: _loadAnimation,
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 60.0), // সংশোধিত প্যাডিং
+                    padding: const EdgeInsets.only(bottom: 60.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildLoadingDot(delay: 0.0),
-                        _buildLoadingDot(delay: 0.2),
-                        _buildLoadingDot(delay: 0.4),
-                        _buildLoadingDot(delay: 0.6),
-                      ],
+                      children: List.generate(4, (index) => _buildLoadingDot(delay: index * 0.15)),
                     ),
                   ),
                 ),
@@ -171,17 +163,16 @@ class _SplashScreenState extends State<SplashScreen>
         double scale = 1.0;
         double opacity = 0.3;
         
-        // ডট এনিমেশন লজিক
         if (_controller.value > (0.6 + delay) && _controller.value < (0.9 + delay)) {
           double progress = (_controller.value - (0.6 + delay)) / 0.3;
-          scale = 1.0 + 0.3 * (progress < 0.5 ? progress * 2 : (1 - progress) * 2);
+          scale = 1.0 + 0.25 * (progress < 0.5 ? progress * 2 : (1 - progress) * 2);
           opacity = 0.3 + 0.7 * (progress < 0.5 ? progress * 2 : (1 - progress) * 2);
         }
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 5),
-          width: 12,
-          height: 12,
+          width: 10,
+          height: 10,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white.withOpacity(opacity),
