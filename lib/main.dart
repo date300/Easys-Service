@@ -1,25 +1,69 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'layout/main_wrapper.dart'; // পাথটি ঠিক আছে কিনা দেখে নিন
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(const MyApp());
+// ১. GoRouter কনফিগারেশন (Navigation System)
+final _router = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/main',
+      builder: (context, state) => const MainWrapper(), // আপনার মেইন স্ক্রিন
+    ),
+  ],
+);
+
+void main() async {
+  // ২. হোয়াইট স্ক্রিন ইস্যু ফিক্স করার জন্য বাইন্ডিং এনসিওর করা
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // ৩. শেয়ারড প্রেফারেন্স এবং অন্যান্য প্লাগইন লোড হতে সময় দিলে এই ওয়েট টুকু দরকার
+  await SharedPreferences.getInstance();
+
+  runApp(
+    // ৪. Riverpod ব্যবহারের জন্য ProviderScope দিয়ে র‍্যাপ করা
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF0284C7),
-      ),
-      home: const SplashScreen(),
+    // ৫. ScreenUtilInit দিয়ে রেসপন্সিভ ডিজাইন সেটআপ
+    return ScreenUtilInit(
+      designSize: const Size(360, 800), // স্ট্যান্ডার্ড ডিজাইন সাইজ
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          title: 'Easy Service',
+          routerConfig: _router,
+          theme: ThemeData(
+            useMaterial3: true,
+            colorSchemeSeed: const Color(0xFF0284C7),
+            // ৬. Google Fonts সেটআপ
+            textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
+          ),
+        );
+      },
     );
   }
 }
 
+// --- SplashScreen Section ---
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -27,56 +71,19 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _appearanceAnimation;
-  late Animation<double> _loadAnimation;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    );
-
-    _appearanceAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    _loadAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.6, 1.0, curve: Curves.linear),
-    );
-
-    _controller.forward();
-
-    Timer(const Duration(milliseconds: 2500), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 700),
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const MainWrapper(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-          ),
-        );
-      }
-    });
+    _navigateToNext();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  _navigateToNext() async {
+    // এখানে চাইলে Dio দিয়ে ডাটা ফেচিং বা Prefs চেক করতে পারেন
+    await Future.delayed(const Duration(milliseconds: 3000));
+    if (mounted) {
+      context.go('/main'); // GoRouter দিয়ে পরের পেজে যাওয়া
+    }
   }
 
   @override
@@ -84,102 +91,82 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       backgroundColor: const Color(0xFF0EA5E9),
       body: SizedBox(
-        width: double.infinity,
-        height: double.infinity,
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Opacity(
-                opacity: _appearanceAnimation.value,
-                child: child,
-              );
-            },
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(flex: 4), // লোগোকে একটু নিচের দিকে নামানোর জন্য
-                
-                // লোগো এবং টেক্সট সেকশন
-                Transform.scale(
-                  scale: 0.95 + (0.05 * _appearanceAnimation.value),
-                  child: Column(
-                    children: [
-                      // ১. লোগো সাইজ বড় (মোটা) করা হয়েছে
-                      Image.asset(
-                        "assets/ultra5G.png",
-                        width: 210, // ২১০ করা হয়েছে যাতে মোটা দেখায়
-                      ),
-                      
-                      // ২. লোগো ও টেক্সটের মাঝখানের দূরত্ব কমানো হয়েছে
-                      const SizedBox(height: 4), 
-                      
-                      // ৩. টেক্সট সাদা কালার এবং সাইজ ছোট করা হয়েছে
-                      const Text(
-                        "Easy Service",
-                        style: TextStyle(
-                          fontSize: 28, // ৪২ থেকে কমিয়ে ২৮ করা হয়েছে
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white, // হলুদ থেকে সাদা করা হয়েছে
-                          letterSpacing: 1.2,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black12,
-                              offset: Offset(0, 2),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+        width: 1.sw,
+        height: 1.sh,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Spacer(flex: 4),
 
-                const Spacer(flex: 3),
+            // লোগো অ্যানিমেশন (Flutter Animate ব্যবহার করা হয়েছে)
+            Image.asset(
+              "assets/ultra5G.png",
+              width: 200.w,
+            ).animate()
+             .fade(duration: 600.ms)
+             .scale(delay: 200.ms, curve: Curves.backOut),
 
-                // ফেসবুক স্টাইল ডট লোডিং
-                FadeTransition(
-                  opacity: _loadAnimation,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 60.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(4, (index) => _buildLoadingDot(delay: index * 0.15)),
+            SizedBox(height: 12.h),
+
+            // টেক্সট অ্যানিমেশন
+            Text(
+              "Easy Service",
+              style: TextStyle(
+                fontSize: 28.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1.5,
+              ),
+            ).animate()
+             .fadeIn(delay: 400.ms)
+             .slideY(begin: 0.2, end: 0),
+
+            const Spacer(flex: 3),
+
+            // ফেসবুক স্টাইল লোডিং ডটস (Flutter Animate দিয়ে সিম্পল করা হয়েছে)
+            Padding(
+              padding: EdgeInsets.bottom(60.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) {
+                  return Container(
+                    margin: EdgeInsets.symmetric(horizontal: 4.w),
+                    width: 10.w,
+                    height: 10.w,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
                     ),
-                  ),
-                ),
-              ],
+                  ).animate(onPlay: (controller) => controller.repeat())
+                   .scale(
+                     delay: (index * 150).ms, 
+                     duration: 600.ms, 
+                     begin: const Offset(1, 1), 
+                     end: const Offset(1.4, 1.4)
+                   )
+                   .then()
+                   .scale(duration: 600.ms);
+                }),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildLoadingDot({required double delay}) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        double scale = 1.0;
-        double opacity = 0.3;
-        
-        if (_controller.value > (0.6 + delay) && _controller.value < (0.9 + delay)) {
-          double progress = (_controller.value - (0.6 + delay)) / 0.3;
-          scale = 1.0 + 0.25 * (progress < 0.5 ? progress * 2 : (1 - progress) * 2);
-          opacity = 0.3 + 0.7 * (progress < 0.5 ? progress * 2 : (1 - progress) * 2);
-        }
+// --- MainWrapper (এটি আপনার অ্যাপের মূল লেআউট হবে) ---
+class MainWrapper extends StatelessWidget {
+  const MainWrapper({super.key});
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(opacity),
-          ),
-          transform: Matrix4.identity()..scale(scale),
-        );
-      },
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Easy Service Home")),
+      body: const Center(
+        child: Text("Welcome to Main Screen!"),
+      ),
     );
   }
 }

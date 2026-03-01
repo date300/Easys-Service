@@ -4,22 +4,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
-//--- ১. পপআপ বা স্টেট ম্যানেজমেন্ট (Riverpod) ---
+// ১. স্টেট ম্যানেজমেন্ট (Riverpod Provider)
 final navIndexProvider = StateProvider<int>((ref) => 0);
 
 void main() {
   runApp(
-    const ProviderScope(
-      child: EasyServiceApp(),
-    ),
+    const ProviderScope(child: MyApp()),
   );
 }
 
-//--- ২. GoRouter কনফিগারেশন ---
-final _router = GoRouter(
+// ২. GoRouter সেটআপ
+final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(
@@ -29,14 +25,14 @@ final _router = GoRouter(
   ],
 );
 
-class EasyServiceApp extends StatelessWidget {
-  const EasyServiceApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // ৩. ScreenUtil ইনিশিয়ালাইজেশন (রেসপন্সিভ ডিজাইনের জন্য)
+    // ৩. ScreenUtilInit (এটি না দিলে স্ক্রিন সাদা হয়ে থাকে)
     return ScreenUtilInit(
-      designSize: const Size(360, 800), // স্ট্যান্ডার্ড মোবাইল সাইজ
+      designSize: const Size(360, 800), 
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
@@ -45,7 +41,8 @@ class EasyServiceApp extends StatelessWidget {
           title: 'Easy Service',
           theme: ThemeData(
             useMaterial3: true,
-            textTheme: GoogleFonts.poppinsTextTheme(), // গ্লোবাল ফন্ট
+            // Google Fonts সেটআপ
+            textTheme: GoogleFonts.poppinsTextTheme(),
           ),
           routerConfig: _router,
         );
@@ -54,7 +51,6 @@ class EasyServiceApp extends StatelessWidget {
   }
 }
 
-//--- ৪. মেইন র‍্যাপার (Main UI Structure) ---
 class MainWrapper extends ConsumerWidget {
   const MainWrapper({super.key});
 
@@ -63,20 +59,47 @@ class MainWrapper extends ConsumerWidget {
     final currentIndex = ref.watch(navIndexProvider);
     const Color skyBlue = Color(0xFF29B6F6);
 
-    // ৫টি ভিন্ন স্ক্রিনের লিস্ট
+    // ৫টি পেজের লিস্ট
     final List<Widget> pages = [
-      const ReusablePage(title: "Home", icon: Icons.home_rounded),
-      const ReusablePage(title: "Reselling", icon: Icons.storefront_rounded),
-      const ReusablePage(title: "Microjobs", icon: Icons.work_history_rounded),
-      const ReusablePage(title: "Campaigns", icon: Icons.campaign_rounded),
-      const ReusablePage(title: "Drive Offers", icon: Icons.directions_car_rounded),
+      _buildPageContent("Home Screen"),
+      _buildPageContent("Reselling Screen"),
+      _buildPageContent("Microjobs Screen"),
+      _buildPageContent("Campaigns Screen"),
+      _buildPageContent("Drive Offers Screen"),
     ];
 
     return Scaffold(
+      // আপনার দেওয়া সেই লেআউট ব্যাকগ্রাউন্ড
       backgroundColor: skyBlue,
-      
-      // সাইডবার (Drawer)
-      drawer: _buildAppDrawer(context, skyBlue),
+
+      // সাইডবার (Drawer) - যা খোলার ব্যবস্থা আছে
+      drawer: Drawer(
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(color: skyBlue),
+              accountName: Text("Easy Service User", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              accountEmail: const Text("user@easyservice.com"),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, color: skyBlue, size: 40),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text("Home"),
+              onTap: () => Navigator.pop(context),
+            ),
+            const Spacer(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text("Logout", style: TextStyle(color: Colors.red)),
+              onTap: () {},
+            ),
+            SizedBox(height: 20.h),
+          ],
+        ),
+      ),
 
       appBar: AppBar(
         backgroundColor: skyBlue,
@@ -86,10 +109,11 @@ class MainWrapper extends ConsumerWidget {
         title: Text(
           'Easy Service',
           style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+            fontSize: 20.sp, // ScreenUtil size
           ),
         ),
+        // সাইডবার খোলার বাটন
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu_open_rounded, size: 28),
@@ -99,161 +123,75 @@ class MainWrapper extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
+            icon: const Icon(Icons.notifications_outlined),
           ),
         ],
       ),
 
-      // রাউন্ডেড বডি উইথ অ্যানিমেশন
+      // 🌟 আপনার প্রিয় বাঁকানো (Rounded Top) বডি লেআউট
       body: Container(
         width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.r),
-            topRight: Radius.circular(30.r),
+            topLeft: Radius.circular(32.r),
+            topRight: Radius.circular(32.r),
           ),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.r),
-            topRight: Radius.circular(30.r),
+            topLeft: Radius.circular(32.r),
+            topRight: Radius.circular(32.r),
           ),
           child: pages[currentIndex]
-              .animate(key: ValueKey(currentIndex))
+              .animate(key: ValueKey(currentIndex)) // flutter_animate যোগ করা হয়েছে
               .fadeIn(duration: 400.ms)
               .moveY(begin: 10, end: 0),
         ),
       ),
 
-      // প্রফেশনাল নেভিগেশন বার
+      // ৫টি বাটন সহ প্রফেশনাল নেভিগেশন বার
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           indicatorColor: skyBlue.withOpacity(0.15),
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return GoogleFonts.poppins(
-                fontSize: 11.sp, fontWeight: FontWeight.w600, color: skyBlue);
+              return GoogleFonts.poppins(color: skyBlue, fontWeight: FontWeight.bold, fontSize: 11.sp);
             }
-            return GoogleFonts.poppins(fontSize: 10.sp, color: Colors.grey);
+            return GoogleFonts.poppins(color: Colors.grey, fontSize: 10.sp);
+          }),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return IconThemeData(color: skyBlue, size: 26.sp);
+            }
+            return IconThemeData(color: Colors.grey, size: 22.sp);
           }),
         ),
         child: NavigationBar(
-          height: 70.h,
           backgroundColor: Colors.white,
+          height: 70.h,
           selectedIndex: currentIndex,
           onDestinationSelected: (index) => 
               ref.read(navIndexProvider.notifier).state = index,
           destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined), 
-              selectedIcon: Icon(Icons.home, color: skyBlue), 
-              label: 'Home'),
-            NavigationDestination(
-              icon: Icon(Icons.storefront_outlined), 
-              selectedIcon: Icon(Icons.storefront, color: skyBlue), 
-              label: 'Reselling'),
-            NavigationDestination(
-              icon: Icon(Icons.work_outline), 
-              selectedIcon: Icon(Icons.work, color: skyBlue), 
-              label: 'Microjobs'),
-            NavigationDestination(
-              icon: Icon(Icons.campaign_outlined), 
-              selectedIcon: Icon(Icons.campaign, color: skyBlue), 
-              label: 'Campaigns'),
-            NavigationDestination(
-              icon: Icon(Icons.directions_car_outlined), 
-              selectedIcon: Icon(Icons.directions_car, color: skyBlue), 
-              label: 'Drive'),
+            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
+            NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront), label: 'Reselling'),
+            NavigationDestination(icon: Icon(Icons.assignment_outlined), selectedIcon: Icon(Icons.assignment), label: 'Microjobs'),
+            NavigationDestination(icon: Icon(Icons.campaign_outlined), selectedIcon: Icon(Icons.campaign), label: 'Campaigns'),
+            NavigationDestination(icon: Icon(Icons.directions_car_outlined), selectedIcon: Icon(Icons.directions_car), label: 'Drive'),
           ],
         ),
       ),
     );
   }
 
-  // ড্রয়ার ফাংশন
-  Widget _buildAppDrawer(BuildContext context, Color themeColor) {
-    return Drawer(
-      backgroundColor: Colors.white,
-      child: Column(
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: themeColor),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, color: themeColor, size: 40.sp),
-            ),
-            accountName: Text("Easy Service User", 
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-            accountEmail: const Text("support@easyservice.com"),
-          ),
-          _drawerItem(Icons.person_outline, "My Profile"),
-          _drawerItem(Icons.history_rounded, "Transaction History"),
-          _drawerItem(Icons.settings_outlined, "Settings"),
-          const Spacer(),
-          const Divider(),
-          _drawerItem(Icons.logout_rounded, "Logout", color: Colors.red),
-          SizedBox(height: 20.h),
-        ],
-      ),
-    );
-  }
-
-  Widget _drawerItem(IconData icon, String title, {Color? color}) {
-    return ListTile(
-      leading: Icon(icon, color: color ?? Colors.black87),
-      title: Text(title, style: GoogleFonts.poppins(fontSize: 14.sp, color: color)),
-      onTap: () {},
-    );
-  }
-}
-
-//--- ৫. রিউজেবল পেজ টেম্পলেট (Lottie & Network Image সহ) ---
-class ReusablePage extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  const ReusablePage({super.key, required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Lottie অ্যানিমেশন এক্সাম্পল (যদি অ্যাসেট থাকে)
-          // Lottie.asset('assets/animations/welcome.json', height: 150.h),
-          
-          Icon(icon, size: 80.sp, color: const Color(0xFF29B6F6).withOpacity(0.5)),
-          SizedBox(height: 20.h),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 24.sp, 
-              fontWeight: FontWeight.bold,
-              color: Colors.black87
-            ),
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            "Welcome to $title service section.\nProfessional UI is ready!",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey),
-          ),
-          SizedBox(height: 30.h),
-          // Cached Network Image এক্সাম্পল
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15.r),
-            child: CachedNetworkImage(
-              imageUrl: "https://via.placeholder.com/300x150/29B6F6/FFFFFF?text=Easy+Service+Banner",
-              placeholder: (context, url) => const CircularProgressIndicator(),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
-              height: 120.h,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-        ],
+  // পেজের ভেতরের কন্টেন্ট
+  Widget _buildPageContent(String title) {
+    return Center(
+      child: Text(
+        title,
+        style: GoogleFonts.poppins(fontSize: 20.sp, fontWeight: FontWeight.w500, color: Colors.grey),
       ),
     );
   }
