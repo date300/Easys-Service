@@ -23,7 +23,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/EasyService.png
+    - assets/ultra5G.png
 
 flutter_icons:
   android: true

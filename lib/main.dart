@@ -89,19 +89,12 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      // পুরো ব্যাকগ্রাউন্ডের জন্য সলিড আকাশী কালার
+      backgroundColor: const Color(0xFF0EA5E9), 
+      
+      body: SizedBox(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFBAE6FD), // হালকা আকাশী
-              Color(0xFF0EA5E9), // জীবন্ত আকাশী
-            ],
-          ),
-        ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -117,7 +110,7 @@ class _SplashScreenState extends State<SplashScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withOpacity(0.3), // শ্যাডো হালকা করা হয়েছে
                             blurRadius: 35,
                             spreadRadius: 8,
                           ),
