@@ -3,53 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:lottie/lottie.dart';
-import 'package:go_router/go_router.dart';
-
-/// 1. Router Setup (GoRouter)
-final goRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    initialLocation: '/',
-    routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const HomeScreen(),
-      ),
-    ],
-  );
-});
-
-void main() {
-  runApp(
-    // Riverpod ProviderScope
-    const ProviderScope(child: MyApp()),
-  );
-}
-
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(goRouterProvider);
-
-    // ScreenUtil Setup for Responsiveness
-    return ScreenUtilInit(
-      designSize: const Size(375, 812), // Standard iPhone X design size
-      minTextAdapt: true,
-      builder: (context, child) {
-        return MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          routerConfig: router,
-          theme: ThemeData(
-            textTheme: GoogleFonts.poppinsTextTheme(), // Google Fonts Applied globally
-          ),
-        );
-      },
-    );
-  }
-}
 
 /// Service Model
 class Service {
@@ -57,34 +10,38 @@ class Service {
   final IconData icon;
   final Color color;
 
-  const Service({required this.name, required this.icon, required this.color});
+  const Service({
+    required this.name,
+    required this.icon,
+    required this.color,
+  });
 }
 
-/// 2. Riverpod Provider for Services (Here you can later use Dio to fetch from API)
+/// Riverpod Provider (পরে Dio দিয়ে API থেকে ডেটা আনলে এখানে যুক্ত করতে পারবেন)
 final servicesProvider = Provider<List<Service>>((ref) {
   return const [
     Service(name: 'Recharge', icon: Icons.phone_iphone, color: Color(0xFF6366F1)),
-    Service(name: 'Offers', icon: Icons.directions_car_filled, color: Color(0xFF0284C7)),
-    Service(name: 'Resell', icon: Icons.storefront_outlined, color: Color(0xFFEA580C)),
-    Service(name: 'Jobs', icon: Icons.work_outline, color: Color(0xFF14B8A6)),
+    Service(name: 'Drive Offer', icon: Icons.directions_car_filled, color: Color(0xFF0284C7)),
+    Service(name: 'Reselling', icon: Icons.storefront_outlined, color: Color(0xFFEA580C)),
+    Service(name: 'Microjob', icon: Icons.work_outline, color: Color(0xFF14B8A6)),
     Service(name: 'Loan', icon: Icons.payments_outlined, color: Color(0xFF22C55E)),
     Service(name: 'Campaign', icon: Icons.campaign_outlined, color: Color(0xFF8B5CF6)),
     Service(name: 'Education', icon: Icons.school_outlined, color: Color(0xFFF59E0B)),
-    Service(name: 'Bus', icon: Icons.directions_bus_filled, color: Color(0xFF3B82F6)),
+    Service(name: 'Easy Bus', icon: Icons.directions_bus_filled, color: Color(0xFF3B82F6)),
     Service(name: 'Courier', icon: Icons.local_shipping_outlined, color: Color(0xFFF97316)),
     Service(name: 'Agro', icon: Icons.agriculture, color: Color(0xFF4ADE80)),
-    Service(name: 'Used', icon: Icons.inventory_2_outlined, color: Color(0xFF78716C)),
+    Service(name: 'Used Item', icon: Icons.inventory_2_outlined, color: Color(0xFF78716C)),
   ];
 });
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+  // Theme Colors
   static const Color kPrimary = Color(0xFF0284C7);
   static const Color kAccent = Color(0xFF38BDF8);
-  static const Color kBackground = Color(0xFFF8FAFC);
+  static const Color kBackground = Color(0xFFF0F7FF);
   static const Color kTextDark = Color(0xFF0F172A);
-  static const Color kSkyBlue = Color(0xFFE0F2FE);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -92,55 +49,38 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: kBackground,
-      appBar: AppBar(
-        backgroundColor: kBackground,
-        elevation: 0,
-        title: Text(
-          'Hello, User 👋',
-          style: GoogleFonts.poppins(
-            color: kTextDark,
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-          ),
+      // অ্যাপবার ডিলিট করা হয়েছে। শুধু বডি রাখা হলো।
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20.w, // রেস্পনসিভ প্যাডিং
+                  vertical: 24.h,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPromoBanner(context),
+                    SizedBox(height: 32.h),
+                    Text(
+                      'Our Services',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20.sp, // রেস্পনসিভ ফন্ট
+                        fontWeight: FontWeight.bold,
+                        color: kTextDark,
+                      ),
+                    ).animate().fadeIn(duration: 500.ms).slideX(), // টেক্সট অ্যানিমেশন
+                    SizedBox(height: 20.h),
+                    _buildCategoriesGrid(services),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          // Cached Network Image for Profile Picture
-          Padding(
-            padding: EdgeInsets.only(right: 16.w),
-            child: CircleAvatar(
-              radius: 18.r,
-              backgroundImage: const CachedNetworkImageProvider(
-                'https://i.pravatar.cc/150?img=11', // Dummy Avatar
-              ),
-            ),
-          )
-        ],
-      ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPromoBanner(context),
-                  SizedBox(height: 24.h),
-                  Text(
-                    'Our Services',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: kTextDark,
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  _buildCategoriesGrid(services),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -148,31 +88,35 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildPromoBanner(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 140.h,
+      height: 150.h,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [kPrimary, kAccent],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(22.r),
+        boxShadow: [
+          BoxShadow(
+            color: kPrimary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Stack(
         children: [
-          // Lottie Animation inside the banner
           Positioned(
-            right: -20.w,
-            bottom: -20.h,
-            child: Lottie.network(
-              'https://assets9.lottiefiles.com/packages/lf20_1y25qm1h.json', // Example Lottie url
-              width: 150.w,
-              height: 150.h,
-              errorBuilder: (context, error, stackTrace) => 
-                  Icon(Icons.bolt, size: 100.w, color: Colors.white24),
+            right: -30.w,
+            bottom: -30.h,
+            child: Icon(
+              Icons.bolt,
+              size: 160.sp,
+              color: Colors.white.withOpacity(0.15),
             ),
           ),
           Padding(
-            padding: EdgeInsets.all(20.w),
+            padding: EdgeInsets.all(24.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -181,23 +125,23 @@ class HomeScreen extends ConsumerWidget {
                   'Summer Sale!',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontSize: 22.sp,
+                    fontSize: 24.sp,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  'Up to 40% cashback',
+                  'Get up to 40% cashback',
                   style: GoogleFonts.poppins(
                     color: Colors.white.withOpacity(0.9),
-                    fontSize: 13.sp,
+                    fontSize: 14.sp,
                   ),
                 ),
               ],
             ),
           ),
         ],
-      ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
+      ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.95, 0.95)),
     );
   }
 
@@ -206,18 +150,17 @@ class HomeScreen extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 100.w, // Box size reduced using ScreenUtil
-        mainAxisSpacing: 16.h,
+        maxCrossAxisExtent: 90.w, // বক্সের সাইজ বেশ ছোট করা হয়েছে
+        mainAxisSpacing: 20.h,
         crossAxisSpacing: 16.w,
-        childAspectRatio: 0.85, // Adjusted for smaller boxes
+        childAspectRatio: 0.75, // আইকন এবং টেক্সট সুন্দরভাবে বসার জন্য রেশিও
       ),
       itemCount: services.length,
       itemBuilder: (context, index) {
         return _ServiceCard(service: services[index])
-            // Flutter Animate: Staggered animation for grid items
             .animate()
-            .fade(delay: (index * 50).ms)
-            .scale(delay: (index * 50).ms);
+            .fade(duration: 400.ms, delay: (index * 40).ms)
+            .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack); // কিউট বাউন্স অ্যানিমেশন
       },
     );
   }
@@ -232,40 +175,38 @@ class _ServiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // GoRouter or Dio action can be added here
+        // GoRouter নেভিগেশন এখানে দিতে পারবেন
       },
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(16.w), // Smaller padding
+            padding: EdgeInsets.all(16.w), // ছোট প্যাডিং
             decoration: BoxDecoration(
-              color: HomeScreen.kSkyBlue,
-              borderRadius: BorderRadius.circular(20.r), // Responsive radius
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              // ম্যাজিক এখানে: আইকনের নিজস্ব কালারের ১০% অপাসিটি ব্যাকগ্রাউন্ড হিসেবে কাজ করবে!
+              color: service.color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20.r), // গোলগাল সুন্দর শেপ
+              border: Border.all(
+                color: service.color.withOpacity(0.05), // হালকা বর্ডার 
+                width: 1,
+              ),
             ),
             child: Icon(
               service.icon,
               color: service.color,
-              size: 28.sp, // Smaller Icon
+              size: 28.sp, // আইকনের সাইজ ছোট ও কিউট
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 10.h),
           Text(
             service.name,
             style: GoogleFonts.poppins(
-              fontSize: 11.sp, // Smaller text
+              fontSize: 11.sp, // টেক্সট সাইজ রেস্পনসিভ ও ছোট
               fontWeight: FontWeight.w600,
               color: HomeScreen.kTextDark,
               height: 1.2,
             ),
             textAlign: TextAlign.center,
-            maxLines: 1,
+            maxLines: 2, // ২ লাইনের বেশি হলে ডট ডট আসবে
             overflow: TextOverflow.ellipsis,
           ),
         ],
