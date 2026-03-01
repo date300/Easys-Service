@@ -1,4 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lottie/lottie.dart';
+import 'package:go_router/go_router.dart';
+
+/// 1. Router Setup (GoRouter)
+final goRouterProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const HomeScreen(),
+      ),
+    ],
+  );
+});
+
+void main() {
+  runApp(
+    // Riverpod ProviderScope
+    const ProviderScope(child: MyApp()),
+  );
+}
+
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(goRouterProvider);
+
+    // ScreenUtil Setup for Responsiveness
+    return ScreenUtilInit(
+      designSize: const Size(375, 812), // Standard iPhone X design size
+      minTextAdapt: true,
+      builder: (context, child) {
+        return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          routerConfig: router,
+          theme: ThemeData(
+            textTheme: GoogleFonts.poppinsTextTheme(), // Google Fonts Applied globally
+          ),
+        );
+      },
+    );
+  }
+}
 
 /// Service Model
 class Service {
@@ -6,118 +57,87 @@ class Service {
   final IconData icon;
   final Color color;
 
-  const Service({
-    required this.name,
-    required this.icon,
-    required this.color,
-  });
+  const Service({required this.name, required this.icon, required this.color});
 }
 
-class HomeScreen extends StatelessWidget {
+/// 2. Riverpod Provider for Services (Here you can later use Dio to fetch from API)
+final servicesProvider = Provider<List<Service>>((ref) {
+  return const [
+    Service(name: 'Recharge', icon: Icons.phone_iphone, color: Color(0xFF6366F1)),
+    Service(name: 'Offers', icon: Icons.directions_car_filled, color: Color(0xFF0284C7)),
+    Service(name: 'Resell', icon: Icons.storefront_outlined, color: Color(0xFFEA580C)),
+    Service(name: 'Jobs', icon: Icons.work_outline, color: Color(0xFF14B8A6)),
+    Service(name: 'Loan', icon: Icons.payments_outlined, color: Color(0xFF22C55E)),
+    Service(name: 'Campaign', icon: Icons.campaign_outlined, color: Color(0xFF8B5CF6)),
+    Service(name: 'Education', icon: Icons.school_outlined, color: Color(0xFFF59E0B)),
+    Service(name: 'Bus', icon: Icons.directions_bus_filled, color: Color(0xFF3B82F6)),
+    Service(name: 'Courier', icon: Icons.local_shipping_outlined, color: Color(0xFFF97316)),
+    Service(name: 'Agro', icon: Icons.agriculture, color: Color(0xFF4ADE80)),
+    Service(name: 'Used', icon: Icons.inventory_2_outlined, color: Color(0xFF78716C)),
+  ];
+});
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  // Theme Colors
   static const Color kPrimary = Color(0xFF0284C7);
   static const Color kAccent = Color(0xFF38BDF8);
-  static const Color kBackground = Color(0xFFF0F7FF);
+  static const Color kBackground = Color(0xFFF8FAFC);
   static const Color kTextDark = Color(0xFF0F172A);
-  static const Color kSkyBlue = Color(0xFFBAE6FD);   // ← আকাশী রঙ (এটাই বক্সের জন্য)
-
-  // নতুন ১১টা সার্ভিস + iOS স্টাইল আইকন
-  static const List<Service> _services = [
-    Service(name: 'Mobile Recharge', icon: Icons.phone_iphone, color: Color(0xFF6366F1)),
-    Service(name: 'Drive Offers', icon: Icons.directions_car_filled, color: Color(0xFF0284C7)),
-    Service(name: 'Reselling', icon: Icons.storefront_outlined, color: Color(0xFFEA580C)),
-    Service(name: 'Microjobs', icon: Icons.work_outline, color: Color(0xFF14B8A6)),
-    Service(name: 'Loan Services', icon: Icons.payments_outlined, color: Color(0xFF22C55E)),
-    Service(name: 'Campaigns', icon: Icons.campaign_outlined, color: Color(0xFF8B5CF6)),
-    Service(name: 'Education Support', icon: Icons.school_outlined, color: Color(0xFFF59E0B)),
-    Service(name: 'Easy Bus', icon: Icons.directions_bus_filled, color: Color(0xFF3B82F6)),
-    Service(name: 'Easy Courier', icon: Icons.local_shipping_outlined, color: Color(0xFFF97316)),
-    Service(name: 'Agro Projects', icon: Icons.agriculture, color: Color(0xFF4ADE80)),
-    Service(name: 'Used Products', icon: Icons.inventory_2_outlined, color: Color(0xFF78716C)),
-  ];
+  static const Color kSkyBlue = Color(0xFFE0F2FE);
 
   @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isTablet = size.width > 600;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final services = ref.watch(servicesProvider);
 
     return Scaffold(
       backgroundColor: kBackground,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isTablet ? 30 : 20,
-                  vertical: 24,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPromoBanner(context),
-                    const SizedBox(height: 40),
-                    const Text(
-                      'Our Services',
-                      style: TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                        color: kTextDark,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildCategoriesGrid(isTablet),
-                  ],
-                ),
+      appBar: AppBar(
+        backgroundColor: kBackground,
+        elevation: 0,
+        title: Text(
+          'Hello, User 👋',
+          style: GoogleFonts.poppins(
+            color: kTextDark,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          // Cached Network Image for Profile Picture
+          Padding(
+            padding: EdgeInsets.only(right: 16.w),
+            child: CircleAvatar(
+              radius: 18.r,
+              backgroundImage: const CachedNetworkImageProvider(
+                'https://i.pravatar.cc/150?img=11', // Dummy Avatar
               ),
             ),
-          ],
-        ),
+          )
+        ],
       ),
-    );
-  }
-
-  Widget _buildPromoBanner(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 172,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [kPrimary, kAccent],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(26),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -45,
-            bottom: -45,
-            child: Icon(Icons.bolt, size: 190, color: Colors.white.withOpacity(0.16)),
-          ),
-          const Padding(
-            padding: EdgeInsets.all(28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Summer Sale!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 27,
-                    fontWeight: FontWeight.bold,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPromoBanner(context),
+                  SizedBox(height: 24.h),
+                  Text(
+                    'Our Services',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: kTextDark,
+                    ),
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Get up to 40% cashback',
-                  style: TextStyle(color: Colors.white70, fontSize: 16.5),
-                ),
-              ],
+                  SizedBox(height: 16.h),
+                  _buildCategoriesGrid(services),
+                ],
+              ),
             ),
           ),
         ],
@@ -125,72 +145,127 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoriesGrid(bool isTablet) {
+  Widget _buildPromoBanner(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 140.h,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [kPrimary, kAccent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Stack(
+        children: [
+          // Lottie Animation inside the banner
+          Positioned(
+            right: -20.w,
+            bottom: -20.h,
+            child: Lottie.network(
+              'https://assets9.lottiefiles.com/packages/lf20_1y25qm1h.json', // Example Lottie url
+              width: 150.w,
+              height: 150.h,
+              errorBuilder: (context, error, stackTrace) => 
+                  Icon(Icons.bolt, size: 100.w, color: Colors.white24),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Summer Sale!',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  'Up to 40% cashback',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 13.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0),
+    );
+  }
+
+  Widget _buildCategoriesGrid(List<Service> services) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 130,        // এটা দিয়ে সব ডিভাইসে অটো রেস্পনসিভ
-        mainAxisSpacing: 28,
-        crossAxisSpacing: 22,
-        childAspectRatio: 0.80,
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 100.w, // Box size reduced using ScreenUtil
+        mainAxisSpacing: 16.h,
+        crossAxisSpacing: 16.w,
+        childAspectRatio: 0.85, // Adjusted for smaller boxes
       ),
-      itemCount: _services.length,
-      itemBuilder: (context, index) => _ServiceCard(service: _services[index]),
+      itemCount: services.length,
+      itemBuilder: (context, index) {
+        return _ServiceCard(service: services[index])
+            // Flutter Animate: Staggered animation for grid items
+            .animate()
+            .fade(delay: (index * 50).ms)
+            .scale(delay: (index * 50).ms);
+      },
     );
   }
 }
 
-/// iOS স্টাইলের আকাশী বক্স সহ সার্ভিস কার্ড
 class _ServiceCard extends StatelessWidget {
   final Service service;
 
-  const _ServiceCard({required this.service, super.key});
+  const _ServiceCard({required this.service});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${service.name} আসছে শীঘ্রই 🚀'),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 1),
-          ),
-        );
+        // GoRouter or Dio action can be added here
       },
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(16.w), // Smaller padding
             decoration: BoxDecoration(
-              color: HomeScreen.kSkyBlue,     // ← আকাশী রঙ
-              borderRadius: BorderRadius.circular(26),
+              color: HomeScreen.kSkyBlue,
+              borderRadius: BorderRadius.circular(20.r), // Responsive radius
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Icon(
               service.icon,
               color: service.color,
-              size: 42,
+              size: 28.sp, // Smaller Icon
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 8.h),
           Text(
             service.name,
-            style: const TextStyle(
-              fontSize: 13.8,
+            style: GoogleFonts.poppins(
+              fontSize: 11.sp, // Smaller text
               fontWeight: FontWeight.w600,
               color: HomeScreen.kTextDark,
-              height: 1.3,
+              height: 1.2,
             ),
             textAlign: TextAlign.center,
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ],
