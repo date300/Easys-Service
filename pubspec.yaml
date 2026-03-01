@@ -12,6 +12,16 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.4
+  
+  # --- আমাদের যোগ করা নতুন প্রফেশনাল প্যাকেজগুলো ---
+  flutter_riverpod: ^2.6.1       # State Management এর জন্য
+  flutter_screenutil: ^5.9.3     # যেকোনো স্ক্রিনে সাইজ ঠিক রাখার জন্য
+  google_fonts: ^6.2.1           # সুন্দর ফন্ট ব্যবহারের জন্য
+  flutter_animate: ^4.5.0        # স্মুথ অ্যানিমেশনের জন্য
+  go_router: ^14.2.0             # পেজ পরিবর্তনের (Routing) জন্য
+  lottie: ^3.1.2                 # লটি অ্যানিমেশনের জন্য
+  cached_network_image: ^3.4.1   # ইন্টারনেট থেকে ছবি লোড ও সেভ করার জন্য
+  dio: ^5.7.0                    # API থেকে ডাটা আনার জন্য
 
 dev_dependencies:
   flutter_test:
@@ -24,6 +34,7 @@ flutter:
 
   assets:
     - assets/ultra5G.png
+    # - assets/animations/       # লটি অ্যানিমেশনের কোনো ফোল্ডার থাকলে এখানে দিতে পারেন
 
 flutter_icons:
   android: true

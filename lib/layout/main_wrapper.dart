@@ -1,97 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-// আপনার যদি আলাদা ফাইলে স্ক্রিনগুলো থাকে, তবে এখানে ইমপোর্ট করুন:
-// import '../features/home/home_screen.dart';
-// import '../features/reselling/reselling_screen.dart';
-// import '../features/microjobs/microjobs_screen.dart';
-// import '../features/campaigns/campaigns_screen.dart';
-// import '../features/drive/drive_screen.dart';
+//--- ১. পপআপ বা স্টেট ম্যানেজমেন্ট (Riverpod) ---
+final navIndexProvider = StateProvider<int>((ref) => 0);
 
-class MainWrapper extends StatefulWidget {
-  const MainWrapper({super.key});
-
-  @override
-  State<MainWrapper> createState() => _MainWrapperState();
+void main() {
+  runApp(
+    const ProviderScope(
+      child: EasyServiceApp(),
+    ),
+  );
 }
 
-class _CurrentPage extends StatelessWidget {
-  final String title;
-  const _CurrentPage({required this.title});
+//--- ২. GoRouter কনফিগারেশন ---
+final _router = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const MainWrapper(),
+    ),
+  ],
+);
+
+class EasyServiceApp extends StatelessWidget {
+  const EasyServiceApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey),
-      ),
+    // ৩. ScreenUtil ইনিশিয়ালাইজেশন (রেসপন্সিভ ডিজাইনের জন্য)
+    return ScreenUtilInit(
+      designSize: const Size(360, 800), // স্ট্যান্ডার্ড মোবাইল সাইজ
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          title: 'Easy Service',
+          theme: ThemeData(
+            useMaterial3: true,
+            textTheme: GoogleFonts.poppinsTextTheme(), // গ্লোবাল ফন্ট
+          ),
+          routerConfig: _router,
+        );
+      },
     );
   }
 }
 
-class _MainWrapperState extends State<MainWrapper> {
-  int _currentIndex = 0;
-
-  // ৫টি পেজের লিস্ট
-  final List<Widget> _pages = const [
-    _CurrentPage(title: "Home Screen"),
-    _CurrentPage(title: "Reselling Screen"),
-    _CurrentPage(title: "Microjobs Screen"),
-    _CurrentPage(title: "Campaigns Screen"),
-    _CurrentPage(title: "Drive Offers Screen"),
-  ];
+//--- ৪. মেইন র‍্যাপার (Main UI Structure) ---
+class MainWrapper extends ConsumerWidget {
+  const MainWrapper({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(navIndexProvider);
     const Color skyBlue = Color(0xFF29B6F6);
 
-    return Scaffold(
-      // ব্যাকগ্রাউন্ড আকাশি যাতে কার্ভের পেছনে গ্যাপ না থাকে
-      backgroundColor: skyBlue,
+    // ৫টি ভিন্ন স্ক্রিনের লিস্ট
+    final List<Widget> pages = [
+      const ReusablePage(title: "Home", icon: Icons.home_rounded),
+      const ReusablePage(title: "Reselling", icon: Icons.storefront_rounded),
+      const ReusablePage(title: "Microjobs", icon: Icons.work_history_rounded),
+      const ReusablePage(title: "Campaigns", icon: Icons.campaign_rounded),
+      const ReusablePage(title: "Drive Offers", icon: Icons.directions_car_rounded),
+    ];
 
-      // ১. সাইডবার (Drawer)
-      drawer: Drawer(
-        child: Column(
-          children: [
-            const UserAccountsDrawerHeader(
-              decoration: BoxDecoration(color: skyBlue),
-              accountName: Text("Easy Service User", style: TextStyle(fontWeight: FontWeight.bold)),
-              accountEmail: Text("user@easyservice.com"),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: skyBlue, size: 40),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text("Home"),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text("History"),
-              onTap: () {},
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Logout", style: TextStyle(color: Colors.red)),
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
+    return Scaffold(
+      backgroundColor: skyBlue,
+      
+      // সাইডবার (Drawer)
+      drawer: _buildAppDrawer(context, skyBlue),
 
       appBar: AppBar(
         backgroundColor: skyBlue,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Easy Service',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w700,
+            fontSize: 20.sp,
+          ),
         ),
-        // ২. ড্রয়ার খোলার বাটন
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu_open_rounded, size: 28),
@@ -101,78 +99,161 @@ class _MainWrapperState extends State<MainWrapper> {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.notifications_none_rounded),
           ),
         ],
       ),
 
-      // ৩. আপনার সেই পছন্দের রাউন্ডেড বডি
-      body: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
+      // রাউন্ডেড বডি উইথ অ্যানিমেশন
+      body: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
           color: Colors.white,
-          child: IndexedStack(
-            index: _currentIndex,
-            children: _pages,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30.r),
+            topRight: Radius.circular(30.r),
           ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30.r),
+            topRight: Radius.circular(30.r),
+          ),
+          child: pages[currentIndex]
+              .animate(key: ValueKey(currentIndex))
+              .fadeIn(duration: 400.ms)
+              .moveY(begin: 10, end: 0),
         ),
       ),
 
-      // ৪. কাস্টমাইজড নেভিগেশন বার
+      // প্রফেশনাল নেভিগেশন বার
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           indicatorColor: skyBlue.withOpacity(0.15),
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return const TextStyle(color: skyBlue, fontWeight: FontWeight.bold, fontSize: 12);
+              return GoogleFonts.poppins(
+                fontSize: 11.sp, fontWeight: FontWeight.w600, color: skyBlue);
             }
-            return const TextStyle(color: Colors.grey, fontSize: 11);
-          }),
-          iconTheme: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const IconThemeData(color: skyBlue, size: 28);
-            }
-            return const IconThemeData(color: Colors.grey, size: 24);
+            return GoogleFonts.poppins(fontSize: 10.sp, color: Colors.grey);
           }),
         ),
         child: NavigationBar(
+          height: 70.h,
           backgroundColor: Colors.white,
-          height: 70,
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) => setState(() => _currentIndex = index),
+          selectedIndex: currentIndex,
+          onDestinationSelected: (index) => 
+              ref.read(navIndexProvider.notifier).state = index,
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
+              icon: Icon(Icons.home_outlined), 
+              selectedIcon: Icon(Icons.home, color: skyBlue), 
+              label: 'Home'),
             NavigationDestination(
-              icon: Icon(Icons.storefront_outlined),
-              selectedIcon: Icon(Icons.storefront),
-              label: 'Reselling',
-            ),
+              icon: Icon(Icons.storefront_outlined), 
+              selectedIcon: Icon(Icons.storefront, color: skyBlue), 
+              label: 'Reselling'),
             NavigationDestination(
-              icon: Icon(Icons.assignment_outlined),
-              selectedIcon: Icon(Icons.assignment),
-              label: 'Microjobs',
-            ),
+              icon: Icon(Icons.work_outline), 
+              selectedIcon: Icon(Icons.work, color: skyBlue), 
+              label: 'Microjobs'),
             NavigationDestination(
-              icon: Icon(Icons.campaign_outlined),
-              selectedIcon: Icon(Icons.campaign),
-              label: 'Campaigns',
-            ),
+              icon: Icon(Icons.campaign_outlined), 
+              selectedIcon: Icon(Icons.campaign, color: skyBlue), 
+              label: 'Campaigns'),
             NavigationDestination(
-              icon: Icon(Icons.directions_car_outlined),
-              selectedIcon: Icon(Icons.directions_car),
-              label: 'Drive',
-            ),
+              icon: Icon(Icons.directions_car_outlined), 
+              selectedIcon: Icon(Icons.directions_car, color: skyBlue), 
+              label: 'Drive'),
           ],
         ),
+      ),
+    );
+  }
+
+  // ড্রয়ার ফাংশন
+  Widget _buildAppDrawer(BuildContext context, Color themeColor) {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: Column(
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: BoxDecoration(color: themeColor),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, color: themeColor, size: 40.sp),
+            ),
+            accountName: Text("Easy Service User", 
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            accountEmail: const Text("support@easyservice.com"),
+          ),
+          _drawerItem(Icons.person_outline, "My Profile"),
+          _drawerItem(Icons.history_rounded, "Transaction History"),
+          _drawerItem(Icons.settings_outlined, "Settings"),
+          const Spacer(),
+          const Divider(),
+          _drawerItem(Icons.logout_rounded, "Logout", color: Colors.red),
+          SizedBox(height: 20.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerItem(IconData icon, String title, {Color? color}) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? Colors.black87),
+      title: Text(title, style: GoogleFonts.poppins(fontSize: 14.sp, color: color)),
+      onTap: () {},
+    );
+  }
+}
+
+//--- ৫. রিউজেবল পেজ টেম্পলেট (Lottie & Network Image সহ) ---
+class ReusablePage extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  const ReusablePage({super.key, required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Lottie অ্যানিমেশন এক্সাম্পল (যদি অ্যাসেট থাকে)
+          // Lottie.asset('assets/animations/welcome.json', height: 150.h),
+          
+          Icon(icon, size: 80.sp, color: const Color(0xFF29B6F6).withOpacity(0.5)),
+          SizedBox(height: 20.h),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 24.sp, 
+              fontWeight: FontWeight.bold,
+              color: Colors.black87
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Text(
+            "Welcome to $title service section.\nProfessional UI is ready!",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey),
+          ),
+          SizedBox(height: 30.h),
+          // Cached Network Image এক্সাম্পল
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15.r),
+            child: CachedNetworkImage(
+              imageUrl: "https://via.placeholder.com/300x150/29B6F6/FFFFFF?text=Easy+Service+Banner",
+              placeholder: (context, url) => const CircularProgressIndicator(),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
+              height: 120.h,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ],
       ),
     );
   }
