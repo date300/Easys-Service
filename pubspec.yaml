@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.4
-  flutter_native_splash: ^2.4.0
 
 dev_dependencies:
   flutter_test:
@@ -24,18 +23,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/ultra5G.png
-
-flutter_native_splash:
-  color: "#0096C7"
-  image: assets/ultra5G.png
-  android: true
-  ios: true
-
-  android_12:
-    color: "#0096C7"
-    image: assets/ultra5G.png
-    icon_background_color: "#0096C7"
+    - assets/EasyService.png
 
 flutter_icons:
   android: true
