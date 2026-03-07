@@ -158,7 +158,7 @@ class MainWrapper extends ConsumerWidget {
                   _buildDrawerItem(Icons.facebook_rounded, "Facebook Group", iconColor: Colors.blue, onTap: () {
                     Navigator.pop(context);
                   }),
-                  _buildDrawerItem(Icons.smart_display_rounded, "YouTube Group", iconColor: Colors.red, onTap: () {
+                  _buildDrawerItem(Icons.smart_display_rounded, "YouTube Channel", iconColor: Colors.red, onTap: () {
                     Navigator.pop(context);
                   }),
                   _buildDrawerItem(Icons.telegram_rounded, "Telegram Group", iconColor: Colors.blueAccent, onTap: () {
