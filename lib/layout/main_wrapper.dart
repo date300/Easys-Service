@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-// ফিচার পেজগুলোর ইমপোর্ট
+// ফিচার পেজগুলোর ইমপোর্ট (আপনার প্রোজেক্টের ডিরেক্টরি অনুযায়ী)
 import '../features/home/home_screen.dart';
 import '../features/reselling/reselling_screen.dart';
 import '../features/microjobs/microjobs_screen.dart';
@@ -62,7 +62,7 @@ class MainWrapper extends ConsumerWidget {
     final currentIndex = ref.watch(navIndexProvider);
     const Color skyBlue = Color(0xFF29B6F6);
 
-    // আপডেট করা ৫টি পেজের লিস্ট
+    // ৫টি পেজের লিস্ট
     final List<Widget> pages = [
       const HomeScreen(),
       const ResellingScreen(),
@@ -73,33 +73,129 @@ class MainWrapper extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: skyBlue,
+      
+      // ================== Modern Drawer / Sidebar ==================
       drawer: Drawer(
+        backgroundColor: Colors.white,
         child: Column(
           children: [
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: skyBlue),
-              accountName: Text("Easy Service User", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-              accountEmail: const Text("user@easyservice.com"),
-              currentAccountPicture: const CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: skyBlue, size: 40),
+            // কাস্টম মডার্ন হেডার
+            Container(
+              padding: EdgeInsets.only(top: 60.h, bottom: 20.h, left: 20.w, right: 20.w),
+              decoration: BoxDecoration(
+                color: skyBlue,
+                borderRadius: BorderRadius.only(
+                  bottomRight: Radius.circular(30.r),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: skyBlue.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  )
+                ],
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30.r,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person_rounded, color: skyBlue, size: 35.sp),
+                  ),
+                  SizedBox(width: 15.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Easy Service User",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                          ),
+                        ),
+                        Text(
+                          "user@easyservice.com",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text("Home"),
-              onTap: () => Navigator.pop(context),
+            SizedBox(height: 10.h),
+            
+            // সাইডবারের মেনু আইটেমগুলো
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildDrawerItem(Icons.account_balance_wallet_rounded, "Wallet", onTap: () {
+                    Navigator.pop(context); // Drawer বন্ধ করার জন্য
+                    // নেভিগেশন লজিক এখানে দিন
+                  }),
+                  _buildDrawerItem(Icons.card_giftcard_rounded, "Voucher Balance", onTap: () {
+                    Navigator.pop(context);
+                  }),
+                  _buildDrawerItem(Icons.workspace_premium_rounded, "Royalty Salary", onTap: () {
+                    Navigator.pop(context);
+                  }),
+                  
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 15.w),
+                    child: Divider(color: Colors.grey.shade200, thickness: 1.5),
+                  ),
+                  
+                  _buildDrawerItem(Icons.support_agent_rounded, "Support Center", onTap: () {
+                    Navigator.pop(context);
+                  }),
+                  _buildDrawerItem(Icons.facebook_rounded, "Facebook Group", iconColor: Colors.blue, onTap: () {
+                    Navigator.pop(context);
+                  }),
+                  _buildDrawerItem(Icons.smart_display_rounded, "YouTube Group", iconColor: Colors.red, onTap: () {
+                    Navigator.pop(context);
+                  }),
+                  _buildDrawerItem(Icons.telegram_rounded, "Telegram Group", iconColor: Colors.blueAccent, onTap: () {
+                    Navigator.pop(context);
+                  }),
+                ],
+              ),
             ),
-            const Spacer(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Logout", style: TextStyle(color: Colors.red)),
-              onTap: () {},
+            
+            // মডার্ন লগআউট বাটন
+            Padding(
+              padding: EdgeInsets.only(left: 15.w, right: 15.w, bottom: 25.h, top: 10.h),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.r),
+                ),
+                tileColor: Colors.red.withOpacity(0.1),
+                leading: const Icon(Icons.logout_rounded, color: Colors.red),
+                title: Text(
+                  "Logout",
+                  style: GoogleFonts.poppins(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15.sp,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Logout Logic Here
+                },
+              ),
             ),
-            SizedBox(height: 20.h),
           ],
         ),
       ),
+      // ==============================================================
+
       appBar: AppBar(
         backgroundColor: skyBlue,
         foregroundColor: Colors.white,
@@ -177,6 +273,25 @@ class MainWrapper extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  // সাইডবার আইটেম তৈরির জন্য কাস্টম উইজেট মেথড
+  Widget _buildDrawerItem(IconData icon, String title, {Color? iconColor, required VoidCallback onTap}) {
+    return ListTile(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+      leading: Icon(icon, color: iconColor ?? const Color(0xFF29B6F6), size: 24.sp),
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w500,
+          color: Colors.black87,
+        ),
+      ),
+      trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14.sp, color: Colors.grey.shade400),
+      onTap: onTap,
+      splashColor: const Color(0xFF29B6F6).withOpacity(0.1),
     );
   }
 }
