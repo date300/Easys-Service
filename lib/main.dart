@@ -5,15 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-// আপনার ফিচার স্ক্রিনগুলো ইম্পোর্ট করুন
 import 'features/home/home_screen.dart';
 import 'features/reselling/reselling_screen.dart';
 import 'features/microjobs/microjobs_screen.dart';
 import 'features/campaigns/campaigns_screen.dart';
 import 'features/drive/drive_screen.dart';
-import 'features/auth/registration_screen.dart'; // রেজিস্ট্রেশন স্ক্রিন
+import 'features/auth/registration_screen.dart';
 
-// ✅ এখানে authProvider যুক্ত করা হলো (যাতে অন্য ফাইল থেকে এক্সেস করা যায়)
+// ১. authProvider ডিফাইন করা (লগইন স্টেট রাখার জন্য)
 final authProvider = StateProvider<bool>((ref) => false);
 
 void main() {
@@ -21,20 +20,38 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-// কেন ShellRoute? এতে আপনার সাইডবার এবং বটম ন্যাভ ঠিক থাকবে কিন্তু মাঝখানের কন্টেন্ট লিঙ্কের সাথে বদলাবে।
+// ২. গো-রাউটার কনফিগারেশন (রিডাইরেক্ট লজিকসহ)
 final GoRouter _router = GoRouter(
   initialLocation: '/home',
+  
+  // রিডাইরেক্ট লজিক: এখানে চেক করা হবে ইউজার লগইন আছে কি না
+  redirect: (BuildContext context, GoRouterState state) {
+    final container = ProviderScope.containerOf(context);
+    final isLoggedIn = container.read(authProvider); // কারেন্ট লগইন স্ট্যাটাস
+    final isGoingToRegister = state.matchedLocation == '/registration';
+
+    // যদি লগইন না থাকে এবং ইউজার রেজিস্ট্রেশন পেজে না থাকে, তবে তাকে রেজিস্ট্রেশন পেজে পাঠাও
+    if (!isLoggedIn && !isGoingToRegister) {
+      return '/registration';
+    }
+
+    // যদি লগইন করা থাকে এবং ইউজার রেজিস্ট্রেশন পেজে যেতে চায়, তবে তাকে হোমে পাঠাও
+    if (isLoggedIn && isGoingToRegister) {
+      return '/home';
+    }
+
+    // অন্যথায় যে পেজে যেতে চায় সেখানেই যেতে দাও
+    return null;
+  },
+  
   routes: [
-    // রেজিস্ট্রেশন আলাদা পেজ (মেনু ছাড়া)
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
-
-    // মেইন অ্যাপের ভেতরকার পেজগুলো (মেনুসহ)
     ShellRoute(
       builder: (context, state, child) {
-        return MainWrapper(child: child); // এখানে child পাস করা হচ্ছে
+        return MainWrapper(child: child);
       },
       routes: [
         GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
@@ -72,15 +89,15 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// ৩. MainWrapper এ লগআউট বাটন যোগ করার সুযোগ থাকে (নিচে পরিবর্তন নেই, আগের মতই)
 class MainWrapper extends ConsumerWidget {
-  final Widget child; // এরর সমাধান করার জন্য এটি যোগ করা হয়েছে
+  final Widget child;
   const MainWrapper({super.key, required this.child});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     const Color skyBlue = Color(0xFF29B6F6);
 
-    // বর্তমান লোকেশন অনুযায়ী ইনডেক্স বের করা
     int getCurrentIndex(BuildContext context) {
       final String location = GoRouterState.of(context).uri.toString();
       if (location == '/home') return 0;
@@ -95,7 +112,7 @@ class MainWrapper extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: skyBlue,
-      drawer: _buildDrawer(context, skyBlue),
+      drawer: _buildDrawer(context, skyBlue, ref), // ref পাস করা হয়েছে লগআউটের জন্য
       appBar: AppBar(
         backgroundColor: skyBlue,
         foregroundColor: Colors.white,
@@ -118,7 +135,7 @@ class MainWrapper extends ConsumerWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.only(topLeft: Radius.circular(32.r), topRight: Radius.circular(32.r)),
-          child: child // এখানে ডাইনামিক পেজ লোড হবে
+          child: child
               .animate(key: ValueKey(currentIndex))
               .fadeIn(duration: 400.ms)
               .moveY(begin: 10, end: 0),
@@ -129,7 +146,6 @@ class MainWrapper extends ConsumerWidget {
         height: 70.h,
         selectedIndex: currentIndex,
         onDestinationSelected: (index) {
-          // ইনডেক্স অনুযায়ী রাউটে নেভিগেট করা
           switch (index) {
             case 0: context.go('/home'); break;
             case 1: context.go('/reselling'); break;
@@ -149,8 +165,7 @@ class MainWrapper extends ConsumerWidget {
     );
   }
 
-  // ড্রয়ার মেথড
-  Widget _buildDrawer(BuildContext context, Color skyBlue) {
+  Widget _buildDrawer(BuildContext context, Color skyBlue, WidgetRef ref) {
     return Drawer(
       backgroundColor: Colors.white,
       child: Column(
@@ -172,9 +187,10 @@ class MainWrapper extends ConsumerWidget {
               children: [
                 _buildDrawerItem(Icons.account_balance_wallet, "Wallet", onTap: () => Navigator.pop(context)),
                 _buildDrawerItem(Icons.support_agent, "Support", onTap: () => Navigator.pop(context)),
-                _buildDrawerItem(Icons.app_registration, "Register", onTap: () {
-                   Navigator.pop(context);
-                   context.push('/registration'); // লিঙ্কের মাধ্যমে যাওয়া
+                // লগআউট বাটন (লগইন স্টেট ফলস করে দিবে)
+                _buildDrawerItem(Icons.logout, "Logout", onTap: () {
+                   ref.read(authProvider.notifier).state = false;
+                   context.go('/registration');
                 }),
               ],
             ),
