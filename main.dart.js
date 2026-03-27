@@ -95301,7 +95301,7 @@ s($,"b0e","aJz",()=>{var q=null
 return new A.zq(new A.au5(),q,q,q,q,A.axY(q),A.al("zq<~>"))})
 s($,"b_F","aJ5",()=>{var q=null,p=A.tK(new A.atR(),"/registration"),o=t.yo,n=A.c([A.tK(new A.atS(),"/home"),A.tK(new A.atT(),"/reselling"),A.tK(new A.atU(),"/microjobs"),A.tK(new A.atV(),"/campaigns"),A.tK(new A.atW(),"/drive")],o),m=A.aMt(q,t.uK)
 p=A.c([p,new A.qN(new A.atX(),m,q,n,q)],o)
-return A.aMw(!1,q,q,q,q,"/",q,q,q,!1,q,!0,q,!1,new A.Rn(new A.aex(p,new A.atY(),5)))})
+return A.aMw(!1,q,q,q,q,"/home",q,q,q,!1,q,!0,q,!1,new A.Rn(new A.aex(p,new A.atY(),5)))})
 s($,"b_8","aII",()=>A.ahr(1,1,500))
 s($,"aZb","aI0",()=>A.aQI(new A.alz(),t.Pb))
 s($,"b0u","aJF",()=>A.aq([B.Du,A.oD(40),B.Dv,A.oD(40),B.n9,A.oD(12)],A.al("to"),t.m_))
