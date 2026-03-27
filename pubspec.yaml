@@ -1,42 +1,51 @@
 name: EasyService
-description: "A new Flutter project."
+description: "A professional service provider app project."
 publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.11.0
+  sdk: '>=3.11.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  shared_preferences: ^2.5.4
-  
-  # --- আমাদের যোগ করা নতুন প্রফেশনাল প্যাকেজগুলো ---
-  flutter_riverpod: ^2.6.1       # State Management এর জন্য
-  flutter_screenutil: ^5.9.3     # যেকোনো স্ক্রিনে সাইজ ঠিক রাখার জন্য
-  google_fonts: ^6.2.1           # সুন্দর ফন্ট ব্যবহারের জন্য
-  flutter_animate: ^4.5.0        # স্মুথ অ্যানিমেশনের জন্য
-  go_router: ^14.2.0             # পেজ পরিবর্তনের (Routing) জন্য
-  lottie: ^3.1.2                 # লটি অ্যানিমেশনের জন্য
-  cached_network_image: ^3.4.1   # ইন্টারনেট থেকে ছবি লোড ও সেভ করার জন্য
-  dio: ^5.7.0                    # API থেকে ডাটা আনার জন্য
+
+  # --- Data & Local Storage ---
+  http: ^1.1.0
+  dio: ^5.7.0                    # Advanced API Handling
+  shared_preferences: ^2.5.4     # Local storage (Duplicate removed)
+
+  # --- UI & Design ---
+  flutter_screenutil: ^5.9.3     # Responsive UI across devices
+  google_fonts: ^6.2.1           # Professional typography
+  flutter_animate: ^4.5.0        # Smooth UI transitions
+  lottie: ^3.1.2                 # High-quality vector animations
+  cached_network_image: ^3.4.1   # Efficient image loading
+
+  # --- Architecture & Navigation ---
+  flutter_riverpod: ^2.6.1       # Modern State Management
+  go_router: ^14.2.0             # Declarative Routing
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
-  flutter_launcher_icons: ^0.14.4
+  flutter_lints: ^3.0.0          # Updated to stable version
+  flutter_launcher_icons: ^0.14.1
 
 flutter:
   uses-material-design: true
 
+  # Assets management
   assets:
     - assets/ultra5G.png
-    # - assets/animations/       # লটি অ্যানিমেশনের কোনো ফোল্ডার থাকলে এখানে দিতে পারেন
+    - assets/EasyService.png
+    # - assets/animations/       # Uncomment if you use Lottie JSON files here
 
-flutter_icons:
+# App Icon Configuration
+flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/EasyService.png"
+  min_sdk_android: 21 
