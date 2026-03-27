@@ -13,6 +13,9 @@ import 'features/campaigns/campaigns_screen.dart';
 import 'features/drive/drive_screen.dart';
 import 'features/auth/registration_screen.dart'; // রেজিস্ট্রেশন স্ক্রিন
 
+// ✅ এখানে authProvider যুক্ত করা হলো (যাতে অন্য ফাইল থেকে এক্সেস করা যায়)
+final authProvider = StateProvider<bool>((ref) => false);
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: MyApp()));
@@ -27,7 +30,7 @@ final GoRouter _router = GoRouter(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
-    
+
     // মেইন অ্যাপের ভেতরকার পেজগুলো (মেনুসহ)
     ShellRoute(
       builder: (context, state, child) {
@@ -71,7 +74,7 @@ class MyApp extends StatelessWidget {
 
 class MainWrapper extends ConsumerWidget {
   final Widget child; // এরর সমাধান করার জন্য এটি যোগ করা হয়েছে
-  const MainWrapper({super.key, required this.child}); 
+  const MainWrapper({super.key, required this.child});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
