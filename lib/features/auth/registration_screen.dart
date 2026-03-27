@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // main.dart ফাইলটি ইমপোর্ট করুন যেখানে authProvider লেখা আছে
 // (আপনার ফোল্ডার অনুযায়ী পাথ ঠিক করে নেবেন)
-import '../main.dart'; 
+import '../../main.dart';
 
 class RegistrationScreen extends ConsumerStatefulWidget {
   const RegistrationScreen({super.key});
