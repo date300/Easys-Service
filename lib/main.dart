@@ -1,4 +1,6 @@
-// main.dart (FIXED: const MainWrapper removed from ShellRoute)
+// main.dart (UPDATED)
+// ✅ '/' root route error fix: initialLocation -> '/home'
+// ✅ const MainWrapper error fix: removed const from ShellRoute builder
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,16 +49,15 @@ final authLoadingProvider = FutureProvider<void>((ref) async {
 });
 
 final GoRouter _router = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/home', // ✅ FIX: '/' না
   routes: [
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
 
-    // ✅ IMPORTANT FIX: remove const here
     ShellRoute(
-      builder: (context, state, child) => MainWrapper(child: child),
+      builder: (context, state, child) => MainWrapper(child: child), // ✅ const removed
       routes: [
         GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
         GoRoute(path: '/reselling', builder: (context, state) => const ResellingScreen()),
