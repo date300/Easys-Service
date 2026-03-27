@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ইমপোর্ট সেকশন (আপনার ফাইল পাথ অনুযায়ী)
 import 'layout/main_wrapper.dart';
@@ -17,25 +20,17 @@ import 'features/reselling/reselling_screen.dart';
 final _router = GoRouter(
   initialLocation: '/',
   routes: [
-    // ১. স্প্ল্যাশ স্ক্রিন (রুট পাথ)
     GoRoute(
       path: '/',
       builder: (context, state) => const SplashScreen(),
     ),
-    
-    // ২. রেজিস্ট্রেশন পেজ
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
-
-    // ৩. মেইন অ্যাপের সব পেজ (লিংকের মাধ্যমে ঢোকার জন্য আলাদা রাউট)
-    // যদি আপনি চান 'MainWrapper' (যেমন বটম ন্যাভিগেশন) বজায় থাকুক, তবে ShellRoute ব্যবহার করা ভালো।
-    // এখানে সাধারণ রাউট হিসেবে দেখানো হলো:
-    
     GoRoute(
       path: '/home',
-      builder: (context, state) => const MainWrapper(child: HomeScreen()), 
+      builder: (context, state) => const MainWrapper(child: HomeScreen()),
     ),
     GoRoute(
       path: '/campaigns',
@@ -61,6 +56,7 @@ final _router = GoRouter(
 );
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -71,13 +67,116 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: const Size(360, 800),
+      minTextAdapt: true,
+      splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
+          title: 'Easy Service',
           routerConfig: _router,
-          theme: ThemeData(useMaterial3: true),
+          theme: ThemeData(
+            useMaterial3: true,
+            colorSchemeSeed: const Color(0xFF0284C7),
+            textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
+          ),
         );
       },
+    );
+  }
+}
+
+// --- SplashScreen (আপনার আগের কোড) ---
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _navigateToNext();
+  }
+
+  _navigateToNext() async {
+    await Future.delayed(const Duration(milliseconds: 3000));
+
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('jwt_token');
+
+    if (mounted) {
+      if (token != null) {
+        context.go('/home'); // টোকেন থাকলে হোমে যাবে
+      } else {
+        context.go('/registration'); // টোকেন না থাকলে রেজিস্ট্রেশনে যাবে
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0EA5E9),
+      body: SizedBox(
+        width: 1.sw,
+        height: 1.sh,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Spacer(flex: 4),
+            // লোগো সেকশন
+            Image.asset(
+              "assets/ultra5G.png",
+              width: 200.w,
+              errorBuilder: (context, error, stackTrace) =>
+                  Icon(Icons.flash_on, size: 100.w, color: Colors.white),
+            ).animate()
+             .fade(duration: 600.ms)
+             .scale(delay: 200.ms, curve: Curves.easeOutBack),
+            SizedBox(height: 12.h),
+            Text(
+              "Easy Service",
+              style: TextStyle(
+                fontSize: 28.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1.5,
+              ),
+            ).animate()
+             .fadeIn(delay: 400.ms)
+             .slideY(begin: 0.2, end: 0),
+            const Spacer(flex: 3),
+            // লোডিং ডটস
+            Padding(
+              padding: EdgeInsets.only(bottom: 60.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) {
+                  return Container(
+                    margin: EdgeInsets.symmetric(horizontal: 4.w),
+                    width: 10.w,
+                    height: 10.w,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ).animate(onPlay: (controller) => controller.repeat())
+                   .scale(
+                     delay: (index * 150).ms,
+                     duration: 600.ms,
+                     begin: const Offset(1, 1),
+                     end: const Offset(1.4, 1.4)
+                   )
+                   .then()
+                   .scale(duration: 600.ms);
+                }),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
