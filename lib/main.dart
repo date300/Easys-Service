@@ -1,64 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
-// ইমপোর্ট সেকশন (আপনার ফাইল পাথ অনুযায়ী)
-import 'layout/main_wrapper.dart';
-import 'features/auth/registration_screen.dart';
+// আপনার ফিচার স্ক্রিনগুলো ইম্পোর্ট করুন
 import 'features/home/home_screen.dart';
+import 'features/reselling/reselling_screen.dart';
+import 'features/microjobs/microjobs_screen.dart';
 import 'features/campaigns/campaigns_screen.dart';
 import 'features/drive/drive_screen.dart';
-import 'features/microjobs/microjobs_screen.dart';
-import 'features/profile/profile_screen.dart';
-import 'features/reselling/reselling_screen.dart';
-
-// GoRouter কনফিগারেশন
-final _router = GoRouter(
-  initialLocation: '/',
-  routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const SplashScreen(),
-    ),
-    GoRoute(
-      path: '/registration',
-      builder: (context, state) => const RegistrationScreen(),
-    ),
-    GoRoute(
-      path: '/home',
-      builder: (context, state) => const MainWrapper(child: HomeScreen()),
-    ),
-    GoRoute(
-      path: '/campaigns',
-      builder: (context, state) => const MainWrapper(child: CampaignsScreen()),
-    ),
-    GoRoute(
-      path: '/drive',
-      builder: (context, state) => const MainWrapper(child: DriveScreen()),
-    ),
-    GoRoute(
-      path: '/microjobs',
-      builder: (context, state) => const MainWrapper(child: MicrojobsScreen()),
-    ),
-    GoRoute(
-      path: '/reselling',
-      builder: (context, state) => const MainWrapper(child: ResellingScreen()),
-    ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const MainWrapper(child: ProfileScreen()),
-    ),
-  ],
-);
+import 'features/auth/registration_screen.dart'; // রেজিস্ট্রেশন স্ক্রিন
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: MyApp()));
 }
+
+// কেন ShellRoute? এতে আপনার সাইডবার এবং বটম ন্যাভ ঠিক থাকবে কিন্তু মাঝখানের কন্টেন্ট লিঙ্কের সাথে বদলাবে।
+final GoRouter _router = GoRouter(
+  initialLocation: '/home',
+  routes: [
+    // রেজিস্ট্রেশন আলাদা পেজ (মেনু ছাড়া)
+    GoRoute(
+      path: '/registration',
+      builder: (context, state) => const RegistrationScreen(),
+    ),
+    
+    // মেইন অ্যাপের ভেতরকার পেজগুলো (মেনুসহ)
+    ShellRoute(
+      builder: (context, state, child) {
+        return MainWrapper(child: child); // এখানে child পাস করা হচ্ছে
+      },
+      routes: [
+        GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+        GoRoute(path: '/reselling', builder: (context, state) => const ResellingScreen()),
+        GoRoute(path: '/microjobs', builder: (context, state) => const MicrojobsScreen()),
+        GoRoute(path: '/campaigns', builder: (context, state) => const CampaignsScreen()),
+        GoRoute(path: '/drive', builder: (context, state) => const DriveScreen()),
+      ],
+    ),
+  ],
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -73,110 +57,135 @@ class MyApp extends StatelessWidget {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'Easy Service',
-          routerConfig: _router,
           theme: ThemeData(
             useMaterial3: true,
-            colorSchemeSeed: const Color(0xFF0284C7),
-            textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
+            colorSchemeSeed: const Color(0xFF29B6F6),
+            textTheme: GoogleFonts.poppinsTextTheme(),
           ),
+          routerConfig: _router,
         );
       },
     );
   }
 }
 
-// --- SplashScreen (আপনার আগের কোড) ---
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+class MainWrapper extends ConsumerWidget {
+  final Widget child; // এরর সমাধান করার জন্য এটি যোগ করা হয়েছে
+  const MainWrapper({super.key, required this.child}); 
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    const Color skyBlue = Color(0xFF29B6F6);
 
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _navigateToNext();
-  }
-
-  _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 3000));
-
-    final prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('jwt_token');
-
-    if (mounted) {
-      if (token != null) {
-        context.go('/home'); // টোকেন থাকলে হোমে যাবে
-      } else {
-        context.go('/registration'); // টোকেন না থাকলে রেজিস্ট্রেশনে যাবে
-      }
+    // বর্তমান লোকেশন অনুযায়ী ইনডেক্স বের করা
+    int getCurrentIndex(BuildContext context) {
+      final String location = GoRouterState.of(context).uri.toString();
+      if (location == '/home') return 0;
+      if (location == '/reselling') return 1;
+      if (location == '/microjobs') return 2;
+      if (location == '/campaigns') return 3;
+      if (location == '/drive') return 4;
+      return 0;
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
+    final currentIndex = getCurrentIndex(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0EA5E9),
-      body: SizedBox(
-        width: 1.sw,
-        height: 1.sh,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(flex: 4),
-            // লোগো সেকশন
-            Image.asset(
-              "assets/ultra5G.png",
-              width: 200.w,
-              errorBuilder: (context, error, stackTrace) =>
-                  Icon(Icons.flash_on, size: 100.w, color: Colors.white),
-            ).animate()
-             .fade(duration: 600.ms)
-             .scale(delay: 200.ms, curve: Curves.easeOutBack),
-            SizedBox(height: 12.h),
-            Text(
-              "Easy Service",
-              style: TextStyle(
-                fontSize: 28.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1.5,
-              ),
-            ).animate()
-             .fadeIn(delay: 400.ms)
-             .slideY(begin: 0.2, end: 0),
-            const Spacer(flex: 3),
-            // লোডিং ডটস
-            Padding(
-              padding: EdgeInsets.only(bottom: 60.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  return Container(
-                    margin: EdgeInsets.symmetric(horizontal: 4.w),
-                    width: 10.w,
-                    height: 10.w,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                  ).animate(onPlay: (controller) => controller.repeat())
-                   .scale(
-                     delay: (index * 150).ms,
-                     duration: 600.ms,
-                     begin: const Offset(1, 1),
-                     end: const Offset(1.4, 1.4)
-                   )
-                   .then()
-                   .scale(duration: 600.ms);
-                }),
-              ),
-            ),
-          ],
+      backgroundColor: skyBlue,
+      drawer: _buildDrawer(context, skyBlue),
+      appBar: AppBar(
+        backgroundColor: skyBlue,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: Text('Easy Service', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 20.sp)),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu_open_rounded, size: 28),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(32.r), topRight: Radius.circular(32.r)),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(32.r), topRight: Radius.circular(32.r)),
+          child: child // এখানে ডাইনামিক পেজ লোড হবে
+              .animate(key: ValueKey(currentIndex))
+              .fadeIn(duration: 400.ms)
+              .moveY(begin: 10, end: 0),
+        ),
+      ),
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: Colors.white,
+        height: 70.h,
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) {
+          // ইনডেক্স অনুযায়ী রাউটে নেভিগেট করা
+          switch (index) {
+            case 0: context.go('/home'); break;
+            case 1: context.go('/reselling'); break;
+            case 2: context.go('/microjobs'); break;
+            case 3: context.go('/campaigns'); break;
+            case 4: context.go('/drive'); break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront), label: 'Reselling'),
+          NavigationDestination(icon: Icon(Icons.assignment_outlined), selectedIcon: Icon(Icons.assignment), label: 'Microjobs'),
+          NavigationDestination(icon: Icon(Icons.campaign_outlined), selectedIcon: Icon(Icons.campaign), label: 'Campaigns'),
+          NavigationDestination(icon: Icon(Icons.directions_car_outlined), selectedIcon: Icon(Icons.directions_car), label: 'Drive'),
+        ],
+      ),
+    );
+  }
+
+  // ড্রয়ার মেথড
+  Widget _buildDrawer(BuildContext context, Color skyBlue) {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.only(top: 60.h, bottom: 20.h, left: 20.w, right: 20.w),
+            color: skyBlue,
+            child: Row(
+              children: [
+                CircleAvatar(radius: 30.r, backgroundColor: Colors.white, child: Icon(Icons.person, color: skyBlue)),
+                SizedBox(width: 15.w),
+                Text("Easy User", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16.sp)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.symmetric(horizontal: 10.w),
+              children: [
+                _buildDrawerItem(Icons.account_balance_wallet, "Wallet", onTap: () => Navigator.pop(context)),
+                _buildDrawerItem(Icons.support_agent, "Support", onTap: () => Navigator.pop(context)),
+                _buildDrawerItem(Icons.app_registration, "Register", onTap: () {
+                   Navigator.pop(context);
+                   context.push('/registration'); // লিঙ্কের মাধ্যমে যাওয়া
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(IconData icon, String title, {required VoidCallback onTap}) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFF29B6F6)),
+      title: Text(title, style: GoogleFonts.poppins(fontSize: 14.sp)),
+      onTap: onTap,
     );
   }
 }
