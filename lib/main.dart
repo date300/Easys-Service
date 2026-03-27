@@ -1,7 +1,4 @@
-// main.dart (FIXED)
-// ✅ OTP কনফার্মের পর /home এ যাবে
-// ✅ লগইন স্টেট SharedPreferences/JWT টোকেন দিয়ে হবে
-// ✅ লেআউট (MainWrapper) ঠিকমতো কাজ করবে
+// main.dart (FIXED: const MainWrapper removed from ShellRoute)
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,10 +46,6 @@ final authLoadingProvider = FutureProvider<void>((ref) async {
   await ref.read(authProvider.notifier).loadFromPrefs();
 });
 
-Future<void> _ensureLoaded(WidgetRef ref) async {
-  await ref.read(authLoadingProvider.future);
-}
-
 final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
@@ -60,8 +53,10 @@ final GoRouter _router = GoRouter(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
+
+    // ✅ IMPORTANT FIX: remove const here
     ShellRoute(
-      builder: (context, state, child) => const MainWrapper(child: child),
+      builder: (context, state, child) => MainWrapper(child: child),
       routes: [
         GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
         GoRoute(path: '/reselling', builder: (context, state) => const ResellingScreen()),
@@ -71,6 +66,7 @@ final GoRouter _router = GoRouter(
       ],
     ),
   ],
+
   redirect: (context, state) async {
     final ref = ProviderScope.containerOf(context);
 
@@ -80,12 +76,8 @@ final GoRouter _router = GoRouter(
     final isLoggedIn = ref.read(authProvider);
     final goingToRegister = state.matchedLocation == '/registration';
 
-    if (!isLoggedIn && !goingToRegister) {
-      return '/registration';
-    }
-    if (isLoggedIn && goingToRegister) {
-      return '/home';
-    }
+    if (!isLoggedIn && !goingToRegister) return '/registration';
+    if (isLoggedIn && goingToRegister) return '/home';
     return null;
   },
 );
@@ -224,7 +216,10 @@ class MainWrapper extends ConsumerWidget {
             topLeft: Radius.circular(32.r),
             topRight: Radius.circular(32.r),
           ),
-          child: child.animate(key: ValueKey(currentIndex)).fadeIn(duration: 400.ms).moveY(begin: 10, end: 0),
+          child: child
+              .animate(key: ValueKey(currentIndex))
+              .fadeIn(duration: 400.ms)
+              .moveY(begin: 10, end: 0),
         ),
       ),
       bottomNavigationBar: NavigationBar(
@@ -251,11 +246,26 @@ class MainWrapper extends ConsumerWidget {
           }
         },
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront), label: 'Reselling'),
-          NavigationDestination(icon: Icon(Icons.assignment_outlined), selectedIcon: Icon(Icons.assignment), label: 'Microjobs'),
-          NavigationDestination(icon: Icon(Icons.campaign_outlined), selectedIcon: Icon(Icons.campaign), label: 'Campaigns'),
-          NavigationDestination(icon: Icon(Icons.directions_car_outlined), selectedIcon: Icon(Icons.directions_car), label: 'Drive'),
+          NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Home'),
+          NavigationDestination(
+              icon: Icon(Icons.storefront_outlined),
+              selectedIcon: Icon(Icons.storefront),
+              label: 'Reselling'),
+          NavigationDestination(
+              icon: Icon(Icons.assignment_outlined),
+              selectedIcon: Icon(Icons.assignment),
+              label: 'Microjobs'),
+          NavigationDestination(
+              icon: Icon(Icons.campaign_outlined),
+              selectedIcon: Icon(Icons.campaign),
+              label: 'Campaigns'),
+          NavigationDestination(
+              icon: Icon(Icons.directions_car_outlined),
+              selectedIcon: Icon(Icons.directions_car),
+              label: 'Drive'),
         ],
       ),
     );
