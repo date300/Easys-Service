@@ -3,46 +3,48 @@ name: Flutter Build & Deploy (APK + Web)
 on:
   push:
     branches:
-      - main
+      - main  # আপনার মেইন ব্রাঞ্চের নাম মেইন (main) না হয়ে মাস্টার (master) হলে সেটা এখানে লিখুন
 
 permissions:
-  contents: write   # ⚠️ এটা দরকার deploy এর জন্য
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Repo checkout
-      - uses: actions/checkout@v3
+      # ১. রিপোজিটরি চেকআউট
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      # 2️⃣ Flutter setup
+      # ২. ফ্লাটার সেটআপ
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.2'
+          channel: 'stable'
 
-      # 3️⃣ Dependencies
+      # ৩. ডিপেন্ডেন্সি ইন্সটল
       - name: Install dependencies
         run: flutter pub get
 
-      # 4️⃣ Build APK
+      # ৪. APK বিল্ড (রিলিজ মোড)
       - name: Build APK
         run: flutter build apk --release --no-shrink
 
-      # 5️⃣ Upload APK
+      # ৫. APK আপলোড (যাতে আপনি GitHub Actions ট্যাব থেকে ডাউনলোড করতে পারেন)
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # 6️⃣ Build Web
+      # ৬. Web বিল্ড (আপনার রিপোজিটোরি নেম অনুযায়ী base-href সেট করা হয়েছে)
       - name: Build Web
-        run: flutter build web
+        run: flutter build web --release --base-href "/Easys-Service/"
 
-      # 7️⃣ Deploy to GitHub Pages
-      - name: Deploy to Pages
+      # ৭. GitHub Pages-এ ডিপ্লয় করা
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
