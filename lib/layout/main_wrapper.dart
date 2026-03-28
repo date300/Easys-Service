@@ -10,7 +10,7 @@ import '../features/home/home_screen.dart';
 import '../features/reselling/reselling_screen.dart';
 import '../features/microjobs/microjobs_screen.dart';
 import '../features/campaigns/campaigns_screen.dart';
-import '../features/profile/profile_screen.dart'; // Drive → Profile
+import '../features/profile/profile_screen.dart';
 import 'registration_screen.dart';
 
 final navIndexProvider = StateProvider<int>((ref) => 0);
@@ -65,14 +65,12 @@ class MainWrapper extends ConsumerStatefulWidget {
 class _MainWrapperState extends ConsumerState<MainWrapper> {
   static const Color skyBlue = Color(0xFF29B6F6);
 
-  // ── Breakpoints ──────────────────────────────────────────────
   static bool _isDesktop(BuildContext ctx) =>
       MediaQuery.of(ctx).size.width >= 1100;
   static bool _isTablet(BuildContext ctx) =>
       MediaQuery.of(ctx).size.width >= 600 &&
       MediaQuery.of(ctx).size.width < 1100;
 
-  // ── Navigation Destinations ───────────────────────────────────
   static const List<NavigationDestination> _bottomDests = [
     NavigationDestination(
         icon: Icon(Icons.home_outlined),
@@ -93,7 +91,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     NavigationDestination(
         icon: Icon(Icons.person_outline_rounded),
         selectedIcon: Icon(Icons.person_rounded),
-        label: 'Profile'), // Drive → Profile
+        label: 'Profile'),
   ];
 
   static const List<NavigationRailDestination> _railDests = [
@@ -116,10 +114,8 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     NavigationRailDestination(
         icon: Icon(Icons.person_outline_rounded),
         selectedIcon: Icon(Icons.person_rounded),
-        label: Text('Profile')), // Drive → Profile
+        label: Text('Profile')),
   ];
-
-  // ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -147,7 +143,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       const ResellingScreen(),
       const MicrojobsScreen(),
       const CampaignsScreen(),
-      const ProfileScreen(), // Drive → Profile
+      const ProfileScreen(),
     ];
 
     if (isLoading) {
@@ -160,7 +156,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final bool isDesktop = _isDesktop(context);
     final bool isTablet = _isTablet(context);
 
-    // Shared animated content
     final Widget pageContent = isLoggedIn
         ? pages[currentIndex]
             .animate(key: ValueKey(currentIndex))
@@ -168,7 +163,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             .moveY(begin: 10, end: 0)
         : const RegistrationScreen().animate().fadeIn(duration: 400.ms);
 
-    // White rounded container
     Widget bodyContainer({bool roundLeft = true, bool roundRight = true}) =>
         Container(
           width: double.infinity,
@@ -189,56 +183,54 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           ),
         );
 
-    // ── Desktop & Tablet layout ───────────────────────────────
+    // Desktop & Tablet layout
     if (isDesktop || isTablet) {
       return Scaffold(
         backgroundColor: skyBlue,
         drawer: _buildDrawer(isLoggedIn),
-        body: Row(
-          children: [
-            // Side NavigationRail (only when logged in)
-            if (isLoggedIn)
-              NavigationRail(
-                backgroundColor: skyBlue,
-                selectedIndex: currentIndex,
-                onDestinationSelected: (i) =>
-                    ref.read(navIndexProvider.notifier).state = i,
-                extended: isDesktop, // full-width labels on desktop
-                labelType: isDesktop
-                    ? NavigationRailLabelType.none
-                    : NavigationRailLabelType.all,
-                selectedIconTheme:
-                    const IconThemeData(color: Colors.white, size: 26),
-                unselectedIconTheme: IconThemeData(
-                    color: Colors.white.withOpacity(0.55), size: 22),
-                selectedLabelTextStyle: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13),
-                unselectedLabelTextStyle: GoogleFonts.poppins(
-                    color: Colors.white.withOpacity(0.65), fontSize: 12),
-                indicatorColor: Colors.white.withOpacity(0.18),
-                leading: _railLeading(isDesktop),
-                destinations: _railDests,
-              ),
+        body: SafeArea(
+          child: Row(
+            children: [
+              if (isLoggedIn)
+                NavigationRail(
+                  backgroundColor: skyBlue,
+                  selectedIndex: currentIndex,
+                  onDestinationSelected: (i) =>
+                      ref.read(navIndexProvider.notifier).state = i,
+                  extended: isDesktop,
+                  labelType: isDesktop
+                      ? NavigationRailLabelType.none
+                      : NavigationRailLabelType.all,
+                  selectedIconTheme:
+                      const IconThemeData(color: Colors.white, size: 26),
+                  unselectedIconTheme: IconThemeData(
+                      color: Colors.white.withOpacity(0.55), size: 22),
+                  selectedLabelTextStyle: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13),
+                  unselectedLabelTextStyle: GoogleFonts.poppins(
+                      color: Colors.white.withOpacity(0.65), fontSize: 12),
+                  indicatorColor: Colors.white.withOpacity(0.18),
+                  leading: _railLeading(isDesktop),
+                  destinations: _railDests,
+                ),
 
-            // Main area
-            Expanded(
-              child: Column(
-                children: [
-                  // Top bar
-                  _topBar(context, isLoggedIn, showMenuBtn: !isLoggedIn),
-                  // Content
-                  Expanded(child: bodyContainer()),
-                ],
+              Expanded(
+                child: Column(
+                  children: [
+                    _topBar(context, isLoggedIn, showMenuBtn: !isLoggedIn),
+                    Expanded(child: bodyContainer()),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    // ── Mobile layout ────────────────────────────────────────
+    // Mobile layout
     return Scaffold(
       backgroundColor: skyBlue,
       drawer: _buildDrawer(isLoggedIn),
@@ -320,7 +312,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     );
   }
 
-  // ── Rail leading (menu + optional title) ─────────────────────
   Widget _railLeading(bool isDesktop) {
     return Column(
       children: [
@@ -350,54 +341,49 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     );
   }
 
-  // ── Shared top bar for tablet/desktop ─────────────────────────
   Widget _topBar(BuildContext context, bool isLoggedIn,
       {required bool showMenuBtn}) {
     return Container(
       color: skyBlue,
-      child: SafeArea(
-        bottom: false,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            children: [
-              if (showMenuBtn)
-                Builder(
-                  builder: (ctx) => IconButton(
-                    icon: const Icon(Icons.menu_open_rounded,
-                        color: Colors.white, size: 28),
-                    onPressed: () => Scaffold.of(ctx).openDrawer(),
-                  ),
-                )
-              else
-                const SizedBox(width: 16),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    isLoggedIn ? 'Easy Service' : 'Create Account',
-                    style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20),
-                  ),
+      child: SizedBox(
+        height: 60,
+        child: Row(
+          children: [
+            if (showMenuBtn)
+              Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.menu_open_rounded,
+                      color: Colors.white, size: 28),
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                ),
+              )
+            else
+              const SizedBox(width: 16),
+            Expanded(
+              child: Center(
+                child: Text(
+                  isLoggedIn ? 'Easy Service' : 'Create Account',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20),
                 ),
               ),
-              if (isLoggedIn)
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.notifications_outlined,
-                      color: Colors.white),
-                )
-              else
-                const SizedBox(width: 16),
-            ],
-          ),
+            ),
+            if (isLoggedIn)
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.notifications_outlined,
+                    color: Colors.white),
+              )
+            else
+              const SizedBox(width: 16),
+          ],
         ),
       ),
     );
   }
 
-  // ── Drawer ────────────────────────────────────────────────────
   Widget _buildDrawer(bool isLoggedIn) {
     return Drawer(
       backgroundColor: Colors.white,
@@ -525,8 +511,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     return ListTile(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.r)),
-      leading:
-          Icon(icon, color: iconColor ?? skyBlue, size: 24.sp),
+      leading: Icon(icon, color: iconColor ?? skyBlue, size: 24.sp),
       title: Text(title,
           style: GoogleFonts.poppins(
               fontSize: 14.sp,
