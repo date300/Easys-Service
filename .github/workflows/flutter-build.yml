@@ -4,7 +4,6 @@ on:
   push:
     branches: ["main"]
 
-# GitHub Pages-এ ডিপ্লয় করার জন্য প্রয়োজনীয় পারমিশন
 permissions:
   contents: read
   pages: write
@@ -18,28 +17,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup GitHub Pages
-        uses: actions/configure-pages@v4 # এটি পেজেসের জন্য এনভায়রনমেন্ট ঠিক করে দেয়
+        uses: actions/configure-pages@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.0' # আপনার প্রয়োজনীয় ভার্সন
+          flutter-version: '3.41.6' # এখানে আপনার লগের সাজেশন অনুযায়ী ভার্সন আপডেট করা হয়েছে
           channel: 'stable'
       
       - name: Install Dependencies
         run: flutter pub get
         
       - name: Build Flutter Web
-        # আপনার রিপোজিটরির নাম যদি Easys-Service হয়, তবে base-href ঠিক আছে
         run: flutter build web --release --base-href "/Easys-Service/"
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/web # এই ফোল্ডারের কন্টেন্ট গিটহাব পেজেসে যাবে
+          path: build/web
 
   deploy:
-    needs: build # এই লাইনের জন্যই ওয়েবসাইট আগে বিল্ড হবে, তারপর ডিপ্লয় হবে
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
