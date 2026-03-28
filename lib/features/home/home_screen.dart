@@ -122,42 +122,40 @@ class HomeScreen extends ConsumerWidget {
     final isDesktop = screenWidth >= 1024;
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
-    return Scaffold(
-      backgroundColor: kBackground,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: isDesktop ? 1200 : double.infinity,
-            ),
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? 48 : isTablet ? 32 : 20.w,
-                      vertical: isDesktop ? 40 : 24.h,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionHeader(context, isDesktop),
-                        SizedBox(height: isDesktop ? 28 : 20.h),
-                        _buildCategoriesGrid(
-                          context,
-                          services,
-                          isDesktop: isDesktop,
-                          isTablet: isTablet,
-                          screenWidth: screenWidth,
-                        ),
-                        SizedBox(height: 40.h),
-                      ],
-                    ),
+    return Container(
+      color: kBackground,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isDesktop ? 1200 : double.infinity,
+          ),
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 48 : isTablet ? 32 : 20.w,
+                    vertical: isDesktop ? 40 : 24.h,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionHeader(context, isDesktop),
+                      SizedBox(height: isDesktop ? 28 : 20.h),
+                      _buildCategoriesGrid(
+                        context,
+                        services,
+                        isDesktop: isDesktop,
+                        isTablet: isTablet,
+                        screenWidth: screenWidth,
+                      ),
+                      SizedBox(height: 40.h),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
