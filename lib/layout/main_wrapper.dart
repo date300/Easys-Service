@@ -10,7 +10,7 @@ import '../features/home/home_screen.dart';
 import '../features/reselling/reselling_screen.dart';
 import '../features/microjobs/microjobs_screen.dart';
 import '../features/campaigns/campaigns_screen.dart';
-import '../features/profile/profile_screen.dart'; // Drive এর বদলে Profile
+import '../features/profile/profile_screen.dart'; // Drive → Profile
 import 'registration_screen.dart';
 
 final navIndexProvider = StateProvider<int>((ref) => 0);
@@ -18,9 +18,7 @@ final authProvider = StateProvider<bool>((ref) => false);
 final authLoadingProvider = StateProvider<bool>((ref) => true);
 
 void main() {
-  runApp(
-    const ProviderScope(child: MyApp()),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 final GoRouter _router = GoRouter(
@@ -65,6 +63,64 @@ class MainWrapper extends ConsumerStatefulWidget {
 }
 
 class _MainWrapperState extends ConsumerState<MainWrapper> {
+  static const Color skyBlue = Color(0xFF29B6F6);
+
+  // ── Breakpoints ──────────────────────────────────────────────
+  static bool _isDesktop(BuildContext ctx) =>
+      MediaQuery.of(ctx).size.width >= 1100;
+  static bool _isTablet(BuildContext ctx) =>
+      MediaQuery.of(ctx).size.width >= 600 &&
+      MediaQuery.of(ctx).size.width < 1100;
+
+  // ── Navigation Destinations ───────────────────────────────────
+  static const List<NavigationDestination> _bottomDests = [
+    NavigationDestination(
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home),
+        label: 'Home'),
+    NavigationDestination(
+        icon: Icon(Icons.storefront_outlined),
+        selectedIcon: Icon(Icons.storefront),
+        label: 'Reselling'),
+    NavigationDestination(
+        icon: Icon(Icons.assignment_outlined),
+        selectedIcon: Icon(Icons.assignment),
+        label: 'Microjobs'),
+    NavigationDestination(
+        icon: Icon(Icons.campaign_outlined),
+        selectedIcon: Icon(Icons.campaign),
+        label: 'Campaigns'),
+    NavigationDestination(
+        icon: Icon(Icons.person_outline_rounded),
+        selectedIcon: Icon(Icons.person_rounded),
+        label: 'Profile'), // Drive → Profile
+  ];
+
+  static const List<NavigationRailDestination> _railDests = [
+    NavigationRailDestination(
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home),
+        label: Text('Home')),
+    NavigationRailDestination(
+        icon: Icon(Icons.storefront_outlined),
+        selectedIcon: Icon(Icons.storefront),
+        label: Text('Reselling')),
+    NavigationRailDestination(
+        icon: Icon(Icons.assignment_outlined),
+        selectedIcon: Icon(Icons.assignment),
+        label: Text('Microjobs')),
+    NavigationRailDestination(
+        icon: Icon(Icons.campaign_outlined),
+        selectedIcon: Icon(Icons.campaign),
+        label: Text('Campaigns')),
+    NavigationRailDestination(
+        icon: Icon(Icons.person_outline_rounded),
+        selectedIcon: Icon(Icons.person_rounded),
+        label: Text('Profile')), // Drive → Profile
+  ];
+
+  // ─────────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
@@ -85,19 +141,13 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final currentIndex = ref.watch(navIndexProvider);
     final isLoggedIn = ref.watch(authProvider);
     final isLoading = ref.watch(authLoadingProvider);
-    const Color skyBlue = Color(0xFF29B6F6);
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    // Breakpoints: mobile < 600, tablet 600–1100, desktop >= 1100
-    final isWide = screenWidth >= 800;
-    final isExtended = screenWidth >= 1100;
 
     final List<Widget> pages = [
       const HomeScreen(),
       const ResellingScreen(),
       const MicrojobsScreen(),
       const CampaignsScreen(),
-      const ProfileScreen(), // Drive এর বদলে Profile
+      const ProfileScreen(), // Drive → Profile
     ];
 
     if (isLoading) {
@@ -107,164 +157,79 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       );
     }
 
-    // ────────────────────────────────────────────────────────────
-    // Wide screen layout: Web / Desktop (>= 800px)
-    // ────────────────────────────────────────────────────────────
-    if (isWide && isLoggedIn) {
+    final bool isDesktop = _isDesktop(context);
+    final bool isTablet = _isTablet(context);
+
+    // Shared animated content
+    final Widget pageContent = isLoggedIn
+        ? pages[currentIndex]
+            .animate(key: ValueKey(currentIndex))
+            .fadeIn(duration: 400.ms)
+            .moveY(begin: 10, end: 0)
+        : const RegistrationScreen().animate().fadeIn(duration: 400.ms);
+
+    // White rounded container
+    Widget bodyContainer({bool roundLeft = true, bool roundRight = true}) =>
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: roundLeft ? const Radius.circular(32) : Radius.zero,
+              topRight: roundRight ? const Radius.circular(32) : Radius.zero,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.only(
+              topLeft: roundLeft ? const Radius.circular(32) : Radius.zero,
+              topRight: roundRight ? const Radius.circular(32) : Radius.zero,
+            ),
+            child: pageContent,
+          ),
+        );
+
+    // ── Desktop & Tablet layout ───────────────────────────────
+    if (isDesktop || isTablet) {
       return Scaffold(
         backgroundColor: skyBlue,
+        drawer: _buildDrawer(isLoggedIn),
         body: Row(
           children: [
-            // Side NavigationRail
-            NavigationRail(
-              backgroundColor: skyBlue,
-              selectedIndex: currentIndex,
-              onDestinationSelected: (index) =>
-                  ref.read(navIndexProvider.notifier).state = index,
-              extended: isExtended,
-              labelType: isExtended
-                  ? NavigationRailLabelType.none
-                  : NavigationRailLabelType.all,
-              selectedIconTheme:
-                  const IconThemeData(color: Colors.white, size: 28),
-              unselectedIconTheme: IconThemeData(
-                  color: Colors.white.withOpacity(0.6), size: 24),
-              selectedLabelTextStyle: GoogleFonts.poppins(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
+            // Side NavigationRail (only when logged in)
+            if (isLoggedIn)
+              NavigationRail(
+                backgroundColor: skyBlue,
+                selectedIndex: currentIndex,
+                onDestinationSelected: (i) =>
+                    ref.read(navIndexProvider.notifier).state = i,
+                extended: isDesktop, // full-width labels on desktop
+                labelType: isDesktop
+                    ? NavigationRailLabelType.none
+                    : NavigationRailLabelType.all,
+                selectedIconTheme:
+                    const IconThemeData(color: Colors.white, size: 26),
+                unselectedIconTheme: IconThemeData(
+                    color: Colors.white.withOpacity(0.55), size: 22),
+                selectedLabelTextStyle: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13),
+                unselectedLabelTextStyle: GoogleFonts.poppins(
+                    color: Colors.white.withOpacity(0.65), fontSize: 12),
+                indicatorColor: Colors.white.withOpacity(0.18),
+                leading: _railLeading(isDesktop),
+                destinations: _railDests,
               ),
-              unselectedLabelTextStyle: GoogleFonts.poppins(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
-              ),
-              leading: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Column(
-                  children: [
-                    const CircleAvatar(
-                      radius: 22,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.person_rounded,
-                          color: skyBlue, size: 26),
-                    ),
-                    const SizedBox(height: 6),
-                    if (isExtended)
-                      Text(
-                        'Easy Service',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              trailing: Expanded(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: isExtended
-                        ? TextButton.icon(
-                            onPressed: _logout,
-                            icon: const Icon(Icons.logout_rounded,
-                                color: Colors.white),
-                            label: Text(
-                              'Logout',
-                              style: GoogleFonts.poppins(
-                                  color: Colors.white, fontSize: 13),
-                            ),
-                          )
-                        : IconButton(
-                            tooltip: 'Logout',
-                            icon: const Icon(Icons.logout_rounded,
-                                color: Colors.white),
-                            onPressed: _logout,
-                          ),
-                  ),
-                ),
-              ),
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: Text('Home'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.storefront_outlined),
-                  selectedIcon: Icon(Icons.storefront),
-                  label: Text('Reselling'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.assignment_outlined),
-                  selectedIcon: Icon(Icons.assignment),
-                  label: Text('Microjobs'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.campaign_outlined),
-                  selectedIcon: Icon(Icons.campaign),
-                  label: Text('Campaigns'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.person_outline_rounded),
-                  selectedIcon: Icon(Icons.person_rounded),
-                  label: Text('Profile'),
-                ),
-              ],
-            ),
-            // Main Content Area
+
+            // Main area
             Expanded(
               child: Column(
                 children: [
-                  // Top AppBar for wide screen
-                  Container(
-                    height: 60,
-                    color: skyBlue,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Easy Service',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.notifications_outlined,
-                              color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Page Content
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(32),
-                          topRight: Radius.circular(32),
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(32),
-                          topRight: Radius.circular(32),
-                        ),
-                        child: pages[currentIndex]
-                            .animate(key: ValueKey(currentIndex))
-                            .fadeIn(duration: 400.ms)
-                            .moveY(begin: 10, end: 0),
-                      ),
-                    ),
-                  ),
+                  // Top bar
+                  _topBar(context, isLoggedIn, showMenuBtn: !isLoggedIn),
+                  // Content
+                  Expanded(child: bodyContainer()),
                 ],
               ),
             ),
@@ -273,12 +238,10 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       );
     }
 
-    // ────────────────────────────────────────────────────────────
-    // Mobile / Narrow layout (< 800px) — অরিজিনাল ডিজাইন
-    // ────────────────────────────────────────────────────────────
+    // ── Mobile layout ────────────────────────────────────────
     return Scaffold(
       backgroundColor: skyBlue,
-      drawer: _buildDrawer(skyBlue, isLoggedIn),
+      drawer: _buildDrawer(isLoggedIn),
       appBar: AppBar(
         backgroundColor: skyBlue,
         foregroundColor: Colors.white,
@@ -287,22 +250,19 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         title: Text(
           isLoggedIn ? 'Easy Service' : 'Create Account',
           style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20.sp,
-          ),
+              fontWeight: FontWeight.bold, fontSize: 20.sp),
         ),
         leading: Builder(
-          builder: (context) => IconButton(
+          builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu_open_rounded, size: 28),
-            onPressed: () => Scaffold.of(context).openDrawer(),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
         actions: isLoggedIn
             ? [
                 IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.notifications_outlined),
-                ),
+                    onPressed: () {},
+                    icon: const Icon(Icons.notifications_outlined))
               ]
             : [],
       ),
@@ -321,12 +281,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             topLeft: Radius.circular(32.r),
             topRight: Radius.circular(32.r),
           ),
-          child: isLoggedIn
-              ? pages[currentIndex]
-                  .animate(key: ValueKey(currentIndex))
-                  .fadeIn(duration: 400.ms)
-                  .moveY(begin: 10, end: 0)
-              : const RegistrationScreen().animate().fadeIn(duration: 400.ms),
+          child: pageContent,
         ),
       ),
       bottomNavigationBar: isLoggedIn
@@ -356,50 +311,99 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 backgroundColor: Colors.white,
                 height: 70.h,
                 selectedIndex: currentIndex,
-                onDestinationSelected: (index) =>
-                    ref.read(navIndexProvider.notifier).state = index,
-                destinations: const [
-                  NavigationDestination(
-                      icon: Icon(Icons.home_outlined),
-                      selectedIcon: Icon(Icons.home),
-                      label: 'Home'),
-                  NavigationDestination(
-                      icon: Icon(Icons.storefront_outlined),
-                      selectedIcon: Icon(Icons.storefront),
-                      label: 'Reselling'),
-                  NavigationDestination(
-                      icon: Icon(Icons.assignment_outlined),
-                      selectedIcon: Icon(Icons.assignment),
-                      label: 'Microjobs'),
-                  NavigationDestination(
-                      icon: Icon(Icons.campaign_outlined),
-                      selectedIcon: Icon(Icons.campaign),
-                      label: 'Campaigns'),
-                  // ✅ Drive → Profile
-                  NavigationDestination(
-                      icon: Icon(Icons.person_outline_rounded),
-                      selectedIcon: Icon(Icons.person_rounded),
-                      label: 'Profile'),
-                ],
+                onDestinationSelected: (i) =>
+                    ref.read(navIndexProvider.notifier).state = i,
+                destinations: _bottomDests,
               ),
             )
           : const SizedBox.shrink(),
     );
   }
 
-  Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('jwt_token');
-    ref.read(authProvider.notifier).state = false;
+  // ── Rail leading (menu + optional title) ─────────────────────
+  Widget _railLeading(bool isDesktop) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_open_rounded,
+                color: Colors.white, size: 28),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
+        if (isDesktop) ...[
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              'Easy Service',
+              style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15),
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
+      ],
+    );
   }
 
-  Widget _buildDrawer(Color skyBlue, bool isLoggedIn) {
+  // ── Shared top bar for tablet/desktop ─────────────────────────
+  Widget _topBar(BuildContext context, bool isLoggedIn,
+      {required bool showMenuBtn}) {
+    return Container(
+      color: skyBlue,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            children: [
+              if (showMenuBtn)
+                Builder(
+                  builder: (ctx) => IconButton(
+                    icon: const Icon(Icons.menu_open_rounded,
+                        color: Colors.white, size: 28),
+                    onPressed: () => Scaffold.of(ctx).openDrawer(),
+                  ),
+                )
+              else
+                const SizedBox(width: 16),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    isLoggedIn ? 'Easy Service' : 'Create Account',
+                    style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20),
+                  ),
+                ),
+              ),
+              if (isLoggedIn)
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.notifications_outlined,
+                      color: Colors.white),
+                )
+              else
+                const SizedBox(width: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Drawer ────────────────────────────────────────────────────
+  Widget _buildDrawer(bool isLoggedIn) {
     return Drawer(
       backgroundColor: Colors.white,
       child: Column(
         children: [
           Container(
-            width: double.infinity,
             padding: EdgeInsets.only(
                 top: 60.h, bottom: 20.h, left: 20.w, right: 20.w),
             decoration: BoxDecoration(
@@ -498,16 +502,16 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 tileColor: Colors.red.withOpacity(0.1),
                 leading:
                     const Icon(Icons.logout_rounded, color: Colors.red),
-                title: Text(
-                  "Logout",
-                  style: GoogleFonts.poppins(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15.sp),
-                ),
+                title: Text("Logout",
+                    style: GoogleFonts.poppins(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.sp)),
                 onTap: () async {
                   Navigator.pop(context);
-                  await _logout();
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('jwt_token');
+                  ref.read(authProvider.notifier).state = false;
                 },
               ),
             ),
@@ -521,19 +525,17 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     return ListTile(
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.r)),
-      leading: Icon(icon,
-          color: iconColor ?? const Color(0xFF29B6F6), size: 24.sp),
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87),
-      ),
+      leading:
+          Icon(icon, color: iconColor ?? skyBlue, size: 24.sp),
+      title: Text(title,
+          style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87)),
       trailing: Icon(Icons.arrow_forward_ios_rounded,
           size: 14.sp, color: Colors.grey.shade400),
       onTap: onTap,
-      splashColor: const Color(0xFF29B6F6).withOpacity(0.1),
+      splashColor: skyBlue.withOpacity(0.1),
     );
   }
 }
