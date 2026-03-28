@@ -1,51 +1,50 @@
-name: Flutter Build & Deploy (APK + Web)
+name: Flutter Build & Deploy
 
 on:
   push:
-    branches:
-      - main  # আপনার মেইন ব্রাঞ্চের নাম মেইন (main) না হয়ে মাস্টার (master) হলে সেটা এখানে লিখুন
+    branches: ["main"]
 
+# GitHub Pages-এ ডিপ্লয় করার জন্য প্রয়োজনীয় পারমিশন
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # ১. রিপোজিটরি চেকআউট
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ২. ফ্লাটার সেটআপ
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4 # এটি পেজেসের জন্য এনভায়রনমেন্ট ঠিক করে দেয়
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.2'
+          flutter-version: '3.29.0' # আপনার প্রয়োজনীয় ভার্সন
           channel: 'stable'
-
-      # ৩. ডিপেন্ডেন্সি ইন্সটল
-      - name: Install dependencies
+      
+      - name: Install Dependencies
         run: flutter pub get
-
-      # ৪. APK বিল্ড (রিলিজ মোড)
-      - name: Build APK
-        run: flutter build apk --release --no-shrink
-
-      # ৫. APK আপলোড (যাতে আপনি GitHub Actions ট্যাব থেকে ডাউনলোড করতে পারেন)
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-      # ৬. Web বিল্ড (আপনার রিপোজিটোরি নেম অনুযায়ী base-href সেট করা হয়েছে)
-      - name: Build Web
+        
+      - name: Build Flutter Web
+        # আপনার রিপোজিটরির নাম যদি Easys-Service হয়, তবে base-href ঠিক আছে
         run: flutter build web --release --base-href "/Easys-Service/"
 
-      # ৭. GitHub Pages-এ ডিপ্লয় করা
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: build/web
+          path: build/web # এই ফোল্ডারের কন্টেন্ট গিটহাব পেজেসে যাবে
+
+  deploy:
+    needs: build # এই লাইনের জন্যই ওয়েবসাইট আগে বিল্ড হবে, তারপর ডিপ্লয় হবে
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
