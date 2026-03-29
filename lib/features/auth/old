@@ -1,20 +1,26 @@
+// features/auth/registration_screen.dart (FIXED)
+// ✅ OTP success এ Navigator.pushAndRemoveUntil এর বদলে router context.go('/home') ব্যবহার করবে
+// ✅ JWT টোকেন AuthController এ সেট হবে, তারপর router redirect হয়ে /home দেখাবে (MainWrapper layout সহ)
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../home/home_screen.dart'; // আপনার হোম স্ক্রিনের ইম্পোর্ট পাথ ঠিক করে নিবেন
+import 'package:go_router/go_router.dart';
 
-class RegistrationScreen extends StatefulWidget {
+import '../../main.dart'; // authProvider এর জন্য
+import '../home/home_screen.dart'; // (optional, দরকার নেই, কিন্তু তোমার কোডে ছিল)
+
+class RegistrationScreen extends ConsumerStatefulWidget {
   const RegistrationScreen({super.key});
 
   @override
-  State<RegistrationScreen> createState() => _RegistrationScreenState();
+  ConsumerState<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
+class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // রেজিস্ট্রেশন কন্ট্রোলার
+
   final _nameController = TextEditingController();
   final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
@@ -22,13 +28,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _confirmPassController = TextEditingController();
   final _refController = TextEditingController();
 
-  // OTP কন্ট্রোলার
   final _otpController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isOtpSent = false; // এই স্টেট দিয়ে আমরা পেজের ডিজাইন চেঞ্জ করবো
+  bool _isOtpSent = false;
 
-  // ১. রেজিস্ট্রেশন API কল
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -57,26 +61,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message']), backgroundColor: Colors.green),
         );
-        
-        // সফল হলে OTP ফর্ম দেখানোর জন্য স্টেট পরিবর্তন করছি
+
         setState(() {
           _isOtpSent = true;
         });
       } else {
         _showError(data['message']);
       }
-    } catch (e) {
-      _showError("সার্ভারের সাথে কানেক্ট করা যাচ্ছে না!");
+    } catch (_) {
+      _showError("????????? ???? ??????? ??? ?????? ??!");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // ২. OTP ভেরিফিকেশন API কল
   Future<void> _verifyOtp() async {
     final otp = _otpController.text.trim();
     if (otp.length < 6) {
-      _showError("সঠিক ৬ ডিজিটের OTP দিন");
+      _showError("???? ? ??????? OTP ???");
       return;
     }
 
@@ -89,7 +91,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         Uri.parse(apiUrl),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "email": _emailController.text.trim(), // রেজিস্ট্রেশনের সময় দেওয়া ইমেইল
+          "email": _emailController.text.trim(),
           "otp": otp,
         }),
       );
@@ -97,26 +99,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       final data = jsonDecode(response.body);
 
       if (data['status'] == "success") {
-        // টোকেন সেভ করা হচ্ছে
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', data['token']);
-        
+        final token = data['token'];
+
+        // ✅ save token + set auth state in one place
+        await ref.read(authProvider.notifier).loginWithToken(token);
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message']), backgroundColor: Colors.green),
         );
 
-        // সফল হলে হোম স্ক্রিনে পাঠিয়ে দেওয়া
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()), 
-          (route) => false,
-        );
+        // ✅ router navigation (so layout shell will be shown)
+        context.go('/home');
       } else {
         _showError(data['message']);
       }
-    } catch (e) {
-      _showError("সার্ভারের সাথে কানেক্ট করা যাচ্ছে না!");
+    } catch (_) {
+      _showError("????????? ???? ??????? ??? ?????? ??!");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -124,23 +123,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   void _showError(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // OTP পাঠানো হলে টাইটেল পরিবর্তন হয়ে যাবে
       appBar: AppBar(title: Text(_isOtpSent ? "OTP Verification" : "Create Account")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
-        // _isOtpSent সত্য হলে OTP ফর্ম দেখাবে, না হলে রেজিস্ট্রেশন ফর্ম দেখাবে
         child: _isOtpSent ? _buildOtpForm() : _buildRegistrationForm(),
       ),
     );
   }
 
-  // ================= রেজিস্ট্রেশন ফর্ম UI =================
   Widget _buildRegistrationForm() {
     return Form(
       key: _formKey,
@@ -152,25 +149,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           _buildTextField(_passController, "Password", Icons.lock, isPassword: true),
           _buildTextField(_confirmPassController, "Confirm Password", Icons.lock_clock, isPassword: true),
           _buildTextField(_refController, "Referral Code (Optional)", Icons.card_giftcard),
-          
+
           const SizedBox(height: 25),
-          
-          _isLoading 
-            ? const CircularProgressIndicator()
-            : SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _register,
-                  child: const Text("Register", style: TextStyle(fontSize: 18)),
+
+          _isLoading
+              ? const CircularProgressIndicator()
+              : SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _register,
+                    child: const Text("Register", style: TextStyle(fontSize: 18)),
+                  ),
                 ),
-              ),
         ],
       ),
     );
   }
 
-  // ================= OTP ফর্ম UI =================
   Widget _buildOtpForm() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -184,7 +180,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 30),
-        
+
         TextField(
           controller: _otpController,
           keyboardType: TextInputType.number,
@@ -209,23 +205,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   child: const Text("Verify & Login", style: TextStyle(fontSize: 18)),
                 ),
               ),
-              
+
         const SizedBox(height: 20),
         TextButton(
           onPressed: () {
-            // ভুল ইমেইল দিলে আবার পেছনে যাওয়ার অপশন
-            setState(() {
-              _isOtpSent = false;
-            });
+            setState(() => _isOtpSent = false);
           },
           child: const Text("Change Email Address"),
-        )
+        ),
       ],
     );
   }
 
-  // ================= সাধারণ টেক্সট ফিল্ড উইজেট =================
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isPassword = false, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isPassword = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
@@ -239,10 +237,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
         validator: (value) {
           if (!label.contains("Optional") && (value == null || value.isEmpty)) {
-            return "$label প্রয়োজন";
+            return "$label ???????";
           }
           if (label == "Confirm Password" && value != _passController.text) {
-            return "পাসওয়ার্ড ম্যাচ করছে না";
+            return "????????? ????? ???? ??";
           }
           return null;
         },
@@ -250,4 +248,3 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 }
-
