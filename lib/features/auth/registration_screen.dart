@@ -548,4 +548,50 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                   passField == 1
                       ? (_passVisible
                           ? Icons.visibility_outlined
-       
+                          : Icons.visibility_off_outlined)
+                      : (_confirmPassVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
+                  color: Colors.black38,
+                  size: _fs(ctx, 20, 21, 22),
+                ),
+                onPressed: () => setState(() {
+                  if (passField == 1) {
+                    _passVisible = !_passVisible;
+                  } else {
+                    _confirmPassVisible = !_confirmPassVisible;
+                  }
+                }),
+              )
+            : null,
+      ),
+      validator: (value) {
+        if (!optional && (value == null || value.isEmpty)) {
+          return "$hint is required";
+        }
+        if (passField == 2 && value != _passController.text) {
+          return "Passwords do not match";
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _dot(double size, Color color) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      );
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _mobileController.dispose();
+    _emailController.dispose();
+    _passController.dispose();
+    _confirmPassController.dispose();
+    _refController.dispose();
+    _otpController.dispose();
+    super.dispose();
+  }
+}
