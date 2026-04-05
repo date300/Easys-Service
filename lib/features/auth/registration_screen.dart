@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,27 +16,20 @@ class RegistrationScreen extends ConsumerStatefulWidget {
 }
 
 class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
-  // iOS-style premium colors
-  static const Color skyBlue       = Color(0xFF007AFF); // iOS blue
-  static const Color _bgLight      = Color(0xFFF2F2F7); // iOS system background
-  static const Color _fieldBg      = Color(0xFFFFFFFF);
-  static const Color _fieldBorder  = Color(0xFFD1D1D6);
-  static const Color _labelColor   = Color(0xFF1C1C1E);
-  static const Color _hintColor    = Color(0xFFAEAEB2);
-  static const Color _subtextColor = Color(0xFF6D6D72);
+  static const Color skyBlue = Color(0xFF29B6F6);
 
-  final _formKey               = GlobalKey<FormState>();
-  final _nameController        = TextEditingController();
-  final _mobileController      = TextEditingController();
-  final _emailController       = TextEditingController();
-  final _passController        = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passController = TextEditingController();
   final _confirmPassController = TextEditingController();
-  final _refController         = TextEditingController();
-  final _otpController         = TextEditingController();
+  final _refController = TextEditingController();
+  final _otpController = TextEditingController();
 
-  bool _isLoading          = false;
-  bool _isOtpSent          = false;
-  bool _passVisible        = false;
+  bool _isLoading = false;
+  bool _isOtpSent = false;
+  bool _passVisible = false;
   bool _confirmPassVisible = false;
 
   bool _isDesktop(BuildContext ctx) => MediaQuery.of(ctx).size.width >= 1100;
@@ -58,13 +50,12 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   }
 
   double _topHeight(BuildContext ctx) {
-    if (_isTablet(ctx)) return 240;
-    return 220.h;
+    if (_isTablet(ctx)) return 200;
+    return 180.h;
   }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
-    HapticFeedback.lightImpact();
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
@@ -84,15 +75,13 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
       final data = jsonDecode(response.body);
       if (data['status'] == "success") {
         if (!mounted) return;
-        HapticFeedback.mediumImpact();
-        _showSnack(data['message'], const Color(0xFF34C759));
+        _showSnack(data['message'], Colors.green);
         setState(() => _isOtpSent = true);
       } else {
-        HapticFeedback.heavyImpact();
-        _showSnack(data['message'], const Color(0xFFFF3B30));
+        _showSnack(data['message'], Colors.red);
       }
     } catch (_) {
-      _showSnack("নেটওয়ার্ক সমস্যা হয়েছে!", const Color(0xFFFF3B30));
+      _showSnack("??????? ????? ?????? ??????!", Colors.red);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -101,10 +90,9 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   Future<void> _verifyOtp() async {
     final otp = _otpController.text.trim();
     if (otp.length < 6) {
-      _showSnack("সঠিক ৬ সংখ্যার OTP দিন", const Color(0xFFFF3B30));
+      _showSnack("???? ? ??????? OTP ???", Colors.red);
       return;
     }
-    HapticFeedback.lightImpact();
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
@@ -119,15 +107,13 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
       if (data['status'] == "success") {
         await ref.read(authProvider.notifier).loginWithToken(data['token']);
         if (!mounted) return;
-        HapticFeedback.heavyImpact();
-        _showSnack(data['message'], const Color(0xFF34C759));
+        _showSnack(data['message'], Colors.green);
         context.go('/home');
       } else {
-        HapticFeedback.heavyImpact();
-        _showSnack(data['message'], const Color(0xFFFF3B30));
+        _showSnack(data['message'], Colors.red);
       }
     } catch (_) {
-      _showSnack("নেটওয়ার্ক সমস্যা হয়েছে!", const Color(0xFFFF3B30));
+      _showSnack("??????? ????? ?????? ??????!", Colors.red);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -135,30 +121,14 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
 
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg,
-            style: GoogleFonts.poppins(
-                color: Colors.white, fontWeight: FontWeight.w500)),
-        backgroundColor: color,
-        behavior:        SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        margin:    const EdgeInsets.all(16),
-        elevation: 0,
-      ),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor:          Colors.transparent,
-      statusBarBrightness:     Brightness.dark,
-      statusBarIconBrightness: Brightness.light,
-    ));
-
     final isDesktop = _isDesktop(context);
-    final isTablet  = _isTablet(context);
+    final isTablet = _isTablet(context);
 
     return Scaffold(
       backgroundColor: skyBlue,
@@ -168,232 +138,166 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     );
   }
 
-  // ── Desktop ────────────────────────────────────────────────────────────────
+  // ?? Desktop ??????????????????????????????????????????????????????
   Widget _desktopLayout(BuildContext ctx) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF007AFF), Color(0xFF0055D4)],
-          begin:  Alignment.topLeft,
-          end:    Alignment.bottomRight,
-        ),
-      ),
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 40),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: _maxWidth(ctx)),
-            child: Container(
-              decoration: BoxDecoration(
-                color:        Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color:      Colors.black.withOpacity(0.16),
-                    blurRadius: 48,
-                    offset:     const Offset(0, 20),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: Column(
-                  children: [
-                    // Header
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF007AFF), Color(0xFF0055D4)],
-                          begin:  Alignment.topLeft,
-                          end:    Alignment.bottomRight,
-                        ),
-                      ),
-                      width:   double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 36, horizontal: 32),
-                      child: Column(
-                        children: [
-                          // Frosted icon
-                          Container(
-                            width:  80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color:  Colors.white.withOpacity(0.2),
-                              shape:  BoxShape.circle,
-                              border: Border.all(
-                                  color: Colors.white.withOpacity(0.4),
-                                  width: 1.5),
-                            ),
-                            child: Icon(
-                              _isOtpSent
-                                  ? Icons.mark_email_read_rounded
-                                  : Icons.person_add_alt_1_rounded,
-                              size:  38,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            _isOtpSent ? 'OTP Verification' : 'Create Account',
-                            style: GoogleFonts.poppins(
-                                color:      Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize:   24),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 28),
-                      child: _isOtpSent
-                          ? _buildOtpForm(ctx)
-                          : _buildRegForm(ctx),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Mobile & Tablet ────────────────────────────────────────────────────────
-  Widget _mobileTabletLayout(BuildContext ctx, bool isTablet) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF007AFF), Color(0xFF0055D4)],
-          begin:  Alignment.topLeft,
-          end:    Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: SizedBox(
-              height: _topHeight(ctx),
-              child: Stack(
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: _maxWidth(ctx)),
+          child: Card(
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Column(
                 children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 8.w, vertical: 8.h),
-                    child: Row(
+                  Container(
+                    color: skyBlue,
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 36, horizontal: 32),
+                    child: Column(
                       children: [
-                        // iOS-style back button
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            if (context.canPop()) context.pop();
-                          },
-                          child: Container(
-                            width:  38.w,
-                            height: 38.w,
-                            decoration: BoxDecoration(
-                              color:  Colors.white.withOpacity(0.2),
-                              shape:  BoxShape.circle,
-                              border: Border.all(
-                                  color: Colors.white.withOpacity(0.35),
-                                  width: 1),
-                            ),
-                            child: const Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                color: Colors.white,
-                                size:  16),
-                          ),
+                        Icon(
+                          _isOtpSent
+                              ? Icons.mark_email_read_rounded
+                              : Icons.lock_rounded,
+                          size: 80,
+                          color: Colors.white.withOpacity(0.9),
                         ),
-                        SizedBox(width: 12.w),
+                        const SizedBox(height: 12),
                         Text(
-                          _isOtpSent ? 'OTP Verification' : 'Register',
+                          _isOtpSent ? 'OTP Verification' : 'Create Account',
                           style: GoogleFonts.poppins(
-                              color:      Colors.white,
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize:   _fs(ctx, 20, 22, 24)),
+                              fontSize: 24),
                         ),
                       ],
                     ),
                   ),
-                  Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 30.h),
-                      // Frosted circle icon (আগের plain icon-এর জায়গায়)
-                      child: Container(
-                        width:  isTablet ? 90 : 80.w,
-                        height: isTablet ? 90 : 80.w,
-                        decoration: BoxDecoration(
-                          color:  Colors.white.withOpacity(0.2),
-                          shape:  BoxShape.circle,
-                          border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
-                              width: 1.5),
-                        ),
-                        child: Icon(
-                          _isOtpSent
-                              ? Icons.mark_email_read_rounded
-                              : Icons.person_add_alt_1_rounded,
-                          size:  isTablet ? 44 : 38.sp,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 28),
+                    child: _isOtpSent
+                        ? _buildOtpForm(ctx)
+                        : _buildRegForm(ctx),
                   ),
-                  // Decorative dots (original)
-                  Positioned(
-                      top:  30.h,
-                      left: 30.w,
-                      child: _dot(10, Colors.white.withOpacity(0.3))),
-                  Positioned(
-                      top:   60.h,
-                      right: 40.w,
-                      child: _dot(8, Colors.white.withOpacity(0.2))),
-                  Positioned(
-                      bottom: 20.h,
-                      left:   60.w,
-                      child: _dot(6, Colors.white.withOpacity(0.25))),
                 ],
               ),
             ),
           ),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: _bgLight,
-                borderRadius: BorderRadius.only(
-                  topLeft:  Radius.circular(32.r),
-                  topRight: Radius.circular(32.r),
+        ),
+      ),
+    );
+  }
+
+  // ?? Mobile & Tablet ??????????????????????????????????????????????
+  Widget _mobileTabletLayout(BuildContext ctx, bool isTablet) {
+    return Column(
+      children: [
+        SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: _topHeight(ctx),
+            child: Stack(
+              children: [
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded,
+                            color: Colors.white),
+                        onPressed: () {},
+                      ),
+                      Text(
+                        _isOtpSent ? 'OTP Verification' : 'Register',
+                        style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: _fs(ctx, 20, 22, 24)),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft:  Radius.circular(32.r),
-                  topRight: Radius.circular(32.r),
-                ),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 40 : 24.w, vertical: 28.h),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: _maxWidth(ctx)),
-                      child: _isOtpSent
-                          ? _buildOtpForm(ctx)
-                          : _buildRegForm(ctx),
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 30.h),
+                    child: Icon(
+                      _isOtpSent
+                          ? Icons.mark_email_read_rounded
+                          : Icons.lock_rounded,
+                      size: isTablet ? 110 : 95.sp,
+                      color: Colors.white.withOpacity(0.9),
                     ),
+                  ),
+                ),
+                Positioned(
+                    top: 30.h,
+                    left: 30.w,
+                    child: _dot(10, Colors.white.withOpacity(0.3))),
+                Positioned(
+                    top: 60.h,
+                    right: 40.w,
+                    child: _dot(8, Colors.white.withOpacity(0.2))),
+                Positioned(
+                    bottom: 20.h,
+                    left: 60.w,
+                    child: _dot(6, Colors.white.withOpacity(0.25))),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(36.r),
+                topRight: Radius.circular(36.r),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(36.r),
+                topRight: Radius.circular(36.r),
+              ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                    left: isTablet ? 40 : 24.w,
+                    right: isTablet ? 40 : 24.w,
+                    top: 32.h,
+                    bottom: 40.h),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: _maxWidth(ctx)),
+                    child: _isOtpSent
+                        ? _buildOtpForm(ctx)
+                        : _buildRegForm(ctx),
                   ),
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  // ── Registration Form ──────────────────────────────────────────────────────
+  // ?? Registration Form ????????????????????????????????????????????
   Widget _buildRegForm(BuildContext ctx) {
     final isDesktop = _isDesktop(ctx);
     return Form(
@@ -403,65 +307,56 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
         children: [
           _label(ctx, "Full Name"),
           _field(ctx, _nameController, "Enter your full name",
-              keyboardType: TextInputType.name,
-              prefixIcon: Icons.person_outline_rounded),
+              keyboardType: TextInputType.name),
           _gap(ctx),
 
           _label(ctx, "Mobile Number"),
           _field(ctx, _mobileController, "Enter your mobile number",
-              keyboardType: TextInputType.phone,
-              prefixIcon: Icons.phone_outlined),
+              keyboardType: TextInputType.phone),
           _gap(ctx),
 
           _label(ctx, "Email Address"),
           _field(ctx, _emailController, "Enter your email address",
-              keyboardType: TextInputType.emailAddress,
-              prefixIcon: Icons.mail_outline_rounded),
+              keyboardType: TextInputType.emailAddress),
           _gap(ctx),
 
           _label(ctx, "Password"),
-          _field(ctx, _passController, "Enter your password",
-              passField: 1, prefixIcon: Icons.lock_outline_rounded),
+          _field(ctx, _passController, "Enter your password", passField: 1),
           _gap(ctx),
 
           _label(ctx, "Confirm Password"),
           _field(ctx, _confirmPassController, "Enter your password",
-              passField: 2, prefixIcon: Icons.lock_outline_rounded),
+              passField: 2),
           _gap(ctx),
 
+          // Affiliate ID ? Optional
           _label(ctx, "Affiliate ID (Optional)"),
           _field(ctx, _refController, "Enter your affiliate id",
-              optional: true, prefixIcon: Icons.card_giftcard_outlined),
+              optional: true),
 
           SizedBox(height: isDesktop ? 28 : 28.h),
 
           SizedBox(
-            width:  double.infinity,
-            height: isDesktop ? 52 : 52.h,
+            width: double.infinity,
+            height: isDesktop ? 54 : 54.h,
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                        color: skyBlue, strokeWidth: 2.5))
+                    child: CircularProgressIndicator(color: skyBlue))
                 : ElevatedButton(
                     onPressed: _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: skyBlue,
                       foregroundColor: Colors.white,
-                      elevation:   0,
-                      shadowColor: skyBlue.withOpacity(0.4),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
-                              isDesktop ? 14 : 14.r)),
-                    ).copyWith(
-                      elevation: WidgetStateProperty.resolveWith((s) =>
-                          s.contains(WidgetState.pressed) ? 0 : 4),
-                      shadowColor: WidgetStateProperty.all(
-                          skyBlue.withOpacity(0.35)),
+                              isDesktop ? 16 : 16.r)),
+                      elevation: 2,
+                      shadowColor: skyBlue.withOpacity(0.4),
                     ),
                     child: Text("Register",
                         style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize:   _fs(ctx, 15, 16, 17))),
+                            fontWeight: FontWeight.bold,
+                            fontSize: _fs(ctx, 15, 16, 17))),
                   ),
           ),
 
@@ -471,18 +366,15 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             children: [
               Text("Already have an account? ",
                   style: GoogleFonts.poppins(
-                      color:    _subtextColor,
+                      color: Colors.black54,
                       fontSize: _fs(ctx, 13, 13, 14))),
               GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  context.go('/login');
-                },
+                onTap: () => context.go('/login'),
                 child: Text("Login",
                     style: GoogleFonts.poppins(
-                        color:      skyBlue,
+                        color: skyBlue,
                         fontWeight: FontWeight.bold,
-                        fontSize:   _fs(ctx, 13, 13, 14))),
+                        fontSize: _fs(ctx, 13, 13, 14))),
               ),
             ],
           ),
@@ -492,7 +384,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     );
   }
 
-  // ── OTP Form ───────────────────────────────────────────────────────────────
+  // ?? OTP Form ?????????????????????????????????????????????????????
   Widget _buildOtpForm(BuildContext ctx) {
     final isDesktop = _isDesktop(ctx);
     return Column(
@@ -500,117 +392,87 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
         SizedBox(height: isDesktop ? 10 : 10.h),
         Text("We have sent an OTP to",
             style: GoogleFonts.poppins(
-                color: _subtextColor, fontSize: _fs(ctx, 14, 14, 15))),
+                color: Colors.black54, fontSize: _fs(ctx, 14, 14, 15))),
         Text(_emailController.text,
             style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
-                fontSize:   _fs(ctx, 15, 15, 16),
-                color:      _labelColor)),
+                fontSize: _fs(ctx, 15, 15, 16),
+                color: Colors.black87)),
         SizedBox(height: isDesktop ? 30 : 30.h),
-        // OTP field with iOS card look
-        Container(
-          decoration: BoxDecoration(
-            color:        _fieldBg,
-            borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r),
-            border: Border.all(color: _fieldBorder, width: 1),
-            boxShadow: [
-              BoxShadow(
-                  color:      Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset:     const Offset(0, 2)),
-            ],
-          ),
-          child: TextField(
-            controller:      _otpController,
-            keyboardType:    TextInputType.number,
-            maxLength:       6,
-            textAlign:       TextAlign.center,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: GoogleFonts.poppins(
-                fontSize:      isDesktop ? 28 : 28.sp,
-                letterSpacing: 12,
-                fontWeight:    FontWeight.w600,
-                color:         _labelColor),
-            decoration: InputDecoration(
-              hintText:    "------",
-              hintStyle:   GoogleFonts.poppins(
-                  color:    _hintColor,
-                  fontSize: isDesktop ? 24 : 22.sp),
-              counterText: "",
-              filled:      true,
-              fillColor:   Colors.transparent,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r),
-                borderSide:   BorderSide.none,
-              ),
+        TextField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+              fontSize: isDesktop ? 28 : 28.sp, letterSpacing: 12),
+          decoration: InputDecoration(
+            hintText: "------",
+            counterText: "",
+            filled: true,
+            fillColor: const Color(0xFFF3F4F6),
+            border: OutlineInputBorder(
+              borderRadius:
+                  BorderRadius.circular(isDesktop ? 14 : 14.r),
+              borderSide: BorderSide.none,
             ),
           ),
         ),
         SizedBox(height: isDesktop ? 30 : 30.h),
         SizedBox(
-          width:  double.infinity,
-          height: isDesktop ? 52 : 52.h,
+          width: double.infinity,
+          height: isDesktop ? 54 : 54.h,
           child: _isLoading
               ? const Center(
-                  child: CircularProgressIndicator(
-                      color: skyBlue, strokeWidth: 2.5))
+                  child: CircularProgressIndicator(color: skyBlue))
               : ElevatedButton(
                   onPressed: _verifyOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: skyBlue,
                     foregroundColor: Colors.white,
-                    elevation:   0,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
-                            isDesktop ? 14 : 14.r)),
-                  ).copyWith(
-                    elevation: WidgetStateProperty.resolveWith((s) =>
-                        s.contains(WidgetState.pressed) ? 0 : 4),
-                    shadowColor: WidgetStateProperty.all(
-                        skyBlue.withOpacity(0.35)),
+                            isDesktop ? 16 : 16.r)),
+                    elevation: 2,
+                    shadowColor: skyBlue.withOpacity(0.4),
                   ),
                   child: Text("Verify & Login",
                       style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
-                          fontSize:   _fs(ctx, 15, 16, 17))),
+                          fontSize: _fs(ctx, 15, 16, 17))),
                 ),
         ),
         SizedBox(height: isDesktop ? 16 : 16.h),
         TextButton(
           onPressed: () => setState(() => _isOtpSent = false),
-          style: TextButton.styleFrom(foregroundColor: skyBlue),
           child: Text("Change Email Address",
               style: GoogleFonts.poppins(
-                  color:      skyBlue,
-                  fontWeight: FontWeight.w500,
-                  fontSize:   _fs(ctx, 13, 13, 14))),
+                  color: skyBlue, fontSize: _fs(ctx, 13, 13, 14))),
         ),
       ],
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ?? Helpers ???????????????????????????????????????????????????????
   Widget _label(BuildContext ctx, String text) => Padding(
-        padding:
-            EdgeInsets.only(bottom: _isDesktop(ctx) ? 6 : 6.h, left: 2),
+        padding: EdgeInsets.only(bottom: _isDesktop(ctx) ? 6 : 6.h),
         child: Text(text,
             style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize:   _fs(ctx, 13, 13, 14),
-                color:      _labelColor)),
+                fontWeight: FontWeight.bold,
+                fontSize: _fs(ctx, 13, 13, 14),
+                color: Colors.black87)),
       );
 
   Widget _gap(BuildContext ctx) =>
-      SizedBox(height: _isDesktop(ctx) ? 14 : 14.h);
+      SizedBox(height: _isDesktop(ctx) ? 16 : 16.h);
 
   Widget _field(
     BuildContext ctx,
     TextEditingController controller,
     String hint, {
-    int passField              = 0,
+    int passField = 0,
     TextInputType keyboardType = TextInputType.text,
-    bool optional              = false,
-    IconData? prefixIcon,
+    bool optional = false,
   }) {
     final obscure = passField == 1
         ? !_passVisible
@@ -618,98 +480,72 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             ? !_confirmPassVisible
             : false;
     final isDesktop = _isDesktop(ctx);
-    final radius    = isDesktop ? 12.0 : 12.r;
-    final vPad      = isDesktop ? 15.0 : 14.h;
-    final hPad      = isDesktop ? 16.0 : 16.w;
+    final radius = isDesktop ? 14.0 : 14.r;
+    final vPad = isDesktop ? 16.0 : 15.h;
+    final hPad = isDesktop ? 18.0 : 16.w;
 
-    return Container(
-      decoration: BoxDecoration(
-        color:        _fieldBg,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: _fieldBorder, width: 1),
-        boxShadow: [
-          BoxShadow(
-              color:      Colors.black.withOpacity(0.04),
-              blurRadius: 6,
-              offset:     const Offset(0, 2)),
-        ],
-      ),
-      child: TextFormField(
-        controller:   controller,
-        obscureText:  obscure,
-        keyboardType: keyboardType,
-        style: GoogleFonts.poppins(
-            fontSize:   _fs(ctx, 13, 13, 14),
-            color:      _labelColor,
-            fontWeight: FontWeight.w400),
-        decoration: InputDecoration(
-          hintText:  hint,
-          hintStyle: GoogleFonts.poppins(
-              color: _hintColor, fontSize: _fs(ctx, 13, 13, 14)),
-          filled:    true,
-          fillColor: Colors.transparent,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-          prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon,
-                  color: _hintColor, size: _fs(ctx, 18, 19, 20))
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(radius),
-            borderSide:   BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(radius),
-            borderSide: const BorderSide(color: skyBlue, width: 1.5),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(radius),
-            borderSide: const BorderSide(
-                color: Color(0xFFFF3B30), width: 1.2),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(radius),
-            borderSide: const BorderSide(
-                color: Color(0xFFFF3B30), width: 1.5),
-          ),
-          suffixIcon: passField != 0
-              ? IconButton(
-                  icon: Icon(
-                    passField == 1
-                        ? (_passVisible
-                            ? Icons.visibility_rounded
-                            : Icons.visibility_off_rounded)
-                        : (_confirmPassVisible
-                            ? Icons.visibility_rounded
-                            : Icons.visibility_off_rounded),
-                    color: _hintColor,
-                    size:  _fs(ctx, 20, 21, 22),
-                  ),
-                  onPressed: () => setState(() {
-                    if (passField == 1) {
-                      _passVisible = !_passVisible;
-                    } else {
-                      _confirmPassVisible = !_confirmPassVisible;
-                    }
-                  }),
-                )
-              : null,
+    return TextFormField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      style: GoogleFonts.poppins(fontSize: _fs(ctx, 13, 13, 14)),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: GoogleFonts.poppins(
+            color: Colors.black38, fontSize: _fs(ctx, 13, 13, 14)),
+        filled: true,
+        fillColor: const Color(0xFFF3F4F6),
+        contentPadding:
+            EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide.none,
         ),
-        validator: (value) {
-          if (!optional && (value == null || value.isEmpty)) {
-            return "$hint is required";
-          }
-          if (passField == 2 && value != _passController.text) {
-            return "Passwords do not match";
-          }
-          return null;
-        },
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: const BorderSide(color: skyBlue, width: 1.5),
+        ),
+        suffixIcon: passField != 0
+            ? IconButton(
+                icon: Icon(
+                  passField == 1
+                      ? (_passVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined)
+                      : (_confirmPassVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
+                  color: Colors.black38,
+                  size: _fs(ctx, 20, 21, 22),
+                ),
+                onPressed: () => setState(() {
+                  if (passField == 1) {
+                    _passVisible = !_passVisible;
+                  } else {
+                    _confirmPassVisible = !_confirmPassVisible;
+                  }
+                }),
+              )
+            : null,
       ),
+      validator: (value) {
+        if (!optional && (value == null || value.isEmpty)) {
+          return "$hint is required";
+        }
+        if (passField == 2 && value != _passController.text) {
+          return "Passwords do not match";
+        }
+        return null;
+      },
     );
   }
 
   Widget _dot(double size, Color color) => Container(
-        width:  size,
+        width: size,
         height: size,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       );
