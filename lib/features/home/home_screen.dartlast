@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 
 /// Service Model
 class Service {
@@ -12,7 +11,7 @@ class Service {
   final IconData icon;
   final Color color;
   final Color secondaryColor;
-  final String? route; // GoRouter route ? null ???? Coming Soon
+  final String? route; // GoRouter route — null মানে Coming Soon
 
   const Service({
     required this.name,
@@ -188,7 +187,7 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         Text(
-          'See All ?',
+          'See All →',
           style: GoogleFonts.poppins(
             fontSize: isDesktop ? 13 : 12.sp,
             color: kPrimary,
@@ -258,7 +257,7 @@ class _ServiceCard extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${service.name} ? Coming Soon!',
+            '${service.name} — Coming Soon!',
             style: GoogleFonts.poppins(fontSize: 13.sp),
           ),
           behavior: SnackBarBehavior.floating,
@@ -318,27 +317,18 @@ class _ServiceCard extends StatelessWidget {
                 ),
                 if (!hasRoute)
                   Positioned(
-                    right: -6,
-                    top: -6,
-                    child: SizedBox(
-                      width: isDesktop ? 28 : 24.sp,
-                      height: isDesktop ? 28 : 24.sp,
-                      child: Lottie.network(
-                        'https://assets2.lottiefiles.com/packages/lf20_vvplpqub.json',
-                        fit: BoxFit.contain,
-                        repeat: true,
-                        errorBuilder: (_, __, ___) => Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF94A3B8),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.lock_outline_rounded,
-                            size: isDesktop ? 10 : 9.sp,
-                            color: Colors.white,
-                          ),
-                        ),
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF94A3B8),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.lock_outline_rounded,
+                        size: isDesktop ? 10 : 9.sp,
+                        color: Colors.white,
                       ),
                     ),
                   ),
