@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../main.dart';
 
@@ -50,8 +51,8 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   }
 
   double _topHeight(BuildContext ctx) {
-    if (_isTablet(ctx)) return 200;
-    return 180.h;
+    if (_isTablet(ctx)) return 170;
+    return 155.h;
   }
 
   Future<void> _register() async {
@@ -160,12 +161,28 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                         vertical: 36, horizontal: 32),
                     child: Column(
                       children: [
-                        Icon(
-                          _isOtpSent
-                              ? Icons.mark_email_read_rounded
-                              : Icons.lock_rounded,
-                          size: 80,
-                          color: Colors.white.withOpacity(0.9),
+                        SizedBox(
+                          width: 90,
+                          height: 90,
+                          child: _isOtpSent
+                              ? Lottie.network(
+                                  'https://assets9.lottiefiles.com/packages/lf20_uu0x8lqv.json',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.mark_email_read_rounded,
+                                    size: 80,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Lottie.network(
+                                  'https://assets2.lottiefiles.com/packages/lf20_vvplpqub.json',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.lock_rounded,
+                                    size: 80,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -226,13 +243,29 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                 ),
                 Center(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 30.h),
-                    child: Icon(
-                      _isOtpSent
-                          ? Icons.mark_email_read_rounded
-                          : Icons.lock_rounded,
-                      size: isTablet ? 110 : 95.sp,
-                      color: Colors.white.withOpacity(0.9),
+                    padding: EdgeInsets.only(top: 20.h),
+                    child: SizedBox(
+                      width: isTablet ? 115 : 90.sp,
+                      height: isTablet ? 115 : 90.sp,
+                      child: _isOtpSent
+                          ? Lottie.network(
+                              'https://assets9.lottiefiles.com/packages/lf20_uu0x8lqv.json',
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.mark_email_read_rounded,
+                                size: isTablet ? 110 : 95.sp,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            )
+                          : Lottie.network(
+                              'https://assets2.lottiefiles.com/packages/lf20_vvplpqub.json',
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.lock_rounded,
+                                size: isTablet ? 110 : 95.sp,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -515,50 +548,4 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                   passField == 1
                       ? (_passVisible
                           ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined)
-                      : (_confirmPassVisible
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined),
-                  color: Colors.black38,
-                  size: _fs(ctx, 20, 21, 22),
-                ),
-                onPressed: () => setState(() {
-                  if (passField == 1) {
-                    _passVisible = !_passVisible;
-                  } else {
-                    _confirmPassVisible = !_confirmPassVisible;
-                  }
-                }),
-              )
-            : null,
-      ),
-      validator: (value) {
-        if (!optional && (value == null || value.isEmpty)) {
-          return "$hint is required";
-        }
-        if (passField == 2 && value != _passController.text) {
-          return "Passwords do not match";
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _dot(double size, Color color) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _mobileController.dispose();
-    _emailController.dispose();
-    _passController.dispose();
-    _confirmPassController.dispose();
-    _refController.dispose();
-    _otpController.dispose();
-    super.dispose();
-  }
-}
+       

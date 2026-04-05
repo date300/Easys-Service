@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-
+  lottie: ^3.1.0
   # --- Data & Local Storage ---
   http: ^1.1.0
   dio: ^5.7.0                    # Advanced API Handling
@@ -21,7 +21,6 @@ dependencies:
   flutter_screenutil: ^5.9.3     # Responsive UI across devices
   google_fonts: ^6.2.1           # Professional typography
   flutter_animate: ^4.5.0        # Smooth UI transitions
-  lottie: ^3.1.2                 # High-quality vector animations
   cached_network_image: ^3.4.1   # Efficient image loading
 
   # --- Architecture & Navigation ---
