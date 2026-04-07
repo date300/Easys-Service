@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 import '../../features/payment/payment_gateway_screen.dart';
 
-// ============================================
-//  VerificationModal - Reusable popup
-//  How to call:
+// ─────────────────────────────────────────────
+//  VerificationModal — Reusable popup
+//  যেকোনো জায়গা থেকে call করো:
 //  VerificationModal.show(context);
-// ============================================
+// ─────────────────────────────────────────────
 class VerificationModal {
-  /// Main method to show the bottom sheet modal
+  /// Modal হিসেবে show করার main method
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -29,7 +28,7 @@ class VerificationModal {
     );
   }
 
-  /// Method to show as a dialog
+  /// Dialog হিসেবে show করার method
   static Future<void> showDialog(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -57,9 +56,9 @@ class VerificationModal {
   }
 }
 
-// ============================================
+// ─────────────────────────────────────────────
 //  Bottom Sheet UI
-// ============================================
+// ─────────────────────────────────────────────
 class _VerificationBottomSheet extends StatelessWidget {
   final double amount;
   final String purpose;
@@ -75,7 +74,7 @@ class _VerificationBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white, // White background
+        color: Color(0xFF0F0F14),
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
@@ -92,47 +91,60 @@ class _VerificationBottomSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.black12,
+                  color: Colors.white24,
                   borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // Icon
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.verified_user_rounded,
+                  color: Color(0xFFF59E0B),
+                  size: 36,
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Lottie animation instead of icon
-              Lottie.network(
-                'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json',
-                width: 120,
-                height: 120,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 16),
-
               Text(
-                'Account Verification Required',
+                'অ্যাকাউন্ট ভেরিফাই করুন',
                 style: GoogleFonts.poppins(
-                  color: Colors.black,
+                  color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 10),
               Text(
-                'To access all features, please complete account verification by paying a fee of \$$amount.',
+                'এই ফিচারটি ব্যবহার করতে অ্যাকাউন্ট ভেরিফাই করুন। মাত্র ৳$amount পেমেন্ট করে ভেরিফাইড হয়ে যান।',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                  color: Colors.black54,
+                  color: Colors.white.withOpacity(0.55),
                   fontSize: 13,
                   height: 1.6,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
               // Benefits
-              _BenefitRow(text: 'Full access to all features'),
+              _BenefitRow(
+                  icon: Icons.check_circle_rounded,
+                  text: 'সব ফিচারে অ্যাক্সেস পাবেন'),
               const SizedBox(height: 10),
-              _BenefitRow(text: 'Priority customer support'),
+              _BenefitRow(
+                  icon: Icons.check_circle_rounded,
+                  text: 'বিশ্বস্ত সার্ভিস প্রোভাইডার'),
               const SizedBox(height: 10),
-              _BenefitRow(text: 'Secure and trusted platform'),
+              _BenefitRow(
+                  icon: Icons.check_circle_rounded,
+                  text: 'একবার পেমেন্ট, আজীবন সুবিধা'),
               const SizedBox(height: 28),
 
               // Verify Button
@@ -172,7 +184,7 @@ class _VerificationBottomSheet extends StatelessWidget {
                       },
                       child: Center(
                         child: Text(
-                          'Verify Now — \$$amount',
+                          '✦  এখনই ভেরিফাই করুন • ৳$amount',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontSize: 15,
@@ -190,9 +202,9 @@ class _VerificationBottomSheet extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  'Cancel',
+                  'এখন না',
                   style: GoogleFonts.poppins(
-                    color: Colors.black38,
+                    color: Colors.white38,
                     fontSize: 13,
                   ),
                 ),
@@ -205,9 +217,9 @@ class _VerificationBottomSheet extends StatelessWidget {
   }
 }
 
-// ============================================
+// ─────────────────────────────────────────────
 //  Dialog UI
-// ============================================
+// ─────────────────────────────────────────────
 class _VerificationDialog extends StatelessWidget {
   final double amount;
   final String purpose;
@@ -229,39 +241,44 @@ class _VerificationDialog extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: Colors.white, // White background
+              color: const Color(0xFF1A1A26),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.white.withOpacity(0.08),
                 width: 1,
               ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Lottie animation instead of icon
-                Lottie.network(
-                  'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json',
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.contain,
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.verified_user_rounded,
+                    color: Color(0xFFF59E0B),
+                    size: 32,
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 Text(
-                  'Account Verification Required',
-                  textAlign: TextAlign.center,
+                  'অ্যাকাউন্ট ভেরিফাই করুন',
                   style: GoogleFonts.poppins(
-                    color: Colors.black,
+                    color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Please complete account verification to unlock all features.',
+                  'এই ফিচার ব্যবহার করতে অ্যাকাউন্ট ভেরিফাই করুন।',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
-                    color: Colors.black54,
+                    color: Colors.white.withOpacity(0.5),
                     fontSize: 13,
                     height: 1.5,
                   ),
@@ -292,7 +309,7 @@ class _VerificationDialog extends StatelessWidget {
                       );
                     },
                     child: Text(
-                      'Verify Now — \$$amount',
+                      'পেমেন্ট করুন • ৳$amount',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -305,9 +322,9 @@ class _VerificationDialog extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
-                    'Cancel',
+                    'এখন না',
                     style: GoogleFonts.poppins(
-                      color: Colors.black38,
+                      color: Colors.white38,
                       fontSize: 13,
                     ),
                   ),
@@ -321,30 +338,25 @@ class _VerificationDialog extends StatelessWidget {
   }
 }
 
-// ============================================
-//  Benefit Row Widget - No icon, text only with dot
-// ============================================
+// ─────────────────────────────────────────────
+//  Benefit Row Widget
+// ─────────────────────────────────────────────
 class _BenefitRow extends StatelessWidget {
+  final IconData icon;
   final String text;
 
-  const _BenefitRow({required this.text});
+  const _BenefitRow({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Lottie small checkmark instead of icon
-        Lottie.network(
-          'https://assets2.lottiefiles.com/packages/lf20_jfe6xnkr.json',
-          width: 28,
-          height: 28,
-          fit: BoxFit.contain,
-        ),
+        Icon(icon, color: const Color(0xFF22C55E), size: 18),
         const SizedBox(width: 10),
         Text(
           text,
           style: GoogleFonts.poppins(
-            color: Colors.black87,
+            color: Colors.white.withOpacity(0.7),
             fontSize: 13,
           ),
         ),
@@ -352,4 +364,3 @@ class _BenefitRow extends StatelessWidget {
     );
   }
 }
-
