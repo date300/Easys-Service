@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../features/payment/payment_gateway_screen.dart'; // ✅ ঠিক করা হয়েছে
+import '../../features/payment/payment_gateway_screen.dart';
 
 // ─────────────────────────────────────────────
 //  VerificationModal — Reusable popup
@@ -8,6 +8,7 @@ import '../../features/payment/payment_gateway_screen.dart'; // ✅ ঠিক �
 //  VerificationModal.show(context);
 // ─────────────────────────────────────────────
 class VerificationModal {
+  /// Modal হিসেবে show করার main method
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -27,6 +28,7 @@ class VerificationModal {
     );
   }
 
+  /// Dialog হিসেবে show করার method
   static Future<void> showDialog(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -54,6 +56,9 @@ class VerificationModal {
   }
 }
 
+// ─────────────────────────────────────────────
+//  Bottom Sheet UI
+// ─────────────────────────────────────────────
 class _VerificationBottomSheet extends StatelessWidget {
   final double amount;
   final String purpose;
@@ -81,6 +86,7 @@ class _VerificationBottomSheet extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Handle bar
               Container(
                 width: 40,
                 height: 4,
@@ -90,6 +96,8 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
+
+              // Icon
               Container(
                 width: 72,
                 height: 72,
@@ -104,6 +112,7 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+
               Text(
                 'অ্যাকাউন্ট ভেরিফাই করুন',
                 style: GoogleFonts.poppins(
@@ -123,6 +132,8 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
+
+              // Benefits
               _BenefitRow(
                   icon: Icons.check_circle_rounded,
                   text: 'সব ফিচারে অ্যাক্সেস পাবেন'),
@@ -135,6 +146,8 @@ class _VerificationBottomSheet extends StatelessWidget {
                   icon: Icons.check_circle_rounded,
                   text: 'একবার পেমেন্ট, আজীবন সুবিধা'),
               const SizedBox(height: 28),
+
+              // Verify Button
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -184,6 +197,8 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+
+              // Cancel
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
@@ -202,6 +217,9 @@ class _VerificationBottomSheet extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+//  Dialog UI
+// ─────────────────────────────────────────────
 class _VerificationDialog extends StatelessWidget {
   final double amount;
   final String purpose;
@@ -226,7 +244,9 @@ class _VerificationDialog extends StatelessWidget {
               color: const Color(0xFF1A1A26),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                  color: Colors.white.withOpacity(0.08), width: 1),
+                color: Colors.white.withOpacity(0.08),
+                width: 1,
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -238,8 +258,11 @@ class _VerificationDialog extends StatelessWidget {
                     color: const Color(0xFFF59E0B).withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.verified_user_rounded,
-                      color: Color(0xFFF59E0B), size: 32),
+                  child: const Icon(
+                    Icons.verified_user_rounded,
+                    color: Color(0xFFF59E0B),
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 Text(
@@ -268,7 +291,8 @@ class _VerificationDialog extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6C63FF),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       elevation: 0,
                     ),
                     onPressed: () {
@@ -297,9 +321,13 @@ class _VerificationDialog extends StatelessWidget {
                 const SizedBox(height: 10),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('এখন না',
-                      style: GoogleFonts.poppins(
-                          color: Colors.white38, fontSize: 13)),
+                  child: Text(
+                    'এখন না',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white38,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -310,9 +338,13 @@ class _VerificationDialog extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+//  Benefit Row Widget
+// ─────────────────────────────────────────────
 class _BenefitRow extends StatelessWidget {
   final IconData icon;
   final String text;
+
   const _BenefitRow({required this.icon, required this.text});
 
   @override
@@ -331,3 +363,4 @@ class _BenefitRow extends StatelessWidget {
       ],
     );
   }
+}
