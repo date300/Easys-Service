@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../features/payment/payment_gateway_screen.dart';
+import '../../features/payment/payment_gateway_screen.dart'; // ✅ ঠিক করা হয়েছে
 
 // ─────────────────────────────────────────────
 //  VerificationModal — Reusable popup
-//  যেকোনো জায়গায় call করো:
+//  যেকোনো জায়গা থেকে call করো:
 //  VerificationModal.show(context);
 // ─────────────────────────────────────────────
 class VerificationModal {
-  /// Modal দেখানোর main method
-  /// onVerified: payment সফল হলে কী করবে
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -29,7 +27,6 @@ class VerificationModal {
     );
   }
 
-  /// Dialog হিসেবে দেখাতে চাইলে এটা use করো
   static Future<void> showDialog(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -57,9 +54,6 @@ class VerificationModal {
   }
 }
 
-// ─────────────────────────────────────────────
-//  Bottom Sheet UI
-// ─────────────────────────────────────────────
 class _VerificationBottomSheet extends StatelessWidget {
   final double amount;
   final String purpose;
@@ -87,7 +81,6 @@ class _VerificationBottomSheet extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
               Container(
                 width: 40,
                 height: 4,
@@ -97,8 +90,6 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-
-              // Warning Icon
               Container(
                 width: 72,
                 height: 72,
@@ -113,7 +104,6 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
               Text(
                 'অ্যাকাউন্ট ভেরিফাই করুন',
                 style: GoogleFonts.poppins(
@@ -124,7 +114,7 @@ class _VerificationBottomSheet extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'এই ফিচারটি ব্যবহার করতে আপনার অ্যাকাউন্ট ভেরিফাই করা প্রয়োজন। মাত্র ৳$amount পেমেন্ট করে আপনার অ্যাকাউন্ট সক্রিয় করুন।',
+                'এই ফিচারটি ব্যবহার করতে অ্যাকাউন্ট ভেরিফাই করুন। মাত্র ৳$amount পেমেন্ট করে ভেরিফাইড হয়ে যান।',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   color: Colors.white.withOpacity(0.55),
@@ -133,23 +123,18 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-
-              // Benefits list
               _BenefitRow(
                   icon: Icons.check_circle_rounded,
-                  text: 'সকল প্রিমিয়াম ফিচার আনলক'),
+                  text: 'সব ফিচারে অ্যাক্সেস পাবেন'),
               const SizedBox(height: 10),
               _BenefitRow(
                   icon: Icons.check_circle_rounded,
-                  text: 'উপার্জন শুরু করুন তাৎক্ষণিকভাবে'),
+                  text: 'বিশ্বস্ত সার্ভিস প্রোভাইডার'),
               const SizedBox(height: 10),
               _BenefitRow(
                   icon: Icons.check_circle_rounded,
-                  text: 'একবারের পেমেন্ট, আজীবন সুবিধা'),
-
+                  text: 'একবার পেমেন্ট, আজীবন সুবিধা'),
               const SizedBox(height: 28),
-
-              // Verify Button
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -186,7 +171,7 @@ class _VerificationBottomSheet extends StatelessWidget {
                       },
                       child: Center(
                         child: Text(
-                          '✓  এখনই ভেরিফাই করুন — ৳$amount',
+                          '✦  এখনই ভেরিফাই করুন • ৳$amount',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontSize: 15,
@@ -198,14 +183,11 @@ class _VerificationBottomSheet extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // Cancel
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  'এখন নয়',
+                  'এখন না',
                   style: GoogleFonts.poppins(
                     color: Colors.white38,
                     fontSize: 13,
@@ -220,9 +202,6 @@ class _VerificationBottomSheet extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-//  Dialog UI (alternative to bottom sheet)
-// ─────────────────────────────────────────────
 class _VerificationDialog extends StatelessWidget {
   final double amount;
   final String purpose;
@@ -273,7 +252,7 @@ class _VerificationDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'এই ফিচার ব্যবহার করতে অ্যাকাউন্ট ভেরিফাই করা প্রয়োজন।',
+                  'এই ফিচার ব্যবহার করতে অ্যাকাউন্ট ভেরিফাই করুন।',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     color: Colors.white.withOpacity(0.5),
@@ -306,7 +285,7 @@ class _VerificationDialog extends StatelessWidget {
                       );
                     },
                     child: Text(
-                      'ভেরিফাই করুন — ৳$amount',
+                      'পেমেন্ট করুন • ৳$amount',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -318,7 +297,7 @@ class _VerificationDialog extends StatelessWidget {
                 const SizedBox(height: 10),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('পরে করব',
+                  child: Text('এখন না',
                       style: GoogleFonts.poppins(
                           color: Colors.white38, fontSize: 13)),
                 ),
@@ -331,9 +310,6 @@ class _VerificationDialog extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-//  Benefit Row Widget
-// ─────────────────────────────────────────────
 class _BenefitRow extends StatelessWidget {
   final IconData icon;
   final String text;
@@ -355,4 +331,3 @@ class _BenefitRow extends StatelessWidget {
       ],
     );
   }
-}
