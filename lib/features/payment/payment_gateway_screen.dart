@@ -3,10 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
-// WebView only for mobile
-import 'package:webview_flutter/webview_flutter.dart'
-    if (dart.library.html) 'package:EasyService/features/payment/web_stub.dart';
-
 // ============================================
 //  Payment Method Model
 // ============================================
@@ -17,7 +13,6 @@ class PaymentMethod {
   final String logoAsset;
   final Color primaryColor;
   final Color secondaryColor;
-  final String url;
 
   const PaymentMethod({
     required this.id,
@@ -26,7 +21,6 @@ class PaymentMethod {
     required this.logoAsset,
     required this.primaryColor,
     required this.secondaryColor,
-    required this.url,
   });
 }
 
@@ -69,7 +63,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
       logoAsset: 'assets/images/bkash.png',
       primaryColor: Color(0xFFE2136E),
       secondaryColor: Color(0xFFFF6DAE),
-      url: 'https://yourbackend.com/payment/bkash/init',
     ),
     PaymentMethod(
       id: 'nagad',
@@ -78,7 +71,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
       logoAsset: 'assets/images/nagad.png',
       primaryColor: Color(0xFFFF6600),
       secondaryColor: Color(0xFFFFAA55),
-      url: 'https://yourbackend.com/payment/nagad/init',
     ),
     PaymentMethod(
       id: 'binance',
@@ -87,7 +79,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
       logoAsset: 'assets/images/binance.png',
       primaryColor: Color(0xFFF0B90B),
       secondaryColor: Color(0xFFFFDA6A),
-      url: 'https://yourbackend.com/payment/binance/init',
     ),
   ];
 
@@ -119,31 +110,17 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
   Future<void> _proceedToPayment() async {
     if (_selectedMethod == null) return;
     setState(() => _isProcessing = true);
-
-    final uri = Uri.parse(_selectedMethod!.url).replace(queryParameters: {
-      'amount': widget.amount.toStringAsFixed(2),
-      'purpose': widget.purpose,
-    });
-
+    await Future.delayed(const Duration(milliseconds: 400)); // mock delay
     setState(() => _isProcessing = false);
     if (!mounted) return;
 
-    // On web platform, show dialog
-    if (kIsWeb) {
-      _openWebPayment(uri.toString());
-      return;
-    }
-
-    // On mobile, use WebView
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => _PaymentWebViewScreen(
-          url: uri.toString(),
-          methodName: _selectedMethod!.name,
-          primaryColor: _selectedMethod!.primaryColor,
-          successUrlPattern: 'yourbackend.com/payment/success',
-          failureUrlPattern: 'yourbackend.com/payment/fail',
+        builder: (_) => _CustomPaymentFlowScreen(
+          method: _selectedMethod!,
+          amount: widget.amount,
+          purpose: widget.purpose,
         ),
       ),
     );
@@ -156,47 +133,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
       widget.onPaymentFailed?.call();
       _showResultDialog(success: false);
     }
-  }
-
-  void _openWebPayment(String url) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Open Payment',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'You will be redirected to the payment page in your browser.',
-          style: TextStyle(color: Colors.black54, fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.black38),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6C63FF),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              // Use url_launcher if needed:
-              // launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-            },
-            child: const Text('Open', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showResultDialog({required bool success}) {
@@ -290,342 +226,180 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
 }
 
 // ============================================
-//  Amount Card
+//  Custom Payment Flow Screen
+//  Step 1: Enter number/ID
+//  Step 2: Enter OTP
+//  Step 3: Enter PIN / Confirm
 // ============================================
-class _AmountCard extends StatelessWidget {
+enum _PaymentStep { enterNumber, enterOtp, enterPin }
+
+class _CustomPaymentFlowScreen extends StatefulWidget {
+  final PaymentMethod method;
   final double amount;
   final String purpose;
-  const _AmountCard({required this.amount, required this.purpose});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
-      ),
-      child: Row(
-        children: [
-          // Lottie instead of receipt icon
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: Lottie.network(
-              'https://assets3.lottiefiles.com/packages/lf20_xlmz9xwm.json',
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  purpose,
-                  style: TextStyle(
-                      color: Colors.black.withOpacity(0.6),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '\$${amount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF22C55E).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'Secure',
-              style: TextStyle(
-                  color: Color(0xFF22C55E),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================
-//  Payment Method Card
-// ============================================
-class _PaymentMethodCard extends StatelessWidget {
-  final PaymentMethod method;
-  final bool isSelected;
-  final VoidCallback onTap;
-  const _PaymentMethodCard(
-      {required this.method,
-      required this.isSelected,
-      required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-      decoration: BoxDecoration(
-        color: isSelected
-            ? method.primaryColor.withOpacity(0.08)
-            : const Color(0xFFF9F9F9),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isSelected
-              ? method.primaryColor.withOpacity(0.7)
-              : Colors.black.withOpacity(0.07),
-          width: isSelected ? 1.8 : 1,
-        ),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                    color: method.primaryColor.withOpacity(0.12),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6))
-              ]
-            : [],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            child: Row(
-              children: [
-                _MethodLogo(method: method),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        method.name,
-                        style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        method.subtitle,
-                        style: TextStyle(
-                            color: Colors.black.withOpacity(0.45),
-                            fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected
-                        ? method.primaryColor
-                        : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected
-                          ? method.primaryColor
-                          : Colors.black.withOpacity(0.25),
-                      width: 2,
-                    ),
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.white, size: 13)
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
-//  Method Logo - Lottie instead of icon
-// ============================================
-class _MethodLogo extends StatelessWidget {
-  final PaymentMethod method;
-  const _MethodLogo({required this.method});
-
-  String get _lottieUrl {
-    switch (method.id) {
-      case 'bkash':
-        return 'https://assets4.lottiefiles.com/packages/lf20_jbrw3hcz.json';
-      case 'nagad':
-        return 'https://assets3.lottiefiles.com/packages/lf20_xlmz9xwm.json';
-      case 'binance':
-        return 'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json';
-      default:
-        return 'https://assets3.lottiefiles.com/packages/lf20_xlmz9xwm.json';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-            colors: [method.primaryColor, method.secondaryColor],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Lottie.network(
-        _lottieUrl,
-        width: 52,
-        height: 52,
-        fit: BoxFit.contain,
-      ),
-    );
-  }
-}
-
-// ============================================
-//  Proceed Button
-// ============================================
-class _ProceedButton extends StatelessWidget {
-  final bool enabled;
-  final bool isLoading;
-  final Color color;
-  final VoidCallback onTap;
-  const _ProceedButton(
-      {required this.enabled,
-      required this.isLoading,
-      required this.color,
-      required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedOpacity(
-      opacity: enabled ? 1.0 : 0.4,
-      duration: const Duration(milliseconds: 250),
-      child: SizedBox(
-        width: double.infinity,
-        height: 56,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: enabled
-                ? LinearGradient(
-                    colors: [color, color.withOpacity(0.75)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight)
-                : const LinearGradient(
-                    colors: [Color(0xFFDDDDDD), Color(0xFFDDDDDD)]),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: enabled
-                ? [
-                    BoxShadow(
-                        color: color.withOpacity(0.35),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8))
-                  ]
-                : [],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: enabled && !isLoading ? onTap : null,
-              borderRadius: BorderRadius.circular(16),
-              child: Center(
-                child: isLoading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5))
-                    : const Text(
-                        'Proceed to Payment',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5),
-                      ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
-//  WebView Screen - Only renders on Mobile
-//  Web platform is handled via kIsWeb check
-// ============================================
-class _PaymentWebViewScreen extends StatefulWidget {
-  final String url;
-  final String methodName;
-  final Color primaryColor;
-  final String successUrlPattern;
-  final String failureUrlPattern;
-
-  const _PaymentWebViewScreen({
-    required this.url,
-    required this.methodName,
-    required this.primaryColor,
-    required this.successUrlPattern,
-    required this.failureUrlPattern,
+  const _CustomPaymentFlowScreen({
+    required this.method,
+    required this.amount,
+    required this.purpose,
   });
 
   @override
-  State<_PaymentWebViewScreen> createState() => _PaymentWebViewScreenState();
+  State<_CustomPaymentFlowScreen> createState() =>
+      _CustomPaymentFlowScreenState();
 }
 
-class _PaymentWebViewScreenState extends State<_PaymentWebViewScreen> {
-  late final WebViewController _controller;
-  bool _isLoading = true;
-  int _loadingProgress = 0;
+class _CustomPaymentFlowScreenState extends State<_CustomPaymentFlowScreen>
+    with SingleTickerProviderStateMixin {
+  _PaymentStep _step = _PaymentStep.enterNumber;
+  final _numberController = TextEditingController();
+  final _otpController = TextEditingController();
+  final _pinController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorText;
+  int _otpResendSeconds = 30;
+  bool _obscurePin = true;
+
+  late AnimationController _stepAnimController;
+  late Animation<Offset> _stepSlide;
 
   @override
   void initState() {
     super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageStarted: (_) => setState(() => _isLoading = true),
-        onPageFinished: (_) => setState(() {
-          _isLoading = false;
-          _loadingProgress = 100;
-        }),
-        onProgress: (p) => setState(() => _loadingProgress = p),
-        onNavigationRequest: (request) {
-          final url = request.url.toLowerCase();
-          if (url.contains(widget.successUrlPattern.toLowerCase())) {
-            Navigator.pop(context, true);
-            return NavigationDecision.prevent;
-          }
-          if (url.contains(widget.failureUrlPattern.toLowerCase())) {
-            Navigator.pop(context, false);
-            return NavigationDecision.prevent;
-          }
-          return NavigationDecision.navigate;
-        },
-      ))
-      ..loadRequest(Uri.parse(widget.url));
+    _stepAnimController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 350));
+    _stepSlide = Tween<Offset>(
+      begin: const Offset(0.12, 0),
+      end: Offset.zero,
+    ).animate(
+        CurvedAnimation(parent: _stepAnimController, curve: Curves.easeOut));
+    _stepAnimController.forward();
+  }
+
+  @override
+  void dispose() {
+    _numberController.dispose();
+    _otpController.dispose();
+    _pinController.dispose();
+    _stepAnimController.dispose();
+    super.dispose();
+  }
+
+  void _goToStep(_PaymentStep next) {
+    setState(() {
+      _step = next;
+      _errorText = null;
+    });
+    _stepAnimController.forward(from: 0);
+    if (next == _PaymentStep.enterOtp) _startOtpTimer();
+  }
+
+  void _startOtpTimer() async {
+    _otpResendSeconds = 30;
+    while (_otpResendSeconds > 0) {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+      setState(() => _otpResendSeconds--);
+    }
+  }
+
+  bool get _isBinance => widget.method.id == 'binance';
+
+  String get _numberLabel =>
+      _isBinance ? 'Binance Email / Pay ID' : 'Mobile Number';
+
+  String get _numberHint =>
+      _isBinance ? 'example@email.com' : '01XXXXXXXXX';
+
+  // --------------------------------------------------
+  //  Step 1: Send OTP request to your backend
+  // --------------------------------------------------
+  Future<void> _sendOtp() async {
+    if (_numberController.text.trim().isEmpty) {
+      setState(() => _errorText = 'Please enter your $_numberLabel');
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+
+    // TODO: Replace with your real API call
+    // Example:
+    // final response = await http.post(
+    //   Uri.parse('https://yourbackend.com/payment/${widget.method.id}/send-otp'),
+    //   body: {'number': _numberController.text.trim(), 'amount': widget.amount.toString()},
+    // );
+    // if (response.statusCode != 200) { setState(() => _errorText = 'Failed to send OTP'); return; }
+
+    await Future.delayed(const Duration(seconds: 1)); // mock delay
+
+    setState(() => _isLoading = false);
+    _goToStep(_PaymentStep.enterOtp);
+  }
+
+  // --------------------------------------------------
+  //  Step 2: Verify OTP with your backend
+  // --------------------------------------------------
+  Future<void> _verifyOtp() async {
+    if (_otpController.text.trim().length < 4) {
+      setState(() => _errorText = 'Enter the OTP you received');
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+
+    // TODO: Replace with your real API call
+    // Example:
+    // final response = await http.post(
+    //   Uri.parse('https://yourbackend.com/payment/${widget.method.id}/verify-otp'),
+    //   body: {'otp': _otpController.text.trim(), 'number': _numberController.text.trim()},
+    // );
+    // if (response.statusCode != 200) { setState(() => _errorText = 'Invalid OTP'); return; }
+
+    await Future.delayed(const Duration(seconds: 1)); // mock delay
+
+    setState(() => _isLoading = false);
+    _goToStep(_PaymentStep.enterPin);
+  }
+
+  // --------------------------------------------------
+  //  Step 3: Confirm payment with PIN via your backend
+  // --------------------------------------------------
+  Future<void> _confirmPayment() async {
+    final pinValue = _pinController.text.trim();
+    if (pinValue.length < (_isBinance ? 6 : 5)) {
+      setState(() => _errorText =
+          _isBinance ? 'Enter your 6-digit PIN' : 'Enter your 5-digit PIN');
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+
+    // TODO: Replace with your real API call
+    // Example:
+    // final response = await http.post(
+    //   Uri.parse('https://yourbackend.com/payment/${widget.method.id}/confirm'),
+    //   body: {
+    //     'number': _numberController.text.trim(),
+    //     'pin': pinValue,
+    //     'amount': widget.amount.toString(),
+    //     'purpose': widget.purpose,
+    //   },
+    // );
+    // final success = response.statusCode == 200;
+    // Navigator.pop(context, success);
+    // return;
+
+    await Future.delayed(const Duration(seconds: 1)); // mock delay
+
+    setState(() => _isLoading = false);
+    if (!mounted) return;
+    Navigator.pop(context, true); // mock success
   }
 
   @override
@@ -637,111 +411,217 @@ class _PaymentWebViewScreenState extends State<_PaymentWebViewScreen> {
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded,
-              color: Colors.black54, size: 22),
-          onPressed: () => Navigator.pop(context, null),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.black54, size: 20),
+          onPressed: () {
+            if (_step == _PaymentStep.enterNumber) {
+              Navigator.pop(context, null);
+            } else if (_step == _PaymentStep.enterOtp) {
+              _goToStep(_PaymentStep.enterNumber);
+            } else {
+              _goToStep(_PaymentStep.enterOtp);
+            }
+          },
         ),
         title: Text(
-          '${widget.methodName} Payment',
+          '${widget.method.name} Payment',
           style: const TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.w600),
+              color: Colors.black, fontSize: 17, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(3),
-          child: AnimatedOpacity(
-            opacity: _isLoading ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 300),
-            child: LinearProgressIndicator(
-              value: _loadingProgress / 100,
-              backgroundColor: Colors.black12,
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(widget.primaryColor),
-              minHeight: 3,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: SlideTransition(
+            position: _stepSlide,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Step indicator
+                _StepIndicator(
+                  current: _step.index,
+                  color: widget.method.primaryColor,
+                ),
+                const SizedBox(height: 28),
+
+                // Method logo + amount summary
+                _PaymentSummaryHeader(
+                    method: widget.method, amount: widget.amount),
+                const SizedBox(height: 32),
+
+                // Step content
+                if (_step == _PaymentStep.enterNumber)
+                  _buildNumberStep()
+                else if (_step == _PaymentStep.enterOtp)
+                  _buildOtpStep()
+                else
+                  _buildPinStep(),
+
+                if (_errorText != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.red, size: 15),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          _errorText!,
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
+                const SizedBox(height: 28),
+                _ProceedButton(
+                  enabled: !_isLoading,
+                  isLoading: _isLoading,
+                  color: widget.method.primaryColor,
+                  onTap: _step == _PaymentStep.enterNumber
+                      ? _sendOtp
+                      : _step == _PaymentStep.enterOtp
+                          ? _verifyOtp
+                          : _confirmPayment,
+                ),
+              ],
             ),
           ),
         ),
       ),
-      body: WebViewWidget(controller: _controller),
     );
   }
-}
 
-// ============================================
-//  Payment Result Dialog
-// ============================================
-class _PaymentResultDialog extends StatelessWidget {
-  final bool success;
-  const _PaymentResultDialog({required this.success});
+  // --------------------------------------------------
+  //  Step 1 UI: Enter mobile number / Binance ID
+  // --------------------------------------------------
+  Widget _buildNumberStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Enter your $_numberLabel',
+          style: const TextStyle(
+              color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _isBinance
+              ? 'We will send an OTP to your registered email.'
+              : 'We will send an OTP to this number.',
+          style: TextStyle(
+              color: Colors.black.withOpacity(0.5), fontSize: 13, height: 1.4),
+        ),
+        const SizedBox(height: 20),
+        _PaymentTextField(
+          controller: _numberController,
+          hint: _numberHint,
+          label: _numberLabel,
+          keyboardType: _isBinance
+              ? TextInputType.emailAddress
+              : TextInputType.phone,
+          inputFormatters: _isBinance
+              ? []
+              : [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
+          prefixIcon: _isBinance
+              ? Icons.alternate_email_rounded
+              : Icons.phone_android_rounded,
+          accentColor: widget.method.primaryColor,
+        ),
+      ],
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  // --------------------------------------------------
+  //  Step 2 UI: Enter OTP
+  // --------------------------------------------------
+  Widget _buildOtpStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Enter OTP',
+          style: TextStyle(
+              color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'A 6-digit OTP has been sent to ${_numberController.text.trim()}',
+          style: TextStyle(
+              color: Colors.black.withOpacity(0.5), fontSize: 13, height: 1.4),
+        ),
+        const SizedBox(height: 20),
+        _OtpInputRow(
+          controller: _otpController,
+          accentColor: widget.method.primaryColor,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // Lottie instead of icon
-            Lottie.network(
-              success
-                  ? 'https://assets4.lottiefiles.com/packages/lf20_jbrw3hcz.json'
-                  : 'https://assets2.lottiefiles.com/packages/lf20_qpwbiyxf.json',
-              width: 100,
-              height: 100,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              success ? 'Payment Successful!' : 'Payment Failed',
-              style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              success
-                  ? 'Your account has been verified successfully.'
-                  : 'Something went wrong. Please try again.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  color: Colors.black54, fontSize: 14, height: 1.5),
-            ),
-            const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: success
-                      ? const Color(0xFF22C55E)
-                      : const Color(0xFF6C63FF),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  if (success) Navigator.pop(context);
+            if (_otpResendSeconds > 0)
+              Text(
+                'Resend in ${_otpResendSeconds}s',
+                style: TextStyle(
+                    color: Colors.black.withOpacity(0.4), fontSize: 12),
+              )
+            else
+              GestureDetector(
+                onTap: () {
+                  // TODO: call send OTP API again
+                  _startOtpTimer();
                 },
                 child: Text(
-                  success ? 'Done' : 'Try Again',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700),
+                  'Resend OTP',
+                  style: TextStyle(
+                      color: widget.method.primaryColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600),
                 ),
               ),
-            ),
           ],
         ),
-      ),
+      ],
     );
   }
-}
 
+  // --------------------------------------------------
+  //  Step 3 UI: Enter PIN
+  // --------------------------------------------------
+  Widget _buildPinStep() {
+    final pinLength = _isBinance ? 6 : 5;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Enter your ${widget.method.name} PIN',
+          style: const TextStyle(
+              color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Enter your $pinLength-digit secret PIN to confirm the payment.',
+          style: TextStyle(
+              color: Colors.black.withOpacity(0.5), fontSize: 13, height: 1.4),
+        ),
+        const SizedBox(height: 20),
+        _PaymentTextField(
+          controller: _pinController,
+          hint: '••••• ',
+          label: 'PIN',
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(pinLength),
+          ],
+          prefixIcon: Icons.lock_outline_rounded,
+          accentColor: widget.method.primaryColor,
+          obscureText: _obscurePin,
+          suffixIcon: IconButton(
+ 
