@@ -1,158 +1,223 @@
-import 'dart:async';
+ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import '../models/payment_method.dart';
-import '../widgets/payment_widgets.dart';
-
-enum BkashPaymentStep { enterNumber, enterOtp, enterPin }
+// import '../widgets/payment_widgets.dart'; // প্রয়োজন না হলে কমেন্ট করে রাখতে পারেন
 
 class BkashPaymentFlow extends StatefulWidget {
   final PaymentMethod method;
   final double amount;
   final String purpose;
 
-  const BkashPaymentFlow({super.key, required this.method, required this.amount, required this.purpose});
+  const BkashPaymentFlow({
+    super.key, 
+    required this.method, 
+    required this.amount, 
+    required this.purpose
+  });
 
   @override
   State<BkashPaymentFlow> createState() => _BkashPaymentFlowState();
 }
 
 class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerProviderStateMixin {
-  BkashPaymentStep _step = BkashPaymentStep.enterNumber;
-  final _numberController = TextEditingController();
-  final _otpController = TextEditingController();
-  final _pinController = TextEditingController();
-
+  final _trxIdController = TextEditingController();
   bool _isLoading = false;
-  bool _obscurePin = true;
   String? _errorText;
-  int _otpResendSeconds = 60;
-  Timer? _otpTimer;
-  late AnimationController _stepAnimController;
-  late Animation<Offset> _stepSlide;
-
-  @override
-  void initState() {
-    super.initState();
-    _stepAnimController = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
-    _stepSlide = Tween<Offset>(begin: const Offset(0.06, 0), end: Offset.zero).animate(CurvedAnimation(parent: _stepAnimController, curve: Curves.easeOut));
-    _stepAnimController.forward();
-  }
+  
+  // আপনার দেয়া প্রাপক নম্বর
+  final String _receiverNumber = '01576584250';
 
   @override
   void dispose() {
-    _numberController.dispose(); _otpController.dispose(); _pinController.dispose(); _otpTimer?.cancel(); _stepAnimController.dispose();
+    _trxIdController.dispose();
     super.dispose();
   }
 
-  void _goToStep(BkashPaymentStep step) {
-    setState(() { _step = step; _errorText = null; });
-    _stepAnimController.forward(from: 0);
+  void _copyToClipboard(String text, String label) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$label কপি করা হয়েছে'),
+        backgroundColor: const Color(0xFF87CEEB), // Sky Blue
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
-  void _startOtpTimer() {
-    _otpTimer?.cancel();
-    setState(() => _otpResendSeconds = 60);
-    _otpTimer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_otpResendSeconds <= 1) { t.cancel(); setState(() => _otpResendSeconds = 0); } 
-      else { setState(() => _otpResendSeconds--); }
+  Future<void> _submitTransaction() async {
+    final trxId = _trxIdController.text.trim();
+    
+    if (trxId.isEmpty) {
+      setState(() => _errorText = 'অনুগ্রহ করে Transaction ID দিন');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
     });
-  }
 
-  Future<void> _sendOtp() async {
-    final number = _numberController.text.trim();
-    if (number.length < 11) { setState(() => _errorText = 'Enter a valid 11-digit bKash number'); return; }
-    setState(() { _isLoading = true; _errorText = null; });
-    await Future.delayed(const Duration(seconds: 1)); // API Call Here
-    setState(() => _isLoading = false);
-    if (!mounted) return;
-    _startOtpTimer();
-    _goToStep(BkashPaymentStep.enterOtp);
-  }
+    // এখানে আপনার সার্ভার বা API চেক করার কোড হবে
+    await Future.delayed(const Duration(seconds: 2)); 
 
-  Future<void> _verifyOtp() async {
-    if (_otpController.text.trim().length < 6) { setState(() => _errorText = 'Enter the 6-digit OTP'); return; }
-    setState(() { _isLoading = true; _errorText = null; });
-    await Future.delayed(const Duration(seconds: 1)); // API Call Here
     setState(() => _isLoading = false);
-    if (!mounted) return;
-    _goToStep(BkashPaymentStep.enterPin);
-  }
 
-  Future<void> _confirmPayment() async {
-    if (_pinController.text.trim().length < 5) { setState(() => _errorText = 'Enter your 5-digit PIN'); return; }
-    setState(() { _isLoading = true; _errorText = null; });
-    await Future.delayed(const Duration(seconds: 1)); // API Call Here
-    setState(() => _isLoading = false);
     if (!mounted) return;
-    Navigator.pop(context, true); // Return success
+    
+    // সফল হলে আগের পেজে ফিরে যাবে
+    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF121212), // Charcoal Black
       appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded, color: Colors.black54), onPressed: () {
-          if (_step == BkashPaymentStep.enterNumber) Navigator.pop(context, null);
-          else if (_step == BkashPaymentStep.enterOtp) _goToStep(BkashPaymentStep.enterNumber);
-          else _goToStep(BkashPaymentStep.enterOtp);
-        }),
-        title: Text('${widget.method.name} Payment', style: const TextStyle(color: Colors.black, fontSize: 17, fontWeight: FontWeight.w600)), centerTitle: true,
+        backgroundColor: const Color(0xFF1E1E1E),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          onPressed: () => Navigator.pop(context, null),
+        ),
+        title: Text(
+          '${widget.method.name} Payment',
+          style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: SlideTransition(
-            position: _stepSlide,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                StepIndicator(current: _step.index, color: widget.method.primaryColor),
-                const SizedBox(height: 28),
-                PaymentSummaryHeader(method: widget.method, amount: widget.amount),
-                const SizedBox(height: 32),
-                if (_step == BkashPaymentStep.enterNumber) _buildNumberStep()
-                else if (_step == BkashPaymentStep.enterOtp) _buildOtpStep()
-                else _buildPinStep(),
-                if (_errorText != null) Padding(padding: const EdgeInsets.only(top: 12), child: Row(children: [Lottie.asset('assets/lottie/error.json', width: 22, height: 22), const SizedBox(width: 6), Expanded(child: Text(_errorText!, style: const TextStyle(color: Colors.red, fontSize: 13)))])),
-                const SizedBox(height: 28),
-                ProceedButton(enabled: !_isLoading, isLoading: _isLoading, color: widget.method.primaryColor, onTap: _step == BkashPaymentStep.enterNumber ? _sendOtp : _step == BkashPaymentStep.enterOtp ? _verifyOtp : _confirmPayment),
-              ],
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // পেমেন্ট ইন্সট্রাকশন কার্ড
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF333333)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'পেমেন্ট করার নিয়মঃ',
+                      style: TextStyle(color: Color(0xFFFFD700), fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildStepText('১. bKash অ্যাপ বা *247# ডায়াল করে Send Money করুন।'),
+                    const SizedBox(height: 15),
+                    
+                    // প্রাপক নম্বর রো
+                    _buildInfoTile('প্রাপক নম্বরঃ', _receiverNumber, Icons.phone_android),
+                    const SizedBox(height: 10),
+                    
+                    // টাকার পরিমাণ রো
+                    _buildInfoTile('মোট টাকার পরিমাণঃ', '৳${widget.amount.toStringAsFixed(2)}', Icons.account_balance_wallet, valueColor: const Color(0xFFFFD700)),
+                    
+                    const SizedBox(height: 15),
+                    _buildStepText('২. পিন দিয়ে পেমেন্ট সফল হওয়ার পর নিচের বক্সে Transaction ID দিন।'),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Transaction ID ইনপুট ফিল্ড
+              const Text(
+                'Transaction ID দিন',
+                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _trxIdController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'যেমন: TX1234ABC',
+                  hintStyle: const TextStyle(color: Colors.white24),
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                  prefixIcon: const Icon(Icons.qr_code_scanner, color: Color(0xFF87CEEB)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF333333)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF87CEEB)),
+                  ),
+                ),
+              ),
+
+              // এরর মেসেজ (যদি থাকে)
+              if (_errorText != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(_errorText!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                ),
+
+              const SizedBox(height: 32),
+
+              // সাবমিট বাটন
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submitTransaction,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF87CEEB), // Sky Blue
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.black)
+                      : const Text('Submit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNumberStep() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Enter bKash Number', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(height: 6),
-      Text('We will send an OTP to this number.', style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13)), const SizedBox(height: 20),
-      PaymentTextField(controller: _numberController, hint: '01XXXXXXXXX', label: 'Mobile Number', keyboardType: TextInputType.phone, inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)], prefixIcon: Icons.phone_android, accentColor: widget.method.primaryColor),
-    ]);
+  Widget _buildStepText(String text) {
+    return Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4));
   }
 
-  Widget _buildOtpStep() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Enter OTP', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(height: 6),
-      Text('A 6-digit OTP has been sent to ${_numberController.text.trim()}', style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13)), const SizedBox(height: 20),
-      OtpInputRow(controller: _otpController, accentColor: widget.method.primaryColor), const SizedBox(height: 16),
-      Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-        if (_otpResendSeconds > 0) Text('Resend in ${_otpResendSeconds}s', style: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 12))
-        else GestureDetector(onTap: _startOtpTimer, child: Text('Resend OTP', style: TextStyle(color: widget.method.primaryColor, fontSize: 13, fontWeight: FontWeight.w600))),
-      ]),
-    ]);
-  }
-
-  Widget _buildPinStep() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Enter bKash PIN', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(height: 6),
-      Text('Enter your 5-digit secret PIN.', style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 13)), const SizedBox(height: 20),
-      PaymentTextField(controller: _pinController, hint: '?????', label: 'PIN', keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(5)], prefixIcon: Icons.lock_outline, accentColor: widget.method.primaryColor, obscureText: _obscurePin, suffixIcon: IconButton(icon: Icon(_obscurePin ? Icons.visibility_off : Icons.visibility, color: Colors.black45), onPressed: () => setState(() => _obscurePin = !_obscurePin))),
-    ]);
+  Widget _buildInfoTile(String label, String value, IconData icon, {Color? valueColor}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF121212),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF87CEEB), size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                Text(value, style: TextStyle(color: valueColor ?? Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy, color: Colors.white54, size: 18),
+            onPressed: () => _copyToClipboard(value, label),
+          )
+        ],
+      ),
+    );
   }
 }
+
