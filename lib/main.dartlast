@@ -1,5 +1,4 @@
-
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,9 +10,8 @@ import 'features/home/home_screen.dart';
 import 'features/reselling/reselling_screen.dart';
 import 'features/microjobs/microjobs_screen.dart';
 import 'features/campaigns/campaigns_screen.dart';
-import 'features/profile/profile_screen.dart';
+import 'features/profile/profile_screen.dart'; // Drive এর বদলে Profile
 import 'features/auth/registration_screen.dart';
-import 'features/payment/payment_gateway_screen.dart'; // ← নতুন
 
 final authProvider = StateNotifierProvider<AuthController, bool>((ref) {
   return AuthController();
@@ -52,37 +50,14 @@ final GoRouter _router = GoRouter(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
-    // ── Payment route ── নতুন, ShellRoute এর বাইরে রাখা হয়েছে
-    // কারণ payment screen এ bottom nav bar দরকার নেই
-    GoRoute(
-      path: '/payment',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        return PaymentGatewayScreen(
-          amount: extra?['amount'] ?? 199.00,
-          purpose: extra?['purpose'] ?? 'Account Verification Fee',
-          onPaymentSuccess: extra?['onSuccess'],
-        );
-      },
-    ),
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
-        GoRoute(
-            path: '/home',
-            builder: (context, state) => const HomeScreen()),
-        GoRoute(
-            path: '/reselling',
-            builder: (context, state) => const ResellingScreen()),
-        GoRoute(
-            path: '/microjobs',
-            builder: (context, state) => const MicrojobsScreen()),
-        GoRoute(
-            path: '/campaigns',
-            builder: (context, state) => const CampaignsScreen()),
-        GoRoute(
-            path: '/profile',
-            builder: (context, state) => const ProfileScreen()),
+        GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+        GoRoute(path: '/reselling', builder: (context, state) => const ResellingScreen()),
+        GoRoute(path: '/microjobs', builder: (context, state) => const MicrojobsScreen()),
+        GoRoute(path: '/campaigns', builder: (context, state) => const CampaignsScreen()),
+        GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()), // /drive -> /profile
       ],
     ),
   ],
@@ -90,13 +65,9 @@ final GoRouter _router = GoRouter(
     final ref = ProviderScope.containerOf(context);
     await ref.read(authLoadingProvider.future);
     final isLoggedIn = ref.read(authProvider);
-    final loc = state.matchedLocation;
-    final goingToRegister = loc == '/registration';
-    final goingToPayment = loc == '/payment';
+    final goingToRegister = state.matchedLocation == '/registration';
     if (!isLoggedIn && !goingToRegister) return '/registration';
     if (isLoggedIn && goingToRegister) return '/home';
-    // Payment page এ logged in থাকলেই যেতে পারবে
-    if (!isLoggedIn && goingToPayment) return '/registration';
     return null;
   },
 );
@@ -154,21 +125,11 @@ class MainWrapper extends ConsumerWidget {
 
   void _onNavTap(BuildContext context, int index) {
     switch (index) {
-      case 0:
-        context.go('/home');
-        break;
-      case 1:
-        context.go('/reselling');
-        break;
-      case 2:
-        context.go('/microjobs');
-        break;
-      case 3:
-        context.go('/campaigns');
-        break;
-      case 4:
-        context.go('/profile');
-        break;
+      case 0: context.go('/home'); break;
+      case 1: context.go('/reselling'); break;
+      case 2: context.go('/microjobs'); break;
+      case 3: context.go('/campaigns'); break;
+      case 4: context.go('/profile'); break;
     }
   }
 
@@ -192,7 +153,7 @@ class MainWrapper extends ConsumerWidget {
     NavigationDestination(
         icon: Icon(Icons.person_outline_rounded),
         selectedIcon: Icon(Icons.person_rounded),
-        label: 'Profile'),
+        label: 'Profile'), // Drive -> Profile
   ];
 
   static const List<NavigationRailDestination> _railDests = [
@@ -215,7 +176,7 @@ class MainWrapper extends ConsumerWidget {
     NavigationRailDestination(
         icon: Icon(Icons.person_outline_rounded),
         selectedIcon: Icon(Icons.person_rounded),
-        label: Text('Profile')),
+        label: Text('Profile')), // Drive -> Profile
   ];
 
   @override
@@ -252,7 +213,7 @@ class MainWrapper extends ConsumerWidget {
 
     Widget drawer = _buildDrawer(context, ref, isLoggedIn);
 
-    // ── Desktop & Tablet ──
+    // ── Desktop & Tablet ─────────────────────────────────────────────
     if (isDesktop || isTablet) {
       return Scaffold(
         backgroundColor: skyBlue,
@@ -297,7 +258,7 @@ class MainWrapper extends ConsumerWidget {
       );
     }
 
-    // ── Mobile ──
+    // ── Mobile ───────────────────────────────────────────────────────
     return Scaffold(
       backgroundColor: skyBlue,
       drawer: drawer,
@@ -493,10 +454,10 @@ class MainWrapper extends ConsumerWidget {
                         Icons.workspace_premium_rounded, "Royalty Salary",
                         onTap: () => Navigator.pop(context)),
                     const Padding(
-                      padding: EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 15),
-                      child: Divider(
-                          color: Color(0xFFEEEEEE), thickness: 1.5),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                      child:
+                          Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
                     ),
                   ],
                   _drawerItem(context,
@@ -507,9 +468,7 @@ class MainWrapper extends ConsumerWidget {
                       iconColor: Colors.blue,
                       onTap: () => Navigator.pop(context)),
                   _drawerItem(
-                      context,
-                      Icons.smart_display_rounded,
-                      "YouTube Channel",
+                      context, Icons.smart_display_rounded, "YouTube Channel",
                       iconColor: Colors.red,
                       onTap: () => Navigator.pop(context)),
                   _drawerItem(
@@ -564,4 +523,3 @@ class MainWrapper extends ConsumerWidget {
     );
   }
 }
-
