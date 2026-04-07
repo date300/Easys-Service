@@ -1,10 +1,4 @@
-// ─────────────────────────────────────────────
-//  web_stub.dart
-//  রাখো: lib/features/payment/web_stub.dart
-//
-//  Web platform এ webview_flutter নেই।
-//  এই stub ফাইল compile error থেকে বাঁচায়।
-// ─────────────────────────────────────────────
+import 'package:flutter/widgets.dart';
 
 class WebViewController {
   WebViewController();
@@ -13,9 +7,12 @@ class WebViewController {
   Future<void> loadRequest(Uri uri) async {}
 }
 
-class WebViewWidget {
+class WebViewWidget extends StatelessWidget {
   final WebViewController controller;
-  const WebViewWidget({required this.controller});
+  const WebViewWidget({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 class JavaScriptMode {

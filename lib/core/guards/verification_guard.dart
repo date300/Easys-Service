@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/services/auth_service.dart';
-import '../core/widgets/verification_modal.dart';
-
+import '../services/auth_service.dart';
+import '../widgets/verification_modal.dart';
 // ─────────────────────────────────────────────
 //  VerificationGuard
 //  যেকোনো button বা action এ ব্যবহার করো।
