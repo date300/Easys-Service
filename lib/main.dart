@@ -10,8 +10,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'router/app_router.dart';
 
 // ============================================
-// PROVIDERS
+// 🚀 PREMIUM DARAZ-STYLE NAVIGATION BAR
+// Complete Copy-Paste Ready Solution
 // ============================================
+
+// Providers
 final authProvider = StateNotifierProvider<AuthController, bool>((ref) {
   return AuthController();
 });
@@ -42,6 +45,7 @@ final authLoadingProvider = FutureProvider<void>((ref) async {
   await ref.read(authProvider.notifier).loadFromPrefs();
 });
 
+// Detail Page Provider
 final isDetailViewProvider = StateProvider<bool>((ref) => false);
 final detailViewTitleProvider = StateProvider<String>((ref) => '');
 
@@ -85,11 +89,9 @@ class MainWrapper extends ConsumerStatefulWidget {
 
 class _MainWrapperState extends ConsumerState<MainWrapper> {
   static const Color skyBlue = Color(0xFF29B6F6);
-  static const Color premiumOrange = Color(0xFFF57224);
+  static const Color premiumOrange = Color(0xFFF57224); // 🎯 Daraz Orange
   static const Color premiumDark = Color(0xFF1A1A2E);
-  static const Color darazPink = Color(0xFFFF6B9D);
-  static const Color darazOrange = Color(0xFFFF8E53);
-
+  
   static bool _isDesktop(BuildContext ctx) =>
       MediaQuery.of(ctx).size.width >= 1100;
   static bool _isTablet(BuildContext ctx) =>
@@ -103,6 +105,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     if (location.startsWith('/reselling')) return 1;
     if (location.startsWith('/microjobs')) return 2;
     if (location.startsWith('/campaigns')) return 3;
+    if (location.startsWith('/profile')) return 4;
     return 0;
   }
 
@@ -123,6 +126,9 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       case 3:
         context.go('/campaigns');
         break;
+      case 4:
+        context.go('/profile');
+        break;
     }
   }
 
@@ -136,13 +142,8 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final isMobile = _isMobile(context);
 
     final isPaymentPage = location == '/payment';
-    final isProfilePage = location == '/profile';
-    final isDetailView = isPaymentPage || isProfilePage || ref.watch(isDetailViewProvider);
-    final detailTitle = isPaymentPage 
-        ? 'Payment' 
-        : isProfilePage 
-            ? 'Profile' 
-            : ref.watch(detailViewTitleProvider);
+    final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
+    final detailTitle = isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
 
     final animatedChild = widget.child
         .animate(key: ValueKey(location))
@@ -255,8 +256,11 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 label: 'Reselling',
                 onTap: () => _onNavTap(context, 1),
               ),
-              _buildCenterButton(
+              _buildNavItem(
+                index: 2,
                 currentIndex: currentIndex,
+                icon: Icons.assignment_rounded,
+                label: 'Microjobs',
                 onTap: () => _onNavTap(context, 2),
               ),
               _buildNavItem(
@@ -265,6 +269,13 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 icon: Icons.campaign_rounded,
                 label: 'Campaigns',
                 onTap: () => _onNavTap(context, 3),
+              ),
+              _buildNavItem(
+                index: 4,
+                currentIndex: currentIndex,
+                icon: Icons.person_rounded,
+                label: 'Profile',
+                onTap: () => _onNavTap(context, 4),
               ),
             ],
           ),
@@ -295,6 +306,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 🎯 Premium Icon with Animation
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
@@ -317,6 +329,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
               ),
             ),
             SizedBox(height: 4.h),
+            // 📝 Animated Label
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 300),
               style: GoogleFonts.poppins(
@@ -326,6 +339,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
               ),
               child: Text(label),
             ),
+            // 🔥 Premium Indicator Line (Daraz Style)
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
@@ -346,58 +360,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCenterButton({
-    required int currentIndex,
-    required VoidCallback onTap,
-  }) {
-    final isSelected = currentIndex == 2;
-    
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 56.w,
-        height: 56.w,
-        margin: EdgeInsets.only(bottom: 8.h),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              darazPink,
-              darazOrange,
-            ],
-          ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: darazPink.withOpacity(0.4),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-          border: Border.all(
-            color: Colors.white,
-            width: 3.w,
-          ),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.assignment_rounded,
-            color: Colors.white,
-            size: 28.sp,
-          ),
-        ),
-      ).animate(
-        onPlay: (controller) => controller.repeat(reverse: true),
-      ).scale(
-        begin: const Offset(1, 1),
-        end: const Offset(1.05, 1.05),
-        duration: 2.seconds,
-        curve: Curves.easeInOut,
       ),
     );
   }
@@ -428,6 +390,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       ),
       child: Column(
         children: [
+          // Logo Section
           Container(
             padding: EdgeInsets.all(20.w),
             child: Row(
@@ -460,6 +423,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
               ],
             ),
           ),
+          // Navigation Items
           Expanded(
             child: ListView(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
@@ -499,6 +463,15 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                   isDesktop: isDesktop,
                   onTap: () => _onNavTap(context, 3),
                 ),
+                SizedBox(height: 12.h),
+                _buildRailItem(
+                  index: 4,
+                  currentIndex: currentIndex,
+                  icon: Icons.person_rounded,
+                  label: 'Profile',
+                  isDesktop: isDesktop,
+                  onTap: () => _onNavTap(context, 4),
+                ),
               ],
             ),
           ),
@@ -536,6 +509,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         ),
         child: Row(
           children: [
+            // Premium Icon Container
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               padding: EdgeInsets.all(isSelected ? 10.w : 8.w),
@@ -569,6 +543,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                   child: Text(label),
                 ),
               ),
+              // Active Indicator Dot
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 width: isSelected ? 8.w : 0,
