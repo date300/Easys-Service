@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import '../features/drive/drive_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/reselling/reselling_screen.dart';
 import '../features/microjobs/microjobs_screen.dart';
@@ -27,6 +27,10 @@ final GoRouter appRouter = GoRouter(
           path: '/home',
           builder: (context, state) => const HomeScreen(),
         ),
+        GoRoute(
+        path: '/drive',
+       builder: (context, state) => const DriveScreen(),
+),
         GoRoute(
           path: '/reselling',
           builder: (context, state) => const ResellingScreen(),
