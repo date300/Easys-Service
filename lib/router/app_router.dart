@@ -9,7 +9,7 @@ import '../features/campaigns/campaigns_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/auth/registration_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
-import 'main.dart'; // authProvider, authLoadingProvider, MainWrapper
+import '../main.dart'; // authProvider, authLoadingProvider, MainWrapper
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/home',
