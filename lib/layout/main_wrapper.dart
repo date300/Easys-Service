@@ -1,5 +1,5 @@
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,35 +14,20 @@ import '../features/campaigns/campaigns_screen.dart';
 import '../features/profile/profile_screen.dart';
 import 'registration_screen.dart';
 
-// Providers
 final navIndexProvider = StateProvider<int>((ref) => 0);
 final authProvider = StateProvider<bool>((ref) => false);
 final authLoadingProvider = StateProvider<bool>((ref) => true);
-
-// Deep Page Provider - Details Page গুলোর জন্য
-final isDetailViewProvider = StateProvider<bool>((ref) => false);
-final detailViewTitleProvider = StateProvider<String>((ref) => '');
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-// GoRouter - Nested Navigation সাপোর্ট
 final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(
       path: '/',
       builder: (context, state) => const MainWrapper(),
-    ),
-    // Details Routes - এগুলো MainWrapper ছাড়া আলাদা পেজ
-    GoRoute(
-      path: '/details/:type/:id',
-      builder: (context, state) {
-        final type = state.pathParameters['type']!;
-        final id = state.pathParameters['id']!;
-        return DetailsScreen(type: type, id: id);
-      },
     ),
   ],
 );
@@ -64,7 +49,7 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             textTheme: GoogleFonts.poppinsTextTheme(),
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF29B6F6),
+              seedColor: const Color(0xFFFF6600), // Daraz Orange
               brightness: Brightness.light,
             ),
           ),
@@ -75,9 +60,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ============================================
-// MAIN WRAPPER - শুধু মূল ৫টি ট্যাবের জন্য
-// ============================================
 class MainWrapper extends ConsumerStatefulWidget {
   const MainWrapper({super.key});
 
@@ -86,8 +68,9 @@ class MainWrapper extends ConsumerStatefulWidget {
 }
 
 class _MainWrapperState extends ConsumerState<MainWrapper> {
-  static const Color skyBlue = Color(0xFF29B6F6);
+  static const Color darazOrange = Color(0xFFFF6600);
 
+  // Breakpoints
   static bool _isDesktop(BuildContext ctx) =>
       MediaQuery.of(ctx).size.width >= 1100;
   static bool _isTablet(BuildContext ctx) =>
@@ -96,57 +79,12 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
   static bool _isMobile(BuildContext ctx) =>
       MediaQuery.of(ctx).size.width < 600;
 
+  // Responsive font size
   static double _fs(BuildContext ctx, double mobile, double tablet, double desktop) {
     if (_isDesktop(ctx)) return desktop;
     if (_isTablet(ctx)) return tablet;
     return mobile;
   }
-
-  static const List<NavigationDestination> _bottomDests = [
-    NavigationDestination(
-        icon: Icon(Icons.home_outlined),
-        selectedIcon: Icon(Icons.home),
-        label: 'Home'),
-    NavigationDestination(
-        icon: Icon(Icons.storefront_outlined),
-        selectedIcon: Icon(Icons.storefront),
-        label: 'Reselling'),
-    NavigationDestination(
-        icon: Icon(Icons.assignment_outlined),
-        selectedIcon: Icon(Icons.assignment),
-        label: 'Microjobs'),
-    NavigationDestination(
-        icon: Icon(Icons.campaign_outlined),
-        selectedIcon: Icon(Icons.campaign),
-        label: 'Campaigns'),
-    NavigationDestination(
-        icon: Icon(Icons.person_outline_rounded),
-        selectedIcon: Icon(Icons.person_rounded),
-        label: 'Profile'),
-  ];
-
-  static const List<NavigationRailDestination> _railDests = [
-    NavigationRailDestination(
-        icon: Icon(Icons.home_outlined),
-        selectedIcon: Icon(Icons.home),
-        label: Text('Home')),
-    NavigationRailDestination(
-        icon: Icon(Icons.storefront_outlined),
-        selectedIcon: Icon(Icons.storefront),
-        label: Text('Reselling')),
-    NavigationRailDestination(
-        icon: Icon(Icons.assignment_outlined),
-        selectedIcon: Icon(Icons.assignment),
-        label: Text('Microjobs')),
-    NavigationRailDestination(
-        icon: Icon(Icons.campaign_outlined),
-        selectedIcon: Icon(Icons.campaign),
-        label: Text('Campaigns')),
-    NavigationRailDestination(
-        icon: Icon(Icons.person_outline_rounded),
-        selectedIcon: Icon(Icons.person_rounded),
-        label: Text('Profile')),
-  ];
 
   @override
   void initState() {
@@ -179,7 +117,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
 
     if (isLoading) {
       return const Scaffold(
-        backgroundColor: skyBlue,
+        backgroundColor: darazOrange,
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
@@ -188,7 +126,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final bool isTablet = _isTablet(context);
     final bool isMobile = _isMobile(context);
 
-    // Page Content with Animation
     final Widget pageContent = isLoggedIn
         ? pages[currentIndex]
             .animate(key: ValueKey(currentIndex))
@@ -196,196 +133,248 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             .moveY(begin: 10, end: 0)
         : const RegistrationScreen().animate().fadeIn(duration: 400.ms);
 
-    return Scaffold(
-      backgroundColor: skyBlue,
-      drawer: _buildDrawer(context, isLoggedIn),
-      body: SafeArea(
-        child: Row(
-          children: [
-            // Desktop/Tablet Rail
-            if ((isDesktop || isTablet) && isLoggedIn)
-              NavigationRail(
-                backgroundColor: skyBlue,
-                selectedIndex: currentIndex,
-                onDestinationSelected: (i) =>
-                    ref.read(navIndexProvider.notifier).state = i,
-                extended: isDesktop,
-                labelType: isDesktop
-                    ? NavigationRailLabelType.none
-                    : NavigationRailLabelType.all,
-                selectedIconTheme:
-                    const IconThemeData(color: Colors.white, size: 26),
-                unselectedIconTheme: IconThemeData(
-                    color: Colors.white.withOpacity(0.55), size: 22),
-                selectedLabelTextStyle: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: _fs(context, 13, 13, 14)),
-                unselectedLabelTextStyle: GoogleFonts.poppins(
-                    color: Colors.white.withOpacity(0.65),
-                    fontSize: _fs(context, 12, 12, 13)),
-                indicatorColor: Colors.white.withOpacity(0.18),
-                leading: _railLeading(context, isDesktop),
-                destinations: _railDests,
+    // Desktop & Tablet Layout
+    if (isDesktop || isTablet) {
+      return Scaffold(
+        backgroundColor: darazOrange,
+        drawer: _buildDrawer(context, isLoggedIn),
+        body: SafeArea(
+          child: Row(
+            children: [
+              if (isLoggedIn)
+                _buildPremiumNavigationRail(context, currentIndex, isDesktop),
+              Expanded(
+                child: Column(
+                  children: [
+                    _topBar(context, isLoggedIn, showMenuBtn: !isLoggedIn),
+                    Expanded(child: _buildBodyContainer(pageContent, isMobile)),
+                  ],
+                ),
               ),
-            
-            // Main Content Area
-            Expanded(
-              child: Column(
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Mobile Layout with Daraz Style Bottom Nav
+    return Scaffold(
+      backgroundColor: darazOrange,
+      drawer: _buildDrawer(context, isLoggedIn),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(56.h),
+        child: AppBar(
+          backgroundColor: darazOrange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          title: Text(
+            isLoggedIn ? 'Easy Service' : 'Create Account',
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: _fs(context, 18, 20, 22)),
+          ),
+          leading: Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu_open_rounded, size: 28),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+          actions: isLoggedIn
+              ? [
+                  IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.notifications_outlined))
+                ]
+              : [],
+        ),
+      ),
+      body: _buildBodyContainer(pageContent, isMobile),
+      bottomNavigationBar: isLoggedIn
+          ? DarazStyleBottomNav(
+              currentIndex: currentIndex,
+              onTap: (index) => ref.read(navIndexProvider.notifier).state = index,
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildBodyContainer(Widget child, bool isMobile) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(isMobile ? 32.r : 24),
+          topRight: Radius.circular(isMobile ? 32.r : 24),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(isMobile ? 32.r : 24),
+          topRight: Radius.circular(isMobile ? 32.r : 24),
+        ),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildPremiumNavigationRail(BuildContext context, int currentIndex, bool isDesktop) {
+    final List<NavRailItem> railItems = [
+      NavRailItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
+      NavRailItem(Icons.storefront_outlined, Icons.storefront_rounded, 'Reselling'),
+      NavRailItem(Icons.assignment_outlined, Icons.assignment_rounded, 'Microjobs'),
+      NavRailItem(Icons.campaign_outlined, Icons.campaign_rounded, 'Campaigns'),
+      NavRailItem(Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
+    ];
+
+    return Container(
+      width: isDesktop ? 280.w : 80.w,
+      color: darazOrange,
+      child: Column(
+        children: [
+          SizedBox(height: 20.h),
+          // Logo area
+          if (isDesktop)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Row(
                 children: [
-                  // Top Bar - সবসময় থাকবে MainWrapper-এ
-                  _buildTopBar(
-                    context, 
-                    isLoggedIn, 
-                    isMobile: isMobile,
-                    isTablet: isTablet,
-                    isDesktop: isDesktop,
+                  Container(
+                    width: 40.w,
+                    height: 40.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Icon(Icons.shopping_bag_rounded, color: darazOrange),
                   ),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(isMobile ? 32.r : 24),
-                          topRight: Radius.circular(isMobile ? 32.r : 24),
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(isMobile ? 32.r : 24),
-                          topRight: Radius.circular(isMobile ? 32.r : 24),
-                        ),
-                        child: pageContent,
-                      ),
+                  SizedBox(width: 12.w),
+                  Text(
+                    'Easy Service',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20.sp,
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          SizedBox(height: 30.h),
+          // Menu button
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+          SizedBox(height: 20.h),
+          // Navigation items
+          Expanded(
+            child: ListView.builder(
+              itemCount: railItems.length,
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              itemBuilder: (context, index) {
+                final item = railItems[index];
+                final isSelected = currentIndex == index;
+
+                return GestureDetector(
+                  onTap: () => ref.read(navIndexProvider.notifier).state = index,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: EdgeInsets.only(bottom: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 16.w : 12.w,
+                      vertical: 12.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Row(
+                      children: [
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            isSelected ? item.activeIcon : item.icon,
+                            key: ValueKey<bool>(isSelected),
+                            color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
+                            size: 24.sp,
+                          ),
+                        ),
+                        if (isDesktop) ...[
+                          SizedBox(width: 12.w),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: GoogleFonts.poppins(
+                              color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              fontSize: 14.sp,
+                            ),
+                            child: Text(item.label),
+                          ),
+                        ],
+                        if (isSelected)
+                          Container(
+                            margin: EdgeInsets.only(left: isDesktop ? 8.w : 0),
+                            width: isDesktop ? 4.w : 4.w,
+                            height: isDesktop ? 20.h : 4.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(2.r),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
-      // Bottom Navigation - শুধু Mobile-এ
-      bottomNavigationBar: (isMobile && isLoggedIn)
-          ? NavigationBarTheme(
-              data: NavigationBarThemeData(
-                indicatorColor: skyBlue.withOpacity(0.15),
-                labelTextStyle:
-                    WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return GoogleFonts.poppins(
-                        color: skyBlue,
-                        fontWeight: FontWeight.bold,
-                        fontSize: _fs(context, 11, 12, 13));
-                  }
-                  return GoogleFonts.poppins(
-                      color: Colors.grey,
-                      fontSize: _fs(context, 10, 11, 12));
-                }),
-                iconTheme:
-                    WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return IconThemeData(
-                        color: skyBlue,
-                        size: _fs(context, 24, 26, 28));
-                  }
-                  return IconThemeData(
-                      color: Colors.grey,
-                      size: _fs(context, 20, 22, 24));
-                }),
-              ),
-              child: NavigationBar(
-                backgroundColor: Colors.white,
-                height: 65.h,
-                selectedIndex: currentIndex,
-                onDestinationSelected: (i) =>
-                    ref.read(navIndexProvider.notifier).state = i,
-                destinations: _bottomDests,
-              ),
-            )
-          : null,
     );
   }
 
-  Widget _buildTopBar(
-    BuildContext context, 
-    bool isLoggedIn, {
-    required bool isMobile,
-    required bool isTablet,
-    required bool isDesktop,
-  }) {
+  Widget _topBar(BuildContext context, bool isLoggedIn, {required bool showMenuBtn}) {
     return Container(
-      color: skyBlue,
+      color: darazOrange,
       child: SizedBox(
-        height: isMobile ? 56.h : 60,
+        height: 60,
         child: Row(
           children: [
-            // Menu Button
-            Builder(
-              builder: (ctx) => IconButton(
-                icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
-                onPressed: () => Scaffold.of(ctx).openDrawer(),
-              ),
-            ),
-            
-            const SizedBox(width: 8),
-            
-            // Title
+            if (showMenuBtn)
+              Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                ),
+              )
+            else
+              const SizedBox(width: 16),
             Expanded(
               child: Center(
                 child: Text(
                   isLoggedIn ? 'Easy Service' : 'Create Account',
                   style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: _fs(context, 18, 20, 22),
-                  ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: _fs(context, 18, 20, 22)),
                 ),
               ),
             ),
-            
-            // Notification Icon
             if (isLoggedIn)
               IconButton(
                 onPressed: () {},
                 icon: const Icon(Icons.notifications_outlined, color: Colors.white),
               )
             else
-              const SizedBox(width: 48),
+              const SizedBox(width: 16),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _railLeading(BuildContext context, bool isDesktop) {
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_open_rounded,
-                color: Colors.white, size: 28),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
-        if (isDesktop) ...[
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              'Easy Service',
-              style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15),
-            ),
-          ),
-        ],
-        const SizedBox(height: 8),
-      ],
     );
   }
 
@@ -410,12 +399,12 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                   left: 20,
                   right: 20),
               decoration: BoxDecoration(
-                color: skyBlue,
+                color: darazOrange,
                 borderRadius:
                     const BorderRadius.only(bottomRight: Radius.circular(30)),
                 boxShadow: [
                   BoxShadow(
-                      color: skyBlue.withOpacity(0.3),
+                      color: darazOrange.withOpacity(0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 5))
                 ],
@@ -426,7 +415,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                     radius: _isDesktop(context) ? 32 : 28,
                     backgroundColor: Colors.white,
                     child: Icon(Icons.person_rounded,
-                        color: skyBlue,
+                        color: darazOrange,
                         size: _isDesktop(context) ? 38 : 32),
                   ),
                   const SizedBox(width: 14),
@@ -508,7 +497,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                       style: GoogleFonts.poppins(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
-                          fontSize: _fs(context, 14, 15, 16))), // ✅ ঠিক করা হলো
+                          fontSize: _fs(context, 14, 15, 16))),
                   onTap: () async {
                     Navigator.pop(context);
                     final prefs = await SharedPreferences.getInstance();
@@ -529,7 +518,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       leading: Icon(icon,
-          color: iconColor ?? skyBlue,
+          color: iconColor ?? darazOrange,
           size: _fs(context, 22, 24, 26)),
       title: Text(title,
           style: GoogleFonts.poppins(
@@ -540,60 +529,309 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           size: _fs(context, 13, 14, 15),
           color: Colors.grey.shade400),
       onTap: onTap,
-      splashColor: skyBlue.withOpacity(0.1),
+      splashColor: darazOrange.withOpacity(0.1),
     );
   }
 }
 
-// ============================================
-// DETAILS SCREEN - আলাদা পেজ, কোনো AppBar/Nav নেই
-// ============================================
-class DetailsScreen extends StatelessWidget {  // ✅ ConsumerWidget → StatelessWidget
-  final String type;
-  final String id;
+// ==================== DARAZ STYLE BOTTOM NAVIGATION ====================
 
-  const DetailsScreen({
+class DarazStyleBottomNav extends StatefulWidget {
+  final int currentIndex;
+  final Function(int) onTap;
+
+  const DarazStyleBottomNav({
     super.key,
-    required this.type,
-    required this.id,
+    required this.currentIndex,
+    required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // নিজস্ব AppBar - পুরো স্ক্রিন জুড়ে
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF29B6F6),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
-          onPressed: () {
-            // GoRouter back
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/');
-            }
-          },
-        ),
-        title: Text(
-          '$type Details',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+  State<DarazStyleBottomNav> createState() => _DarazStyleBottomNavState();
+}
+
+class _DarazStyleBottomNavState extends State<DarazStyleBottomNav> 
+    with TickerProviderStateMixin {
+
+  late List<AnimationController> _controllers;
+  late List<Animation<double>> _animations;
+
+  final List<NavItemData> items = [
+    NavItemData(
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
+      label: 'Home',
+      color: const Color(0xFFFF6600),
+    ),
+    NavItemData(
+      icon: Icons.storefront_outlined,
+      activeIcon: Icons.storefront_rounded,
+      label: 'Resell',
+      color: const Color(0xFFFF6600),
+    ),
+    NavItemData(
+      icon: Icons.add_circle_outline_rounded,
+      activeIcon: Icons.add_circle_rounded,
+      label: 'Post',
+      color: const Color(0xFFFF6600),
+      isCenter: true,
+    ),
+    NavItemData(
+      icon: Icons.campaign_outlined,
+      activeIcon: Icons.campaign_rounded,
+      label: 'Campaign',
+      color: const Color(0xFFFF6600),
+    ),
+    NavItemData(
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: 'Profile',
+      color: const Color(0xFFFF6600),
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(
+      items.length,
+      (index) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 300),
       ),
-      body: Container(
+    );
+    _animations = _controllers.map((controller) {
+      return Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(
+          parent: controller,
+          curve: Curves.easeOutBack,
+        ),
+      );
+    }).toList();
+
+    _controllers[widget.currentIndex].value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(DarazStyleBottomNav oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      _controllers[oldWidget.currentIndex].reverse();
+      _controllers[widget.currentIndex].forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 85.h,
+      decoration: BoxDecoration(
         color: Colors.white,
-        child: Center(
-          child: Text(
-            'Details: $type\nID: $id',
-            style: GoogleFonts.poppins(fontSize: 20),
-            textAlign: TextAlign.center,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30.r),
+          topRight: Radius.circular(30.r),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 30,
+            offset: const Offset(0, -10),
           ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30.r),
+          topRight: Radius.circular(30.r),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(items.length, (index) {
+            final item = items[index];
+            final isSelected = widget.currentIndex == index;
+
+            if (item.isCenter) {
+              return _buildCenterButton(item, index, isSelected);
+            }
+
+            return _buildNavItem(item, index, isSelected);
+          }),
         ),
       ),
     );
   }
+
+  Widget _buildNavItem(NavItemData item, int index, bool isSelected) {
+    return GestureDetector(
+      onTap: () => widget.onTap(index),
+      child: AnimatedBuilder(
+        animation: _animations[index],
+        builder: (context, child) {
+          final scale = 1 + (_animations[index].value * 0.2);
+          final translateY = _animations[index].value * -12;
+
+          return Container(
+            width: 65.w,
+            height: 70.h,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Animated background container
+                Transform.translate(
+                  offset: Offset(0, translateY),
+                  child: Transform.scale(
+                    scale: scale,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 44.w,
+                      height: 44.h,
+                      decoration: BoxDecoration(
+                        gradient: isSelected
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  item.color.withOpacity(0.2),
+                                  item.color.withOpacity(0.1),
+                                ],
+                              )
+                            : null,
+                        color: isSelected ? null : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        transitionBuilder: (child, animation) {
+                          return ScaleTransition(
+                            scale: animation,
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Icon(
+                          isSelected ? item.activeIcon : item.icon,
+                          key: ValueKey<bool>(isSelected),
+                          color: isSelected ? item.color : Colors.grey.shade400,
+                          size: 24.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                // Label
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.sp,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? item.color : Colors.grey.shade400,
+                  ),
+                  child: Text(item.label),
+                ),
+                // Animated indicator dot
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: EdgeInsets.only(top: 6.h),
+                  width: isSelected ? 20.w : 0,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [item.color, item.color.withOpacity(0.7)],
+                    ),
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCenterButton(NavItemData item, int index, bool isSelected) {
+    return GestureDetector(
+      onTap: () => widget.onTap(index),
+      child: AnimatedBuilder(
+        animation: _animations[index],
+        builder: (context, child) {
+          final scale = 1 + (_animations[index].value * 0.25);
+
+          return Transform.scale(
+            scale: scale,
+            child: Container(
+              width: 65.w,
+              height: 65.h,
+              margin: EdgeInsets.only(bottom: 25.h),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFFF6600),
+                    Color(0xFFFF4500),
+                    Color(0xFFFF3300),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(22.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6600).withOpacity(0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                    spreadRadius: 2,
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFFF6600).withOpacity(0.3),
+                    blurRadius: 40,
+                    offset: const Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: Icon(
+                isSelected ? item.activeIcon : item.icon,
+                color: Colors.white,
+                size: 32.sp,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class NavItemData {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final Color color;
+  final bool isCenter;
+
+  NavItemData({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.color,
+    this.isCenter = false,
+  });
+}
+
+class NavRailItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+
+  NavRailItem(this.icon, this.activeIcon, this.label);
 }
