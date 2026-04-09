@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,13 +6,16 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../core/guards/verification_guard.dart'; // ← নতুন
+
 /// Service Model
 class Service {
   final String name;
   final IconData icon;
   final Color color;
   final Color secondaryColor;
-  final String? route; // GoRouter route ? null ???? Coming Soon
+  final String? route;
+  final bool requiresVerification; // ← নতুন: verification লাগবে কিনা
 
   const Service({
     required this.name,
@@ -20,6 +23,7 @@ class Service {
     required this.color,
     required this.secondaryColor,
     this.route,
+    this.requiresVerification = true, // default: সব route এ verification লাগবে
   });
 }
 
@@ -39,6 +43,7 @@ final servicesProvider = Provider<List<Service>>((ref) {
       color: Color(0xFF0284C7),
       secondaryColor: Color(0xFF38BDF8),
       route: '/drive',
+      requiresVerification: true, // ভেরিফাই না হলে modal দেখাবে
     ),
     Service(
       name: 'Reselling',
@@ -46,6 +51,7 @@ final servicesProvider = Provider<List<Service>>((ref) {
       color: Color(0xFFEA580C),
       secondaryColor: Color(0xFFFB923C),
       route: '/reselling',
+      requiresVerification: true,
     ),
     Service(
       name: 'Microjob',
@@ -53,6 +59,7 @@ final servicesProvider = Provider<List<Service>>((ref) {
       color: Color(0xFF0D9488),
       secondaryColor: Color(0xFF2DD4BF),
       route: '/microjobs',
+      requiresVerification: true,
     ),
     Service(
       name: 'Loan',
@@ -67,6 +74,7 @@ final servicesProvider = Provider<List<Service>>((ref) {
       color: Color(0xFF7C3AED),
       secondaryColor: Color(0xFFA78BFA),
       route: '/campaigns',
+      requiresVerification: true,
     ),
     Service(
       name: 'Education',
@@ -188,7 +196,7 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         Text(
-          'See All ?',
+          'See All →',
           style: GoogleFonts.poppins(
             fontSize: isDesktop ? 13 : 12.sp,
             color: kPrimary,
@@ -251,14 +259,14 @@ class _ServiceCard extends StatelessWidget {
 
   const _ServiceCard({required this.service, this.isDesktop = false});
 
+  // ── Tap handler: verification guard দিয়ে route এ যাবে ──
   void _onTap(BuildContext context) {
-    if (service.route != null) {
-      context.go(service.route!);
-    } else {
+    if (service.route == null) {
+      // Coming Soon
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${service.name} ? Coming Soon!',
+            '${service.name} — Coming Soon!',
             style: GoogleFonts.poppins(fontSize: 13.sp),
           ),
           behavior: SnackBarBehavior.floating,
@@ -269,6 +277,23 @@ class _ServiceCard extends StatelessWidget {
           duration: const Duration(seconds: 2),
         ),
       );
+      return;
+    }
+
+    if (service.requiresVerification) {
+      // ── Verification guard check ──
+      VerificationGuard.check(
+        context,
+        amount: 199.00,
+        purpose: 'Account Verification Fee',
+        onVerified: () {
+          // verified হলে route এ যাও
+          context.go(service.route!);
+        },
+      );
+    } else {
+      // verification লাগবে না, সরাসরি যাও
+      context.go(service.route!);
     }
   }
 
@@ -297,14 +322,16 @@ class _ServiceCard extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(isDesktop ? 22 : 20.r),
+                    borderRadius:
+                        BorderRadius.circular(isDesktop ? 22 : 20.r),
                     border: Border.all(
                       color: service.color.withOpacity(0.18),
                       width: 1.2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: service.color.withOpacity(hasRoute ? 0.18 : 0.06),
+                        color: service.color
+                            .withOpacity(hasRoute ? 0.18 : 0.06),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -363,3 +390,4 @@ class _ServiceCard extends StatelessWidget {
     );
   }
 }
+
