@@ -39,6 +39,7 @@ flutter:
 
   # Assets management
   assets:
+    - assets/images/
     - assets/ultra5G.png
     - assets/EasyService.png
     # - assets/animations/       # Uncomment if you use Lottie JSON files here
