@@ -1,13 +1,13 @@
-import 'dart:ui'; // BackdropFilter এবং ImageFilter এর জন্য
+import 'dart:ui'; // ব্লার ইফেক্টের জন্য প্রয়োজন
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart'; // Lottie প্যাকেজ ইম্পোর্ট করা হলো
+import 'package:lottie/lottie.dart'; // লটি প্যাকেজটি অবশ্যই থাকতে হবে
 
-// Import your providers — adjust path as needed
-import '../main.dart';
+// আপনার প্রোপ্রাইডার ইম্পোর্ট (আপনার প্রোজেক্ট পাথ অনুযায়ী ঠিক করে নিন)
+import '../main.dart'; 
 
 class AppTopBar extends ConsumerWidget {
   final bool isDetailView;
@@ -27,76 +27,93 @@ class AppTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      height: isMobile ? 56.h : 60,
-      width: double.infinity,
-      // Stack ব্যবহার করা হয়েছে যেন একটার ওপর আরেকটা লেয়ার বসানো যায়
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // ১. সবার নিচে Lottie অ্যানিমেশন (আপনার লিংকটি এখানে বসাবেন)
-          Lottie.network(
-            'https://assets9.lottiefiles.com/packages/lf20_bwmio3bw.json', // এখানে আপনার Lottie লিংক দিন
-            fit: BoxFit.cover, // যেন পুরো টপ বার জুড়ে থাকে
-          ),
-
-          // ২. আকাশী কালার এবং ঝাপসা (Blur) ইফেক্ট লেয়ার
-          ClipRRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0), // ব্লার/ঝাপসা করার পরিমাণ
-              child: Container(
-                color: skyBlue.withOpacity(0.4), // আকাশী কালার স্বচ্ছ (Opacity) করে দেওয়া হয়েছে
+    return ClipRRect( // ব্লার যেন বারের বাইরে ছড়িয়ে না যায়
+      child: SizedBox(
+        height: isMobile ? 65.h : 70, // অ্যানিমেশন দেখানোর জন্য হাইট সামান্য বাড়ানো হয়েছে
+        child: Stack(
+          children: [
+            // ১. ব্যাকগ্রাউন্ডে লটি অ্যানিমেশন
+            Positioned.fill(
+              child: Lottie.network(
+                'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json', // একটি প্রিমিয়াম লটি লিংক দেওয়া হয়েছে
+                fit: BoxFit.cover,
+                repeat: true,
               ),
             ),
-          ),
 
-          // ৩. সবার ওপর আপনার আইকন এবং টেক্সট
-          Row(
-            children: [
-              SizedBox(width: 8.w),
-              if (isDetailView)
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_rounded,
-                      color: Colors.white, size: 24),
-                  onPressed: () {
-                    ref.read(isDetailViewProvider.notifier).state = false;
-                    ref.read(detailViewTitleProvider.notifier).state = '';
-                    context.go('/home');
-                  },
-                )
-              else
-                Builder(
-                  builder: (ctx) => IconButton(
-                    icon: const Icon(Icons.menu_open_rounded,
-                        color: Colors.white, size: 28),
-                    onPressed: () => Scaffold.of(ctx).openDrawer(),
-                  ),
-                ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    isDetailView ? detailTitle : 'Easy Service',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: isMobile ? 20.sp : 20,
-                    ),
-                  ),
+            // ২. ঝাপসা আকাশী লেয়ার (Blur + Color Overlay)
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ঝাপসা করার পরিমাণ
+                child: Container(
+                  color: skyBlue.withOpacity(0.45), // আকাশী কালারের স্বচ্ছ আস্তর
                 ),
               ),
-              if (!isDetailView && isLoggedIn)
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                )
-              else
-                SizedBox(width: 48.w),
-            ],
-          ),
-        ],
+            ),
+
+            // ৩. মেইন কন্টেন্ট (আইকন ও টাইটেল)
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                child: Row(
+                  children: [
+                    if (isDetailView)
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_rounded,
+                            color: Colors.white, size: 22),
+                        onPressed: () {
+                          // আপনার অরিজিনাল লজিক
+                          ref.read(isDetailViewProvider.notifier).state = false;
+                          ref.read(detailViewTitleProvider.notifier).state = '';
+                          context.go('/home');
+                        },
+                      )
+                    else
+                      Builder(
+                        builder: (ctx) => IconButton(
+                          icon: const Icon(Icons.menu_open_rounded,
+                              color: Colors.white, size: 28),
+                          onPressed: () => Scaffold.of(ctx).openDrawer(),
+                        ),
+                      ),
+                    
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          isDetailView ? detailTitle : 'Easy Service',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isMobile ? 18.sp : 20,
+                            letterSpacing: 0.5,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (!isDetailView && isLoggedIn)
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.notifications_outlined,
+                            color: Colors.white, size: 26),
+                      )
+                    else
+                      SizedBox(width: 48.w), // ব্যালেন্স রাখার জন্য গ্যাপ
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
