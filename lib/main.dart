@@ -58,11 +58,11 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: const Size(360, 800),
       minTextAdapt: true,
@@ -113,34 +113,26 @@ class MainWrapper extends ConsumerWidget {
     ref.read(detailViewTitleProvider.notifier).state = '';
 
     switch (index) {
-      case 0:
-        context.go('/home');
-        break;
-      case 1:
-        context.go('/reselling');
-        break;
-      case 2:
-        context.go('/microjobs');
-        break;
-      case 3:
-        context.go('/campaigns');
-        break;
-      case 4:
-        context.go('/profile');
-        break;
+      case 0: context.go('/home'); break;
+      case 1: context.go('/reselling'); break;
+      case 2: context.go('/microjobs'); break;
+      case 3: context.go('/campaigns'); break;
+      case 4: context.go('/profile'); break;
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final location = GoRouter.of(context).location; // ✅ Web-ready
+    final location = GoRouterState.of(context).uri.toString();
     final currentIndex = _indexFromLocation(location);
     final isLoggedIn = ref.watch(authProvider);
     final isDesktop = _isDesktop(context);
     final isTablet = _isTablet(context);
     final isMobile = _isMobile(context);
 
+    // এডিট প্রোফাইল পেজ কি না চেক করা হচ্ছে
     final isEditProfile = location.contains('edit_profile');
+    
     final isPaymentPage = location == '/payment';
     final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
     final detailTitle =
@@ -152,6 +144,7 @@ class MainWrapper extends ConsumerWidget {
         .moveY(begin: 10, end: 0);
 
     Widget bodyContainer() {
+      // যদি ডিটেইল ভিউ বা এডিট প্রোফাইল হয়, তবে ফুল স্ক্রিন কন্টেইনার (বর্ডার ছাড়া)
       if (isDetailView || isEditProfile) {
         return Container(
           width: double.infinity,
@@ -180,48 +173,60 @@ class MainWrapper extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF29B6F6),
-      drawer: (isDetailView || isEditProfile)
-          ? null
-          : AppDrawer(
-              isLoggedIn: isLoggedIn,
-              isDesktop: isDesktop,
-              isTablet: isTablet,
-            ),
-      body: SafeArea(
-        top: !isEditProfile,
-        child: Row(
-          children: [
-            if ((isDesktop || isTablet) && !isDetailView && !isEditProfile)
-              AppNavRail(
-                currentIndex: currentIndex,
+    return PopScope(
+      canPop: !isDetailView,
+      onPopInvokedWithResult: (didPop, result) {
+        if (isDetailView && !didPop) {
+          ref.read(isDetailViewProvider.notifier).state = false;
+          ref.read(detailViewTitleProvider.notifier).state = '';
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF29B6F6),
+        drawer: (isDetailView || isEditProfile)
+            ? null
+            : AppDrawer(
+                isLoggedIn: isLoggedIn,
                 isDesktop: isDesktop,
-                onTap: (i) => _onNavTap(context, ref, i),
+                isTablet: isTablet,
               ),
-            Expanded(
-              child: Column(
-                children: [
-                  if (!isEditProfile)
-                    AppTopBar(
-                      isDetailView: isDetailView,
-                      detailTitle: detailTitle,
-                      isMobile: isMobile,
-                      isLoggedIn: isLoggedIn,
-                    ),
-                  Expanded(child: bodyContainer()),
-                ],
+        body: SafeArea(
+          // এডিট প্রোফাইলে টপবার নেই, তাই SafeArea উপর থেকে শুরু হবে
+          top: !isEditProfile,
+          child: Row(
+            children: [
+              if ((isDesktop || isTablet) && !isDetailView && !isEditProfile)
+                AppNavRail(
+                  currentIndex: currentIndex,
+                  isDesktop: isDesktop,
+                  onTap: (i) => _onNavTap(context, ref, i),
+                ),
+              Expanded(
+                child: Column(
+                  children: [
+                    // কন্ডিশনাল টপবার: এডিট প্রোফাইল হলে দেখাবে না
+                    if (!isEditProfile)
+                      AppTopBar(
+                        isDetailView: isDetailView,
+                        detailTitle: detailTitle,
+                        isMobile: isMobile,
+                        isLoggedIn: isLoggedIn,
+                      ),
+                    Expanded(child: bodyContainer()),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        // বটম নেভিগেশন: মোবাইল হলে দেখাবে, তবে ডিটেইল ভিউতে না (ব্যতিক্রম: এডিট প্রোফাইল)
+        bottomNavigationBar: (isMobile && (!isDetailView || isEditProfile))
+            ? AppBottomNavBar(
+                currentIndex: currentIndex,
+                onTap: (i) => _onNavTap(context, ref, i),
+              )
+            : null,
       ),
-      bottomNavigationBar: (isMobile && (!isDetailView || isEditProfile))
-          ? AppBottomNavBar(
-              currentIndex: currentIndex,
-              onTap: (i) => _onNavTap(context, ref, i),
-            )
-          : null,
     );
   }
 }

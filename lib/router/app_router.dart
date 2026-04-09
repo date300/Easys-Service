@@ -1,8 +1,6 @@
-// app_router.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../features/drive/drive_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/reselling/reselling_screen.dart';
@@ -16,27 +14,23 @@ import '../main.dart';
 final GoRouter appRouter = GoRouter(
   initialLocation: '/home',
   routes: [
-    // Registration — আলাদা Page, কোনো MainWrapper নেই
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
 
-    // ShellRoute — Home, Drive, Reselling, Microjobs, Campaigns, Profile, Payment
+    // ✅ ShellRoute — সব পেজ এখানে (Bottom Nav + AppTopBar সহ)
     ShellRoute(
-      builder: (context, state, child) => MainWrapper(
-        child: child,
-        // default: isDetailView=false, except Payment
-      ),
+      builder: (context, state, child) => MainWrapper(child: child),
       routes: [
         GoRoute(
           path: '/home',
           builder: (context, state) => const HomeScreen(),
         ),
         GoRoute(
-          path: '/drive',
-          builder: (context, state) => const DriveScreen(),
-        ),
+        path: '/drive',
+       builder: (context, state) => const DriveScreen(),
+),
         GoRoute(
           path: '/reselling',
           builder: (context, state) => const ResellingScreen(),
@@ -49,31 +43,29 @@ final GoRouter appRouter = GoRouter(
           path: '/campaigns',
           builder: (context, state) => const CampaignsScreen(),
         ),
+
+        // ✅ Profile — ShellRoute এর ভেতরে
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
 
-        // Payment — MainWrapper with isDetailView=true
+        // ✅ Payment — ShellRoute এর ভেতরে
+        // MainWrapper isDetailView=true দেখবে → শুধু back arrow, কোনো bottom nav নেই
         GoRoute(
           path: '/payment',
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
-            return MainWrapper(
-              isDetailView: true, // hide bottom nav + appbar customization
-              child: PaymentGatewayScreen(
-                amount: extra?['amount'] ?? 199.00,
-                purpose: extra?['purpose'] ?? 'Account Verification Fee',
-                onPaymentSuccess: extra?['onSuccess'],
-              ),
+            return PaymentGatewayScreen(
+              amount: extra?['amount'] ?? 199.00,
+              purpose: extra?['purpose'] ?? 'Account Verification Fee',
+              onPaymentSuccess: extra?['onSuccess'],
             );
           },
         ),
       ],
     ),
   ],
-
-  // Redirect logic: login check
   redirect: (context, state) async {
     final ref = ProviderScope.containerOf(context);
     await ref.read(authLoadingProvider.future);
