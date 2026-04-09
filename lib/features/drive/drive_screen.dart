@@ -78,7 +78,7 @@ class _DriveScreenState extends State<DriveScreen> {
     try {
       final opCode = operatorCodes[operator]!.toLowerCase();
       final response = await http.get(
-        Uri.parse('https://easy.ltcminematrix.com/api/recharge/drives/\$opCode'),
+        Uri.parse('https://easy.ltcminematrix.com/api/recharge/drives/$opCode'),
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -91,13 +91,14 @@ class _DriveScreenState extends State<DriveScreen> {
           });
         } else {
           setState(() {
-            errorMessage = 'API Error: \${json['message'] ?? 'Unknown error'}';
+            // FIX: outer double quote দিয়ে inner single quote conflict এড়ানো হয়েছে
+            errorMessage = "API Error: ${json['message'] ?? 'Unknown error'}";
             isLoading = false;
           });
         }
       } else {
         setState(() {
-          errorMessage = 'Server error: \${response.statusCode}';
+          errorMessage = 'Server error: ${response.statusCode}';
           isLoading = false;
         });
       }
@@ -198,7 +199,7 @@ class _DriveScreenState extends State<DriveScreen> {
           ),
           const Spacer(),
           Text(
-            '\${filteredDrives.length} Packages',
+            '${filteredDrives.length} Packages',
             style: GoogleFonts.poppins(
               fontSize: 12.sp,
               color: Colors.white54,
@@ -407,7 +408,8 @@ class _DriveScreenState extends State<DriveScreen> {
     final duration = drive['duration'] ?? '30';
     final title = (drive['title'] ?? '') as String;
 
-    final cleanTitle = title.replaceAll(RegExp(r'\(অবশ্যই.*?\)'), '').trim();
+    // FIX: garbled unicode regex ঠিক করা হয়েছে
+    final cleanTitle = title.replaceAll(RegExp(r'\(.*?\)'), '').trim();
     final isGift = title.contains('GIFT');
 
     return Container(
@@ -476,11 +478,11 @@ class _DriveScreenState extends State<DriveScreen> {
                     SizedBox(height: 10.h),
                     Row(
                       children: [
-                        _infoChip(Icons.currency_exchange_rounded, '৳\$price', color),
+                        _infoChip(Icons.currency_exchange_rounded, '৳$price', color),
                         SizedBox(width: 8.w),
-                        _infoChip(Icons.calendar_today_rounded, '\${duration}d', Colors.blueGrey),
+                        _infoChip(Icons.calendar_today_rounded, '${duration}d', Colors.blueGrey),
                         SizedBox(width: 8.w),
-                        _infoChip(Icons.trending_up_rounded, '+৳\$commission', Colors.green),
+                        _infoChip(Icons.trending_up_rounded, '+৳$commission', Colors.green),
                         const Spacer(),
                         GestureDetector(
                           onTap: () {
