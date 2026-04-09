@@ -130,9 +130,6 @@ class MainWrapper extends ConsumerWidget {
     final isTablet = _isTablet(context);
     final isMobile = _isMobile(context);
 
-    // এডিট প্রোফাইল পেজ কি না চেক করা হচ্ছে
-    final isEditProfile = location.contains('edit_profile');
-    
     final isPaymentPage = location == '/payment';
     final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
     final detailTitle =
@@ -144,8 +141,7 @@ class MainWrapper extends ConsumerWidget {
         .moveY(begin: 10, end: 0);
 
     Widget bodyContainer() {
-      // যদি ডিটেইল ভিউ বা এডিট প্রোফাইল হয়, তবে ফুল স্ক্রিন কন্টেইনার (বর্ডার ছাড়া)
-      if (isDetailView || isEditProfile) {
+      if (isDetailView) {
         return Container(
           width: double.infinity,
           height: double.infinity,
@@ -183,7 +179,7 @@ class MainWrapper extends ConsumerWidget {
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF29B6F6),
-        drawer: (isDetailView || isEditProfile)
+        drawer: isDetailView
             ? null
             : AppDrawer(
                 isLoggedIn: isLoggedIn,
@@ -191,11 +187,9 @@ class MainWrapper extends ConsumerWidget {
                 isTablet: isTablet,
               ),
         body: SafeArea(
-          // এডিট প্রোফাইলে টপবার নেই, তাই SafeArea উপর থেকে শুরু হবে
-          top: !isEditProfile,
           child: Row(
             children: [
-              if ((isDesktop || isTablet) && !isDetailView && !isEditProfile)
+              if ((isDesktop || isTablet) && !isDetailView)
                 AppNavRail(
                   currentIndex: currentIndex,
                   isDesktop: isDesktop,
@@ -204,14 +198,12 @@ class MainWrapper extends ConsumerWidget {
               Expanded(
                 child: Column(
                   children: [
-                    // কন্ডিশনাল টপবার: এডিট প্রোফাইল হলে দেখাবে না
-                    if (!isEditProfile)
-                      AppTopBar(
-                        isDetailView: isDetailView,
-                        detailTitle: detailTitle,
-                        isMobile: isMobile,
-                        isLoggedIn: isLoggedIn,
-                      ),
+                    AppTopBar(
+                      isDetailView: isDetailView,
+                      detailTitle: detailTitle,
+                      isMobile: isMobile,
+                      isLoggedIn: isLoggedIn,
+                    ),
                     Expanded(child: bodyContainer()),
                   ],
                 ),
@@ -219,8 +211,7 @@ class MainWrapper extends ConsumerWidget {
             ],
           ),
         ),
-        // বটম নেভিগেশন: মোবাইল হলে দেখাবে, তবে ডিটেইল ভিউতে না (ব্যতিক্রম: এডিট প্রোফাইল)
-        bottomNavigationBar: (isMobile && (!isDetailView || isEditProfile))
+        bottomNavigationBar: (isMobile && !isDetailView)
             ? AppBottomNavBar(
                 currentIndex: currentIndex,
                 onTap: (i) => _onNavTap(context, ref, i),
