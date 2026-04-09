@@ -19,7 +19,7 @@ final navIndexProvider = StateProvider<int>((ref) => 0);
 final authProvider = StateProvider<bool>((ref) => false);
 final authLoadingProvider = StateProvider<bool>((ref) => true);
 
-// নতুন Provider গুলো - Deep Page নেভিগেশনের জন্য
+// Deep Page Provider - Details Page গুলোর জন্য
 final isDetailViewProvider = StateProvider<bool>((ref) => false);
 final detailViewTitleProvider = StateProvider<String>((ref) => '');
 
@@ -27,12 +27,22 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
+// GoRouter - Nested Navigation সাপোর্ট
 final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(
       path: '/',
       builder: (context, state) => const MainWrapper(),
+    ),
+    // Details Routes - এগুলো MainWrapper ছাড়া আলাদা পেজ
+    GoRoute(
+      path: '/details/:type/:id',
+      builder: (context, state) {
+        final type = state.pathParameters['type']!;
+        final id = state.pathParameters['id']!;
+        return DetailsScreen(type: type, id: id);
+      },
     ),
   ],
 );
@@ -65,6 +75,9 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// ============================================
+// MAIN WRAPPER - শুধু মূল ৫টি ট্যাবের জন্য
+// ============================================
 class MainWrapper extends ConsumerStatefulWidget {
   const MainWrapper({super.key});
 
@@ -155,8 +168,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final currentIndex = ref.watch(navIndexProvider);
     final isLoggedIn = ref.watch(authProvider);
     final isLoading = ref.watch(authLoadingProvider);
-    final isDetailView = ref.watch(isDetailViewProvider);
-    final detailTitle = ref.watch(detailViewTitleProvider);
 
     final List<Widget> pages = [
       const HomeScreen(),
@@ -177,7 +188,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final bool isTablet = _isTablet(context);
     final bool isMobile = _isMobile(context);
 
-    // পেজ কন্টেন্ট - Detail View তে এনিমেশন আলাদা
+    // Page Content with Animation
     final Widget pageContent = isLoggedIn
         ? pages[currentIndex]
             .animate(key: ValueKey(currentIndex))
@@ -185,150 +196,122 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             .moveY(begin: 10, end: 0)
         : const RegistrationScreen().animate().fadeIn(duration: 400.ms);
 
-    // বডি কন্টেইনার - Detail View তে গোলা কোণা থাকবে না
-    Widget bodyContainer() {
-      if (isDetailView) {
-        return Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: Colors.white,
-          child: pageContent,
-        );
-      }
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(isMobile ? 32.r : 24),
-            topRight: Radius.circular(isMobile ? 32.r : 24),
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(isMobile ? 32.r : 24),
-            topRight: Radius.circular(isMobile ? 32.r : 24),
-          ),
-          child: pageContent,
-        ),
-      );
-    }
-
-    // সিস্টেম ব্যাক বাটন হ্যান্ডলিং
-    return PopScope(
-      canPop: !isDetailView, // Detail view তে স্বয়ংক্রিয় পপ বন্ধ
-      onPopInvokedWithResult: (didPop, result) {
-        if (isDetailView && !didPop) {
-          // ব্যাক বাটনে Detail মোড বন্ধ
-          ref.read(isDetailViewProvider.notifier).state = false;
-          ref.read(detailViewTitleProvider.notifier).state = '';
-          Navigator.of(context).maybePop();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: skyBlue,
-        drawer: isDetailView ? null : _buildDrawer(context, isLoggedIn), // Detail এ Drawer বন্ধ
-        body: SafeArea(
-          child: Row(
-            children: [
-              // Desktop/Tablet Rail - Detail View তে লুকানো
-              if ((isDesktop || isTablet) && isLoggedIn && !isDetailView)
-                NavigationRail(
-                  backgroundColor: skyBlue,
-                  selectedIndex: currentIndex,
-                  onDestinationSelected: (i) =>
-                      ref.read(navIndexProvider.notifier).state = i,
-                  extended: isDesktop,
-                  labelType: isDesktop
-                      ? NavigationRailLabelType.none
-                      : NavigationRailLabelType.all,
-                  selectedIconTheme:
-                      const IconThemeData(color: Colors.white, size: 26),
-                  unselectedIconTheme: IconThemeData(
-                      color: Colors.white.withOpacity(0.55), size: 22),
-                  selectedLabelTextStyle: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: _fs(context, 13, 13, 14)),
-                  unselectedLabelTextStyle: GoogleFonts.poppins(
-                      color: Colors.white.withOpacity(0.65),
-                      fontSize: _fs(context, 12, 12, 13)),
-                  indicatorColor: Colors.white.withOpacity(0.18),
-                  leading: _railLeading(context, isDesktop),
-                  destinations: _railDests,
-                ),
-              
-              // মূল কন্টেন্ট এরিয়া
-              Expanded(
-                child: Column(
-                  children: [
-                    // টপ বার - Detail View তে ব্যাক বাটন সহ
-                    _buildTopBar(
-                      context, 
-                      isLoggedIn, 
-                      isDetailView: isDetailView, 
-                      detailTitle: detailTitle,
-                      isMobile: isMobile,
-                      isTablet: isTablet,
-                      isDesktop: isDesktop,
-                    ),
-                    Expanded(child: bodyContainer()),
-                  ],
-                ),
+    return Scaffold(
+      backgroundColor: skyBlue,
+      drawer: _buildDrawer(context, isLoggedIn),
+      body: SafeArea(
+        child: Row(
+          children: [
+            // Desktop/Tablet Rail
+            if ((isDesktop || isTablet) && isLoggedIn)
+              NavigationRail(
+                backgroundColor: skyBlue,
+                selectedIndex: currentIndex,
+                onDestinationSelected: (i) =>
+                    ref.read(navIndexProvider.notifier).state = i,
+                extended: isDesktop,
+                labelType: isDesktop
+                    ? NavigationRailLabelType.none
+                    : NavigationRailLabelType.all,
+                selectedIconTheme:
+                    const IconThemeData(color: Colors.white, size: 26),
+                unselectedIconTheme: IconThemeData(
+                    color: Colors.white.withOpacity(0.55), size: 22),
+                selectedLabelTextStyle: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: _fs(context, 13, 13, 14)),
+                unselectedLabelTextStyle: GoogleFonts.poppins(
+                    color: Colors.white.withOpacity(0.65),
+                    fontSize: _fs(context, 12, 12, 13)),
+                indicatorColor: Colors.white.withOpacity(0.18),
+                leading: _railLeading(context, isDesktop),
+                destinations: _railDests,
               ),
-            ],
-          ),
+            
+            // Main Content Area
+            Expanded(
+              child: Column(
+                children: [
+                  // Top Bar - সবসময় থাকবে MainWrapper-এ
+                  _buildTopBar(
+                    context, 
+                    isLoggedIn, 
+                    isMobile: isMobile,
+                    isTablet: isTablet,
+                    isDesktop: isDesktop,
+                  ),
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(isMobile ? 32.r : 24),
+                          topRight: Radius.circular(isMobile ? 32.r : 24),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(isMobile ? 32.r : 24),
+                          topRight: Radius.circular(isMobile ? 32.r : 24),
+                        ),
+                        child: pageContent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        // বটম ন্যাভ - শুধু Mobile তে এবং Detail View না হলে
-        bottomNavigationBar: (isMobile && isLoggedIn && !isDetailView)
-            ? NavigationBarTheme(
-                data: NavigationBarThemeData(
-                  indicatorColor: skyBlue.withOpacity(0.15),
-                  labelTextStyle:
-                      WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) {
-                      return GoogleFonts.poppins(
-                          color: skyBlue,
-                          fontWeight: FontWeight.bold,
-                          fontSize: _fs(context, 11, 12, 13));
-                    }
-                    return GoogleFonts.poppins(
-                        color: Colors.grey,
-                        fontSize: _fs(context, 10, 11, 12));
-                  }),
-                  iconTheme:
-                      WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.selected)) {
-                      return IconThemeData(
-                          color: skyBlue,
-                          size: _fs(context, 24, 26, 28));
-                    }
-                    return IconThemeData(
-                        color: Colors.grey,
-                        size: _fs(context, 20, 22, 24));
-                  }),
-                ),
-                child: NavigationBar(
-                  backgroundColor: Colors.white,
-                  height: 65.h,
-                  selectedIndex: currentIndex,
-                  onDestinationSelected: (i) =>
-                      ref.read(navIndexProvider.notifier).state = i,
-                  destinations: _bottomDests,
-                ),
-              )
-            : null,
       ),
+      // Bottom Navigation - শুধু Mobile-এ
+      bottomNavigationBar: (isMobile && isLoggedIn)
+          ? NavigationBarTheme(
+              data: NavigationBarThemeData(
+                indicatorColor: skyBlue.withOpacity(0.15),
+                labelTextStyle:
+                    WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return GoogleFonts.poppins(
+                        color: skyBlue,
+                        fontWeight: FontWeight.bold,
+                        fontSize: _fs(context, 11, 12, 13));
+                  }
+                  return GoogleFonts.poppins(
+                      color: Colors.grey,
+                      fontSize: _fs(context, 10, 11, 12));
+                }),
+                iconTheme:
+                    WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return IconThemeData(
+                        color: skyBlue,
+                        size: _fs(context, 24, 26, 28));
+                  }
+                  return IconThemeData(
+                      color: Colors.grey,
+                      size: _fs(context, 20, 22, 24));
+                }),
+              ),
+              child: NavigationBar(
+                backgroundColor: Colors.white,
+                height: 65.h,
+                selectedIndex: currentIndex,
+                onDestinationSelected: (i) =>
+                    ref.read(navIndexProvider.notifier).state = i,
+                destinations: _bottomDests,
+              ),
+            )
+          : null,
     );
   }
 
-  // এক্সট্রাক্টেড টপ বার মেথড
   Widget _buildTopBar(
     BuildContext context, 
     bool isLoggedIn, {
-    required bool isDetailView,
-    required String detailTitle,
     required bool isMobile,
     required bool isTablet,
     required bool isDesktop,
@@ -339,36 +322,21 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         height: isMobile ? 56.h : 60,
         child: Row(
           children: [
-            // লিডিং আইকন
-            if (isDetailView)
-              // ব্যাক বাটন
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 24),
-                onPressed: () {
-                  // ডিটেইল মোড বন্ধ
-                  ref.read(isDetailViewProvider.notifier).state = false;
-                  ref.read(detailViewTitleProvider.notifier).state = '';
-                  Navigator.of(context).maybePop();
-                },
-              )
-            else
-              // মেনু বাটন
-              Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
-                ),
+            // Menu Button
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
               ),
+            ),
             
             const SizedBox(width: 8),
             
-            // টাইটেল
+            // Title
             Expanded(
               child: Center(
                 child: Text(
-                  isDetailView 
-                      ? detailTitle 
-                      : (isLoggedIn ? 'Easy Service' : 'Create Account'),
+                  isLoggedIn ? 'Easy Service' : 'Create Account',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -378,14 +346,14 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
               ),
             ),
             
-            // ট্রেইলিং আইকন (শুধু মেইন পেজে)
-            if (isLoggedIn && !isDetailView)
+            // Notification Icon
+            if (isLoggedIn)
               IconButton(
                 onPressed: () {},
                 icon: const Icon(Icons.notifications_outlined, color: Colors.white),
               )
             else
-              const SizedBox(width: 48), // ব্যালান্স করতে
+              const SizedBox(width: 48),
           ],
         ),
       ),
@@ -540,7 +508,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                       style: GoogleFonts.poppins(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
-                          fontSize: _fs(context, 14, 15, 16))),
+                          fontSize: _fs(context, 14, 15, 16))), // ✅ ঠিক করা হলো
                   onTap: () async {
                     Navigator.pop(context);
                     final prefs = await SharedPreferences.getInstance();
@@ -573,6 +541,59 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           color: Colors.grey.shade400),
       onTap: onTap,
       splashColor: skyBlue.withOpacity(0.1),
+    );
+  }
+}
+
+// ============================================
+// DETAILS SCREEN - আলাদা পেজ, কোনো AppBar/Nav নেই
+// ============================================
+class DetailsScreen extends StatelessWidget {  // ✅ ConsumerWidget → StatelessWidget
+  final String type;
+  final String id;
+
+  const DetailsScreen({
+    super.key,
+    required this.type,
+    required this.id,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // নিজস্ব AppBar - পুরো স্ক্রিন জুড়ে
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF29B6F6),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          onPressed: () {
+            // GoRouter back
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+        title: Text(
+          '$type Details',
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      body: Container(
+        color: Colors.white,
+        child: Center(
+          child: Text(
+            'Details: $type\nID: $id',
+            style: GoogleFonts.poppins(fontSize: 20),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
     );
   }
 }

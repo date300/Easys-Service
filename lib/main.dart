@@ -1,4 +1,4 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -46,7 +46,7 @@ final authLoadingProvider = FutureProvider<void>((ref) async {
   await ref.read(authProvider.notifier).loadFromPrefs();
 });
 
-// নতুন Provider গুলো - Detail Page এর জন্য
+// Detail Page Provider
 final isDetailViewProvider = StateProvider<bool>((ref) => false);
 final detailViewTitleProvider = StateProvider<String>((ref) => '');
 
@@ -56,17 +56,6 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
-    ),
-    GoRoute(
-      path: '/payment',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        return PaymentGatewayScreen(
-          amount: extra?['amount'] ?? 199.00,
-          purpose: extra?['purpose'] ?? 'Account Verification Fee',
-          onPaymentSuccess: extra?['onSuccess'],
-        );
-      },
     ),
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
@@ -86,6 +75,18 @@ final GoRouter _router = GoRouter(
         GoRoute(
             path: '/profile',
             builder: (context, state) => const ProfileScreen()),
+        // Payment Route - ShellRoute এর ভিতরে
+        GoRoute(
+          path: '/payment',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return PaymentGatewayScreen(
+              amount: extra?['amount'] ?? 199.00,
+              purpose: extra?['purpose'] ?? 'Account Verification Fee',
+              onPaymentSuccess: extra?['onSuccess'],
+            );
+          },
+        ),
       ],
     ),
   ],
@@ -95,10 +96,9 @@ final GoRouter _router = GoRouter(
     final isLoggedIn = ref.read(authProvider);
     final loc = state.matchedLocation;
     final goingToRegister = loc == '/registration';
-    final goingToPayment = loc == '/payment';
+    
     if (!isLoggedIn && !goingToRegister) return '/registration';
     if (isLoggedIn && goingToRegister) return '/home';
-    if (!isLoggedIn && goingToPayment) return '/registration';
     return null;
   },
 );
@@ -133,7 +133,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ConsumerStatefulWidget এ পরিবর্তন করা হয়েছে
 class MainWrapper extends ConsumerStatefulWidget {
   final Widget child;
   const MainWrapper({super.key, required this.child});
@@ -163,7 +162,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
   }
 
   void _onNavTap(BuildContext context, int index) {
-    // নেভিগেশন করলে Detail View বন্ধ হয়ে যাবে
+    // Navigation change এ Detail View বন্ধ
     ref.read(isDetailViewProvider.notifier).state = false;
     ref.read(detailViewTitleProvider.notifier).state = '';
     
@@ -241,18 +240,21 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final isTablet = _isTablet(context);
     final isMobile = _isMobile(context);
     
-    // Detail View স্টেট ওয়াচ করা
-    final isDetailView = ref.watch(isDetailViewProvider);
-    final detailTitle = ref.watch(detailViewTitleProvider);
+    // Check if current page is payment or detail view
+    final isPaymentPage = location == '/payment';
+    final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
+    final detailTitle = isPaymentPage 
+        ? 'Payment' 
+        : ref.watch(detailViewTitleProvider);
 
     final animatedChild = widget.child
         .animate(key: ValueKey(location))
         .fadeIn(duration: 400.ms)
         .moveY(begin: 10, end: 0);
 
-    // Detail View তে কোণা থাকবে না, নরমালে থাকবে
     Widget bodyContainer() {
       if (isDetailView) {
+        // Detail/Payment page - no rounded corners, full screen
         return Container(
           width: double.infinity,
           height: double.infinity,
@@ -260,6 +262,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           child: animatedChild,
         );
       }
+      // Normal page - rounded corners
       return Container(
         width: double.infinity,
         height: double.infinity,
@@ -280,7 +283,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       );
     }
 
-    // সিস্টেম ব্যাক বাটন হ্যান্ডলিং
     return PopScope(
       canPop: !isDetailView,
       onPopInvokedWithResult: (didPop, result) {
@@ -295,7 +297,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         body: SafeArea(
           child: Row(
             children: [
-              // Detail View তে NavigationRail লুকানো
+              // Hide NavigationRail for detail/payment pages
               if ((isDesktop || isTablet) && !isDetailView)
                 NavigationRail(
                   backgroundColor: skyBlue,
@@ -338,7 +340,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             ],
           ),
         ),
-        // Detail View তে Bottom Nav লুকানো
+        // Hide BottomNav for detail/payment pages
         bottomNavigationBar: (isMobile && !isDetailView)
             ? NavigationBarTheme(
                 data: NavigationBarThemeData(
@@ -387,15 +389,15 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         children: [
           const SizedBox(width: 8),
           
-          // লিডিং আইকন - Detail View তে ব্যাক বাটন, নয়তো মেনু
+          // Back button for detail/payment pages, Menu for normal pages
           if (isDetailView)
             IconButton(
               icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 24),
               onPressed: () {
-                // ব্যাক বাটনে Detail Mode বন্ধ
+                // Go back to home and reset detail view
                 ref.read(isDetailViewProvider.notifier).state = false;
                 ref.read(detailViewTitleProvider.notifier).state = '';
-                Navigator.of(context).maybePop();
+                context.go('/home');
               },
             )
           else
@@ -408,7 +410,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           
           const SizedBox(width: 8),
           
-          // টাইটেল
+          // Title
           Expanded(
             child: Center(
               child: Text(
@@ -422,7 +424,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             ),
           ),
           
-          // ট্রেইলিং আইকন - শুধু মেইন পেজে
+          // Notification icon only for normal pages
           if (!isDetailView && isLoggedIn)
             IconButton(
               onPressed: () {},
