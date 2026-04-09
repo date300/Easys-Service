@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
 // Import your providers — adjust path as needed
-import '../main.dart'; // <-- authProvider access এর জন্য লাগবে
+import '../main.dart';
 
 class AppDrawer extends ConsumerWidget {
   final bool isLoggedIn;
@@ -166,11 +166,8 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   onTap: () async {
                     Navigator.pop(context);
-                    // ✅ Flutter Web compatible authProvider call
                     await ref.read(authProvider.notifier).logout();
-                    if (context.mounted) {
-                      GoRouter.of(context).go('/registration');
-                    }
+                    if (context.mounted) context.go('/registration');
                   },
                 ),
               ),
