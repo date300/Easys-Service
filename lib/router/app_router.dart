@@ -18,6 +18,20 @@ final GoRouter appRouter = GoRouter(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
+
+    // ✅ Payment - ShellRoute এর বাইরে (Bottom Nav দেখাবে না)
+    GoRoute(
+      path: '/payment',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return PaymentGatewayScreen(
+          amount: extra?['amount'] ?? 199.00,
+          purpose: extra?['purpose'] ?? 'Account Verification Fee',
+          onPaymentSuccess: extra?['onSuccess'],
+        );
+      },
+    ),
+
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
@@ -36,18 +50,6 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
             path: '/profile',
             builder: (context, state) => const ProfileScreen()),
-        // Payment Route - ShellRoute এর ভেতরে
-        GoRoute(
-          path: '/payment',
-          builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>?;
-            return PaymentGatewayScreen(
-              amount: extra?['amount'] ?? 199.00,
-              purpose: extra?['purpose'] ?? 'Account Verification Fee',
-              onPaymentSuccess: extra?['onSuccess'],
-            );
-          },
-        ),
       ],
     ),
   ],
