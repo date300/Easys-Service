@@ -12,34 +12,52 @@ class DriveScreen extends StatefulWidget {
 }
 
 class _DriveScreenState extends State<DriveScreen> {
-  final List<String> operators = ['gp', 'bl', 'robi', 'airtel', 'teletalk'];
+  final List<String> operators = ['gp', 'robi', 'airtel', 'bl', 'teletalk', 'skitto', 'brilliant'];
 
   final Map<String, String> operatorNames = {
     'gp': 'Grameenphone',
-    'bl': 'Banglalink',
     'robi': 'Robi',
     'airtel': 'Airtel',
+    'bl': 'Banglalink',
     'teletalk': 'Teletalk',
+    'skitto': 'Skitto',
+    'brilliant': 'Brilliant',
   };
 
   final Map<String, Color> operatorColors = {
     'gp': Color(0xFF009B77),
-    'bl': Color(0xFFE8000D),
-    'robi': Color(0xFFE8000D),
+    'robi': Color(0xFF9C27B0),
     'airtel': Color(0xFFE40000),
+    'bl': Color(0xFFE8000D),
     'teletalk': Color(0xFF003399),
+    'skitto': Color(0xFFFF6B00),
+    'brilliant': Color(0xFF1E88E5),
   };
 
-  final Map<String, String> operatorLogos = {
+  final Map<String, String> operatorCodes = {
     'gp': 'GP',
-    'bl': 'BL',
     'robi': 'RB',
     'airtel': 'AT',
+    'bl': 'BL',
     'teletalk': 'TT',
+    'skitto': 'SK',
+    'brilliant': 'BT',
+  };
+
+  final Map<String, List<String>> operatorCategories = {
+    'gp': ['All', 'Internet', 'Minute', 'Bundle', 'Social'],
+    'robi': ['All', 'Internet', 'Talktime', 'Combo', 'Roaming'],
+    'airtel': ['All', 'Data', 'Voice', 'Mixed', 'SMS'],
+    'bl': ['All', 'Internet', 'Minute', 'Bundle', 'Star'],
+    'teletalk': ['All', 'Internet', 'Minute', 'Bundle', 'Special'],
+    'skitto': ['All', 'Data', 'Voice', 'Combo'],
+    'brilliant': ['All', 'Internet', 'Minute', 'Bundle'],
   };
 
   String selectedOperator = 'gp';
+  String selectedCategory = 'All';
   List<dynamic> drives = [];
+  List<dynamic> filteredDrives = [];
   bool isLoading = false;
   String? errorMessage;
 
@@ -54,12 +72,13 @@ class _DriveScreenState extends State<DriveScreen> {
       isLoading = true;
       errorMessage = null;
       drives = [];
+      filteredDrives = [];
     });
 
     try {
+      final opCode = operatorCodes[operator]!.toLowerCase();
       final response = await http.get(
-        Uri.parse(
-            'https://easy.ltcminematrix.com/api/recharge/drives/$operator'),
+        Uri.parse('https://easy.ltcminematrix.com/api/recharge/drives/\$opCode'),
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -67,17 +86,18 @@ class _DriveScreenState extends State<DriveScreen> {
         if (json['success'] == true) {
           setState(() {
             drives = json['data']['drives'] ?? [];
+            _filterDrives();
             isLoading = false;
           });
         } else {
           setState(() {
-            errorMessage = 'API Error: ${json['message'] ?? 'Unknown error'}';
+            errorMessage = 'API Error: \${json['message'] ?? 'Unknown error'}';
             isLoading = false;
           });
         }
       } else {
         setState(() {
-          errorMessage = 'Server error: ${response.statusCode}';
+          errorMessage = 'Server error: \${response.statusCode}';
           isLoading = false;
         });
       }
@@ -89,6 +109,50 @@ class _DriveScreenState extends State<DriveScreen> {
     }
   }
 
+  void _filterDrives() {
+    if (selectedCategory == 'All') {
+      filteredDrives = drives;
+    } else {
+      filteredDrives = drives.where((drive) {
+        final title = (drive['title'] ?? '').toString().toLowerCase();
+        final category = selectedCategory.toLowerCase();
+
+        switch (category) {
+          case 'internet':
+          case 'data':
+            return title.contains('gb') || title.contains('mb') || title.contains('data');
+          case 'minute':
+          case 'talktime':
+          case 'voice':
+            return title.contains('min') || title.contains('minute') || title.contains('talktime');
+          case 'bundle':
+          case 'combo':
+          case 'mixed':
+            return title.contains('bundle') || title.contains('combo') || (title.contains('gb') && title.contains('min'));
+          case 'social':
+            return title.contains('social') || title.contains('facebook') || title.contains('whatsapp');
+          case 'sms':
+            return title.contains('sms');
+          case 'roaming':
+            return title.contains('roaming');
+          case 'star':
+            return title.contains('star');
+          case 'special':
+            return title.contains('special') || title.contains('gift');
+          default:
+            return true;
+        }
+      }).toList();
+    }
+  }
+
+  void _onCategoryChanged(String category) {
+    setState(() {
+      selectedCategory = category;
+      _filterDrives();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,6 +161,7 @@ class _DriveScreenState extends State<DriveScreen> {
         children: [
           _buildHeader(),
           _buildOperatorTabs(),
+          _buildCategoryTabs(),
           Expanded(child: _buildBody()),
         ],
       ),
@@ -133,7 +198,7 @@ class _DriveScreenState extends State<DriveScreen> {
           ),
           const Spacer(),
           Text(
-            '${drives.length} Packages',
+            '\${filteredDrives.length} Packages',
             style: GoogleFonts.poppins(
               fontSize: 12.sp,
               color: Colors.white54,
@@ -160,7 +225,10 @@ class _DriveScreenState extends State<DriveScreen> {
           return GestureDetector(
             onTap: () {
               if (!isSelected) {
-                setState(() => selectedOperator = op);
+                setState(() {
+                  selectedOperator = op;
+                  selectedCategory = 'All';
+                });
                 fetchDrives(op);
               }
             },
@@ -182,14 +250,12 @@ class _DriveScreenState extends State<DriveScreen> {
                     width: 22.w,
                     height: 22.w,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.white24
-                          : color.withOpacity(0.2),
+                      color: isSelected ? Colors.white24 : color.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        operatorLogos[op]!,
+                        operatorCodes[op]!,
                         style: GoogleFonts.poppins(
                           fontSize: 7.sp,
                           fontWeight: FontWeight.bold,
@@ -203,12 +269,55 @@ class _DriveScreenState extends State<DriveScreen> {
                     operatorNames[op]!,
                     style: GoogleFonts.poppins(
                       fontSize: 12.sp,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                       color: isSelected ? Colors.white : Colors.white70,
                     ),
                   ),
                 ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCategoryTabs() {
+    final categories = operatorCategories[selectedOperator] ?? ['All'];
+    final color = operatorColors[selectedOperator]!;
+
+    return Container(
+      color: Colors.white,
+      height: 48.h,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isSelected = category == selectedCategory;
+
+          return GestureDetector(
+            onTap: () => _onCategoryChanged(category),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: EdgeInsets.only(right: 8.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: isSelected ? color : color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(
+                  color: isSelected ? color : color.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Text(
+                category,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.sp,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected ? Colors.white : color,
+                ),
               ),
             ),
           );
@@ -230,8 +339,7 @@ class _DriveScreenState extends State<DriveScreen> {
             SizedBox(height: 16.h),
             Text(
               'Loading offers...',
-              style: GoogleFonts.poppins(
-                  fontSize: 14.sp, color: Colors.grey[500]),
+              style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -245,29 +353,23 @@ class _DriveScreenState extends State<DriveScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.wifi_off_rounded,
-                  size: 60.sp, color: Colors.grey[400]),
+              Icon(Icons.wifi_off_rounded, size: 60.sp, color: Colors.grey[400]),
               SizedBox(height: 16.h),
               Text(
                 errorMessage!,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                    fontSize: 14.sp, color: Colors.grey[600]),
+                style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
               ),
               SizedBox(height: 20.h),
               ElevatedButton.icon(
                 onPressed: () => fetchDrives(selectedOperator),
                 icon: const Icon(Icons.refresh_rounded),
-                label: Text('Retry',
-                    style:
-                        GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                label: Text('Retry', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: operatorColors[selectedOperator],
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r)),
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 24.w, vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 ),
               ),
             ],
@@ -276,12 +378,11 @@ class _DriveScreenState extends State<DriveScreen> {
       );
     }
 
-    if (drives.isEmpty) {
+    if (filteredDrives.isEmpty) {
       return Center(
         child: Text(
-          'No offers available',
-          style: GoogleFonts.poppins(
-              fontSize: 14.sp, color: Colors.grey[500]),
+          'No offers available for this category',
+          style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[500]),
         ),
       );
     }
@@ -291,9 +392,9 @@ class _DriveScreenState extends State<DriveScreen> {
       color: operatorColors[selectedOperator],
       child: ListView.builder(
         padding: EdgeInsets.all(16.w),
-        itemCount: drives.length,
+        itemCount: filteredDrives.length,
         itemBuilder: (context, index) {
-          return _buildDriveCard(drives[index]);
+          return _buildDriveCard(filteredDrives[index]);
         },
       ),
     );
@@ -306,9 +407,7 @@ class _DriveScreenState extends State<DriveScreen> {
     final duration = drive['duration'] ?? '30';
     final title = (drive['title'] ?? '') as String;
 
-    // Clean Bengali note from title
-    final cleanTitle =
-        title.replaceAll(RegExp(r'\(অবশ্যই.*?\)'), '').trim();
+    final cleanTitle = title.replaceAll(RegExp(r'\(অবশ্যই.*?\)'), '').trim();
     final isGift = title.contains('GIFT');
 
     return Container(
@@ -327,7 +426,6 @@ class _DriveScreenState extends State<DriveScreen> {
       child: IntrinsicHeight(
         child: Row(
           children: [
-            // Left accent bar
             Container(
               width: 6.w,
               decoration: BoxDecoration(
@@ -338,7 +436,6 @@ class _DriveScreenState extends State<DriveScreen> {
                 ),
               ),
             ),
-            // Card content
             Expanded(
               child: Padding(
                 padding: EdgeInsets.all(14.w),
@@ -359,13 +456,11 @@ class _DriveScreenState extends State<DriveScreen> {
                         ),
                         if (isGift)
                           Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 8.w, vertical: 2.h),
+                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                             decoration: BoxDecoration(
                               color: Colors.amber.shade50,
                               borderRadius: BorderRadius.circular(20.r),
-                              border:
-                                  Border.all(color: Colors.amber.shade300),
+                              border: Border.all(color: Colors.amber.shade300),
                             ),
                             child: Text(
                               'GIFT',
@@ -381,24 +476,18 @@ class _DriveScreenState extends State<DriveScreen> {
                     SizedBox(height: 10.h),
                     Row(
                       children: [
-                        _infoChip(
-                            Icons.currency_exchange_rounded,
-                            '৳$price',
-                            color),
+                        _infoChip(Icons.currency_exchange_rounded, '৳\$price', color),
                         SizedBox(width: 8.w),
-                        _infoChip(Icons.calendar_today_rounded,
-                            '${duration}d', Colors.blueGrey),
+                        _infoChip(Icons.calendar_today_rounded, '\${duration}d', Colors.blueGrey),
                         SizedBox(width: 8.w),
-                        _infoChip(Icons.trending_up_rounded,
-                            '+৳$commission', Colors.green),
+                        _infoChip(Icons.trending_up_rounded, '+৳\$commission', Colors.green),
                         const Spacer(),
                         GestureDetector(
                           onTap: () {
                             // TODO: handle buy action
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 14.w, vertical: 6.h),
+                            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
                             decoration: BoxDecoration(
                               color: color,
                               borderRadius: BorderRadius.circular(8.r),
