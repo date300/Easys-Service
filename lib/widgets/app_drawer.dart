@@ -1,9 +1,7 @@
-import 'dart:ui'; // ব্লার ইফেক্টের জন্য
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart'; // লটি প্যাকেজ
 
 // Import your providers — adjust path as needed
 import '../main.dart';
@@ -36,91 +34,59 @@ class AppDrawer extends ConsumerWidget {
         backgroundColor: Colors.white,
         child: Column(
           children: [
-            // --- হেডার অংশ (Lottie + Sky Blue Blur) ---
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomRight: Radius.circular(30),
+            // Header
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 20,
+                bottom: 20,
+                left: 20,
+                right: 20,
               ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 160, // হেডারের জন্য একটি নির্দিষ্ট উচ্চতা
-                child: Stack(
-                  children: [
-                    // ১. ব্যাকগ্রাউন্ডে লটি অ্যানিমেশন
-                    Positioned.fill(
-                      child: Lottie.network(
-                        'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-
-                    // ২. আকাশী কালার এবং ঝাপসা (Blur) লেয়ার
-                    Positioned.fill(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          color: skyBlue.withOpacity(0.45),
-                        ),
-                      ),
-                    ),
-
-                    // ৩. প্রোফাইল ইনফরমেশন (সবার উপরে)
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: MediaQuery.of(context).padding.top + 10,
-                        left: 20,
-                        right: 20,
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                            ),
-                            child: const CircleAvatar(
-                              radius: 30,
-                              backgroundColor: Colors.white,
-                              child: Icon(Icons.person_rounded, color: skyBlue, size: 32),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  isLoggedIn ? "Easy Service User" : "Guest User",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    shadows: [Shadow(color: Colors.black26, blurRadius: 5)],
-                                  ),
-                                ),
-                                Text(
-                                  isLoggedIn
-                                      ? "user@easyservice.com"
-                                      : "Please login to continue",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              decoration: const BoxDecoration(
+                color: skyBlue,
+                borderRadius: BorderRadius.only(
+                  bottomRight: Radius.circular(30),
                 ),
+              ),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person_rounded, color: skyBlue, size: 32),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isLoggedIn ? "Easy Service User" : "Guest User",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        Text(
+                          isLoggedIn
+                              ? "user@easyservice.com"
+                              : "Please login to continue",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 10),
 
-            // --- মেনু আইটেমগুলো (বাকি কোড আগের মতোই থাকবে) ---
+            // Menu Items
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
