@@ -100,10 +100,9 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
 
   int _indexFromLocation(String location) {
     if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/messages')) return 1;
-    if (location.startsWith('/categories')) return 2;
-    if (location.startsWith('/cart')) return 3;
-    if (location.startsWith('/profile')) return 4;
+    if (location.startsWith('/reselling')) return 1;
+    if (location.startsWith('/microjobs')) return 2;
+    if (location.startsWith('/campaigns')) return 3;
     return 0;
   }
 
@@ -116,16 +115,13 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         context.go('/home');
         break;
       case 1:
-        context.go('/messages');
+        context.go('/reselling');
         break;
       case 2:
-        context.go('/categories');
+        context.go('/microjobs');
         break;
       case 3:
-        context.go('/cart');
-        break;
-      case 4:
-        context.go('/profile');
+        context.go('/campaigns');
         break;
     }
   }
@@ -140,8 +136,13 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final isMobile = _isMobile(context);
 
     final isPaymentPage = location == '/payment';
-    final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
-    final detailTitle = isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
+    final isProfilePage = location == '/profile';
+    final isDetailView = isPaymentPage || isProfilePage || ref.watch(isDetailViewProvider);
+    final detailTitle = isPaymentPage 
+        ? 'Payment' 
+        : isProfilePage 
+            ? 'Profile' 
+            : ref.watch(detailViewTitleProvider);
 
     final animatedChild = widget.child
         .animate(key: ValueKey(location))
@@ -212,16 +213,16 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           ),
         ),
         bottomNavigationBar: (isMobile && !isDetailView)
-            ? _buildDarazStyleBottomNav(context, currentIndex)
+            ? _buildPremiumBottomNav(context, currentIndex)
             : null,
       ),
     );
   }
 
   // ============================================
-  // 🎨 DARAZ-STYLE BOTTOM NAVIGATION BAR
+  // 🎨 PREMIUM BOTTOM NAVIGATION BAR (DARAZ STYLE)
   // ============================================
-  Widget _buildDarazStyleBottomNav(BuildContext context, int currentIndex) {
+  Widget _buildPremiumBottomNav(BuildContext context, int currentIndex) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -236,10 +237,9 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       child: SafeArea(
         child: Container(
           height: 70.h,
-          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               _buildNavItem(
                 index: 0,
@@ -251,29 +251,20 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
               _buildNavItem(
                 index: 1,
                 currentIndex: currentIndex,
-                icon: Icons.chat_bubble_rounded,
-                label: 'Messages',
-                badge: '15',
+                icon: Icons.storefront_rounded,
+                label: 'Reselling',
                 onTap: () => _onNavTap(context, 1),
               ),
-              // 🎯 DARAZ STYLE CENTER ELEVATED BUTTON
-              _buildCenterElevatedButton(
+              _buildCenterButton(
                 currentIndex: currentIndex,
                 onTap: () => _onNavTap(context, 2),
               ),
               _buildNavItem(
                 index: 3,
                 currentIndex: currentIndex,
-                icon: Icons.shopping_cart_rounded,
-                label: 'Cart',
+                icon: Icons.campaign_rounded,
+                label: 'Campaigns',
                 onTap: () => _onNavTap(context, 3),
-              ),
-              _buildNavItem(
-                index: 4,
-                currentIndex: currentIndex,
-                icon: Icons.person_rounded,
-                label: 'Profile',
-                onTap: () => _onNavTap(context, 4),
               ),
             ],
           ),
@@ -282,8 +273,84 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     );
   }
 
-  // 🎯 DARAZ STYLE CENTER ELEVATED BUTTON (Pink/Orange Gradient)
-  Widget _buildCenterElevatedButton({
+  Widget _buildNavItem({
+    required int index,
+    required int currentIndex,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = index == currentIndex;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isSelected ? premiumOrange.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              padding: EdgeInsets.all(isSelected ? 6.w : 4.w),
+              decoration: BoxDecoration(
+                color: isSelected ? premiumOrange : Colors.transparent,
+                borderRadius: BorderRadius.circular(12.r),
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: premiumOrange.withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ] : [],
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.grey.shade400,
+                size: isSelected ? 22.sp : 24.sp,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              style: GoogleFonts.poppins(
+                color: isSelected ? premiumOrange : Colors.grey.shade500,
+                fontSize: isSelected ? 11.sp : 10.sp,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+              child: Text(label),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              margin: EdgeInsets.only(top: 4.h),
+              height: 3.h,
+              width: isSelected ? 20.w : 0,
+              decoration: BoxDecoration(
+                color: premiumOrange,
+                borderRadius: BorderRadius.circular(2.r),
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: premiumOrange.withOpacity(0.6),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ] : [],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterButton({
     required int currentIndex,
     required VoidCallback onTap,
   }) {
@@ -292,8 +359,8 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 60.w,
-        height: 60.w,
+        width: 56.w,
+        height: 56.w,
         margin: EdgeInsets.only(bottom: 8.h),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -318,24 +385,10 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           ),
         ),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.category_rounded,
-                color: Colors.white,
-                size: 28.sp,
-              ),
-              SizedBox(height: 2.h),
-              Container(
-                width: 4.w,
-                height: 4.w,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
+          child: Icon(
+            Icons.assignment_rounded,
+            color: Colors.white,
+            size: 28.sp,
           ),
         ),
       ).animate(
@@ -345,80 +398,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         end: const Offset(1.05, 1.05),
         duration: 2.seconds,
         curve: Curves.easeInOut,
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required int index,
-    required int currentIndex,
-    required IconData icon,
-    required String label,
-    String? badge,
-    required VoidCallback onTap,
-  }) {
-    final isSelected = index == currentIndex;
-    
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon with Badge
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.all(isSelected ? 6.w : 4.w),
-                  decoration: BoxDecoration(
-                    color: isSelected ? premiumOrange.withOpacity(0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isSelected ? premiumOrange : Colors.grey.shade400,
-                    size: isSelected ? 24.sp : 22.sp,
-                  ),
-                ),
-                // 🔴 Badge Notification
-                if (badge != null)
-                  Positioned(
-                    top: -4.h,
-                    right: -4.w,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(color: Colors.white, width: 1.5.w),
-                      ),
-                      child: Text(
-                        badge,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 9.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            SizedBox(height: 4.h),
-            // Label
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                color: isSelected ? premiumOrange : Colors.grey.shade500,
-                fontSize: 10.sp,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -449,7 +428,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       ),
       child: Column(
         children: [
-          // Logo Section
           Container(
             padding: EdgeInsets.all(20.w),
             child: Row(
@@ -482,7 +460,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
               ],
             ),
           ),
-          // Navigation Items
           Expanded(
             child: ListView(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
@@ -499,8 +476,8 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 _buildRailItem(
                   index: 1,
                   currentIndex: currentIndex,
-                  icon: Icons.chat_bubble_rounded,
-                  label: 'Messages',
+                  icon: Icons.storefront_rounded,
+                  label: 'Reselling',
                   isDesktop: isDesktop,
                   onTap: () => _onNavTap(context, 1),
                 ),
@@ -508,8 +485,8 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 _buildRailItem(
                   index: 2,
                   currentIndex: currentIndex,
-                  icon: Icons.category_rounded,
-                  label: 'Categories',
+                  icon: Icons.assignment_rounded,
+                  label: 'Microjobs',
                   isDesktop: isDesktop,
                   onTap: () => _onNavTap(context, 2),
                 ),
@@ -517,19 +494,10 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 _buildRailItem(
                   index: 3,
                   currentIndex: currentIndex,
-                  icon: Icons.shopping_cart_rounded,
-                  label: 'Cart',
+                  icon: Icons.campaign_rounded,
+                  label: 'Campaigns',
                   isDesktop: isDesktop,
                   onTap: () => _onNavTap(context, 3),
-                ),
-                SizedBox(height: 12.h),
-                _buildRailItem(
-                  index: 4,
-                  currentIndex: currentIndex,
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
-                  isDesktop: isDesktop,
-                  onTap: () => _onNavTap(context, 4),
                 ),
               ],
             ),
@@ -568,7 +536,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         ),
         child: Row(
           children: [
-            // Premium Icon Container
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               padding: EdgeInsets.all(isSelected ? 10.w : 8.w),
@@ -602,7 +569,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                   child: Text(label),
                 ),
               ),
-              // Active Indicator Dot
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 width: isSelected ? 8.w : 0,
