@@ -7,7 +7,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'router/app_router.dart'; // ← Router আলাদা ফাইলে
+import 'features/home/home_screen.dart';
+import 'features/reselling/reselling_screen.dart';
+import 'features/microjobs/microjobs_screen.dart';
+import 'features/campaigns/campaigns_screen.dart';
+import 'features/profile/profile_screen.dart';
+import 'features/auth/registration_screen.dart';
+import 'features/payment/payment_gateway_screen.dart';
 
 // Providers
 final authProvider = StateNotifierProvider<AuthController, bool>((ref) {
@@ -44,6 +50,59 @@ final authLoadingProvider = FutureProvider<void>((ref) async {
 final isDetailViewProvider = StateProvider<bool>((ref) => false);
 final detailViewTitleProvider = StateProvider<String>((ref) => '');
 
+final GoRouter _router = GoRouter(
+  initialLocation: '/home',
+  routes: [
+    GoRoute(
+      path: '/registration',
+      builder: (context, state) => const RegistrationScreen(),
+    ),
+    ShellRoute(
+      builder: (context, state, child) => MainWrapper(child: child),
+      routes: [
+        GoRoute(
+            path: '/home',
+            builder: (context, state) => const HomeScreen()),
+        GoRoute(
+            path: '/reselling',
+            builder: (context, state) => const ResellingScreen()),
+        GoRoute(
+            path: '/microjobs',
+            builder: (context, state) => const MicrojobsScreen()),
+        GoRoute(
+            path: '/campaigns',
+            builder: (context, state) => const CampaignsScreen()),
+        GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen()),
+        // Payment Route - ShellRoute এর ভিতরে
+        GoRoute(
+          path: '/payment',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return PaymentGatewayScreen(
+              amount: extra?['amount'] ?? 199.00,
+              purpose: extra?['purpose'] ?? 'Account Verification Fee',
+              onPaymentSuccess: extra?['onSuccess'],
+            );
+          },
+        ),
+      ],
+    ),
+  ],
+  redirect: (context, state) async {
+    final ref = ProviderScope.containerOf(context);
+    await ref.read(authLoadingProvider.future);
+    final isLoggedIn = ref.read(authProvider);
+    final loc = state.matchedLocation;
+    final goingToRegister = loc == '/registration';
+    
+    if (!isLoggedIn && !goingToRegister) return '/registration';
+    if (isLoggedIn && goingToRegister) return '/home';
+    return null;
+  },
+);
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: MyApp()));
@@ -67,7 +126,7 @@ class MyApp extends StatelessWidget {
             colorSchemeSeed: const Color(0xFF29B6F6),
             textTheme: GoogleFonts.poppinsTextTheme(),
           ),
-          routerConfig: appRouter, // ← _router এর বদলে appRouter
+          routerConfig: _router,
         );
       },
     );
@@ -103,10 +162,10 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
   }
 
   void _onNavTap(BuildContext context, int index) {
-    // Navigation change এ Detail View রিসেট
+    // Navigation change এ Detail View বন্ধ
     ref.read(isDetailViewProvider.notifier).state = false;
     ref.read(detailViewTitleProvider.notifier).state = '';
-
+    
     switch (index) {
       case 0:
         context.go('/home');
@@ -180,12 +239,12 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     final isDesktop = _isDesktop(context);
     final isTablet = _isTablet(context);
     final isMobile = _isMobile(context);
-
+    
     // Check if current page is payment or detail view
     final isPaymentPage = location == '/payment';
     final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
-    final detailTitle = isPaymentPage
-        ? 'Payment'
+    final detailTitle = isPaymentPage 
+        ? 'Payment' 
         : ref.watch(detailViewTitleProvider);
 
     final animatedChild = widget.child
@@ -195,6 +254,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
 
     Widget bodyContainer() {
       if (isDetailView) {
+        // Detail/Payment page - no rounded corners, full screen
         return Container(
           width: double.infinity,
           height: double.infinity,
@@ -202,6 +262,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           child: animatedChild,
         );
       }
+      // Normal page - rounded corners
       return Container(
         width: double.infinity,
         height: double.infinity,
@@ -236,6 +297,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
         body: SafeArea(
           child: Row(
             children: [
+              // Hide NavigationRail for detail/payment pages
               if ((isDesktop || isTablet) && !isDetailView)
                 NavigationRail(
                   backgroundColor: skyBlue,
@@ -264,9 +326,9 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 child: Column(
                   children: [
                     _buildTopBar(
-                      context,
+                      context, 
                       ref,
-                      isLoggedIn,
+                      isLoggedIn, 
                       isDetailView: isDetailView,
                       detailTitle: detailTitle,
                       isMobile: isMobile,
@@ -278,6 +340,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
             ],
           ),
         ),
+        // Hide BottomNav for detail/payment pages
         bottomNavigationBar: (isMobile && !isDetailView)
             ? NavigationBarTheme(
                 data: NavigationBarThemeData(
@@ -289,8 +352,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                           fontWeight: FontWeight.bold,
                           fontSize: 11.sp);
                     }
-                    return GoogleFonts.poppins(
-                        color: Colors.grey, fontSize: 10.sp);
+                    return GoogleFonts.poppins(color: Colors.grey, fontSize: 10.sp);
                   }),
                   iconTheme: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
@@ -313,7 +375,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
   }
 
   Widget _buildTopBar(
-    BuildContext context,
+    BuildContext context, 
     WidgetRef ref,
     bool isLoggedIn, {
     required bool isDetailView,
@@ -326,11 +388,13 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
       child: Row(
         children: [
           const SizedBox(width: 8),
+          
+          // Back button for detail/payment pages, Menu for normal pages
           if (isDetailView)
             IconButton(
-              icon: const Icon(Icons.arrow_back_ios_rounded,
-                  color: Colors.white, size: 24),
+              icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 24),
               onPressed: () {
+                // Go back to home and reset detail view
                 ref.read(isDetailViewProvider.notifier).state = false;
                 ref.read(detailViewTitleProvider.notifier).state = '';
                 context.go('/home');
@@ -339,12 +403,14 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           else
             Builder(
               builder: (ctx) => IconButton(
-                icon: const Icon(Icons.menu_open_rounded,
-                    color: Colors.white, size: 28),
+                icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
                 onPressed: () => Scaffold.of(ctx).openDrawer(),
               ),
             ),
+          
           const SizedBox(width: 8),
+          
+          // Title
           Expanded(
             child: Center(
               child: Text(
@@ -357,11 +423,12 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
               ),
             ),
           ),
+          
+          // Notification icon only for normal pages
           if (!isDetailView && isLoggedIn)
             IconButton(
               onPressed: () {},
-              icon: const Icon(Icons.notifications_outlined,
-                  color: Colors.white),
+              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             )
           else
             const SizedBox(width: 48),
@@ -399,7 +466,8 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context, WidgetRef ref, bool isLoggedIn) {
+  Widget _buildDrawer(
+      BuildContext context, WidgetRef ref, bool isLoggedIn) {
     final isDesktop = _isDesktop(context);
     final isTablet = _isTablet(context);
     final double drawerWidth = isDesktop
@@ -467,27 +535,32 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
                 physics: const BouncingScrollPhysics(),
                 children: [
                   if (isLoggedIn) ...[
-                    _drawerItem(context, Icons.account_balance_wallet_rounded,
-                        "Wallet",
+                    _drawerItem(context,
+                        Icons.account_balance_wallet_rounded, "Wallet",
                         onTap: () => Navigator.pop(context)),
-                    _drawerItem(
-                        context, Icons.card_giftcard_rounded, "Voucher Balance",
+                    _drawerItem(context,
+                        Icons.card_giftcard_rounded, "Voucher Balance",
                         onTap: () => Navigator.pop(context)),
-                    _drawerItem(context, Icons.workspace_premium_rounded,
-                        "Royalty Salary",
+                    _drawerItem(context,
+                        Icons.workspace_premium_rounded, "Royalty Salary",
                         onTap: () => Navigator.pop(context)),
                     const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                      child: Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
+                      padding: EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 15),
+                      child: Divider(
+                          color: Color(0xFFEEEEEE), thickness: 1.5),
                     ),
                   ],
-                  _drawerItem(
-                      context, Icons.support_agent_rounded, "Support Center",
+                  _drawerItem(context,
+                      Icons.support_agent_rounded, "Support Center",
                       onTap: () => Navigator.pop(context)),
-                  _drawerItem(context, Icons.facebook_rounded, "Facebook Group",
+                  _drawerItem(
+                      context, Icons.facebook_rounded, "Facebook Group",
                       iconColor: Colors.blue,
                       onTap: () => Navigator.pop(context)),
-                  _drawerItem(context, Icons.smart_display_rounded,
+                  _drawerItem(
+                      context,
+                      Icons.smart_display_rounded,
                       "YouTube Channel",
                       iconColor: Colors.red,
                       onTap: () => Navigator.pop(context)),
@@ -543,4 +616,3 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     );
   }
 }
-
