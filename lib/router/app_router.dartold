@@ -19,7 +19,7 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const RegistrationScreen(),
     ),
 
-    // ✅ Payment - ShellRoute এর বাইরে (Bottom Nav দেখাবে না)
+    // ✅ Payment - ShellRoute এর বাইরে (No Bottom Nav)
     GoRoute(
       path: '/payment',
       builder: (context, state) {
@@ -32,6 +32,13 @@ final GoRouter appRouter = GoRouter(
       },
     ),
 
+    // ✅ Profile - ShellRoute এর বাইরে (No Bottom Nav)
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfileScreen(),
+    ),
+
+    // ShellRoute - Only pages WITH bottom navigation
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
@@ -47,9 +54,6 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
             path: '/campaigns',
             builder: (context, state) => const CampaignsScreen()),
-        GoRoute(
-            path: '/profile',
-            builder: (context, state) => const ProfileScreen()),
       ],
     ),
   ],

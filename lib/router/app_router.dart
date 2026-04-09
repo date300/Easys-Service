@@ -9,7 +9,7 @@ import '../features/campaigns/campaigns_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/auth/registration_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
-import '../main.dart'; // authProvider, authLoadingProvider, MainWrapper
+import '../main.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/home',
@@ -19,41 +19,46 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const RegistrationScreen(),
     ),
 
-    // ✅ Payment - ShellRoute এর বাইরে (No Bottom Nav)
-    GoRoute(
-      path: '/payment',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        return PaymentGatewayScreen(
-          amount: extra?['amount'] ?? 199.00,
-          purpose: extra?['purpose'] ?? 'Account Verification Fee',
-          onPaymentSuccess: extra?['onSuccess'],
-        );
-      },
-    ),
-
-    // ✅ Profile - ShellRoute এর বাইরে (No Bottom Nav)
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
-    ),
-
-    // ShellRoute - Only pages WITH bottom navigation
+    // ✅ ShellRoute — সব পেজ এখানে (Bottom Nav + AppTopBar সহ)
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
         GoRoute(
-            path: '/home',
-            builder: (context, state) => const HomeScreen()),
+          path: '/home',
+          builder: (context, state) => const HomeScreen(),
+        ),
         GoRoute(
-            path: '/reselling',
-            builder: (context, state) => const ResellingScreen()),
+          path: '/reselling',
+          builder: (context, state) => const ResellingScreen(),
+        ),
         GoRoute(
-            path: '/microjobs',
-            builder: (context, state) => const MicrojobsScreen()),
+          path: '/microjobs',
+          builder: (context, state) => const MicrojobsScreen(),
+        ),
         GoRoute(
-            path: '/campaigns',
-            builder: (context, state) => const CampaignsScreen()),
+          path: '/campaigns',
+          builder: (context, state) => const CampaignsScreen(),
+        ),
+
+        // ✅ Profile — ShellRoute এর ভেতরে
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfileScreen(),
+        ),
+
+        // ✅ Payment — ShellRoute এর ভেতরে
+        // MainWrapper isDetailView=true দেখবে → শুধু back arrow, কোনো bottom nav নেই
+        GoRoute(
+          path: '/payment',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return PaymentGatewayScreen(
+              amount: extra?['amount'] ?? 199.00,
+              purpose: extra?['purpose'] ?? 'Account Verification Fee',
+              onPaymentSuccess: extra?['onSuccess'],
+            );
+          },
+        ),
       ],
     ),
   ],
