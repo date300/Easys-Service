@@ -1,3 +1,4 @@
+import 'dart:ui'; // ব্লার ইফেক্টের জন্য
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lottie/lottie.dart'; // লটি প্যাকেজ
 
 import 'router/app_router.dart';
 import 'widgets/app_bottom_nav_bar.dart';
@@ -84,20 +86,16 @@ class MyApp extends StatelessWidget {
 }
 
 // ============================================
-// MAIN WRAPPER
+// MAIN WRAPPER (এখানেই মূল পরিবর্তন করা হয়েছে)
 // ============================================
 
 class MainWrapper extends ConsumerWidget {
   final Widget child;
   const MainWrapper({super.key, required this.child});
 
-  static bool _isDesktop(BuildContext ctx) =>
-      MediaQuery.of(ctx).size.width >= 1100;
-  static bool _isTablet(BuildContext ctx) =>
-      MediaQuery.of(ctx).size.width >= 600 &&
-      MediaQuery.of(ctx).size.width < 1100;
-  static bool _isMobile(BuildContext ctx) =>
-      MediaQuery.of(ctx).size.width < 600;
+  static bool _isDesktop(BuildContext ctx) => MediaQuery.of(ctx).size.width >= 1100;
+  static bool _isTablet(BuildContext ctx) => MediaQuery.of(ctx).size.width >= 600 && MediaQuery.of(ctx).size.width < 1100;
+  static bool _isMobile(BuildContext ctx) => MediaQuery.of(ctx).size.width < 600;
 
   int _indexFromLocation(String location) {
     if (location.startsWith('/home')) return 0;
@@ -126,98 +124,90 @@ class MainWrapper extends ConsumerWidget {
     final location = GoRouterState.of(context).uri.toString();
     final currentIndex = _indexFromLocation(location);
     final isLoggedIn = ref.watch(authProvider);
-    final isDesktop = _isDesktop(context);
-    final isTablet = _isTablet(context);
     final isMobile = _isMobile(context);
+    final isDetailView = ref.watch(isDetailViewProvider);
+    final detailTitle = ref.watch(detailViewTitleProvider);
 
-    final isPaymentPage = location == '/payment';
-    final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
-    final detailTitle =
-        isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
-
-    final animatedChild = child
-        .animate(key: ValueKey(location))
-        .fadeIn(duration: 400.ms)
-        .moveY(begin: 10, end: 0);
-
-    Widget bodyContainer() {
-      if (isDetailView) {
-        return Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: Colors.white,
-          child: animatedChild,
-        );
-      }
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(isMobile ? 32.r : 24),
-            topRight: Radius.circular(isMobile ? 32.r : 24),
+    return Scaffold(
+      // ব্যাকগ্রাউন্ড সলিড কালারের বদলে স্ট্যাক ব্যবহার করে লটি যোগ করা হয়েছে
+      body: Stack(
+        children: [
+          // ১. গ্লোবাল লটি অ্যানিমেশন (পুরো ব্যাকগ্রাউন্ড জুড়ে)
+          Positioned.fill(
+            child: Lottie.network(
+              'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(isMobile ? 32.r : 24),
-            topRight: Radius.circular(isMobile ? 32.r : 24),
-          ),
-          child: animatedChild,
-        ),
-      );
-    }
-
-    return PopScope(
-      canPop: !isDetailView,
-      onPopInvokedWithResult: (didPop, result) {
-        if (isDetailView && !didPop) {
-          ref.read(isDetailViewProvider.notifier).state = false;
-          ref.read(detailViewTitleProvider.notifier).state = '';
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFF29B6F6),
-        drawer: isDetailView
-            ? null
-            : AppDrawer(
-                isLoggedIn: isLoggedIn,
-                isDesktop: isDesktop,
-                isTablet: isTablet,
+          
+          // ২. আকাশী গ্লাস লেয়ার (ঝাপসা ইফেক্ট)
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                color: const Color(0xFF29B6F6).withOpacity(0.4),
               ),
-        body: SafeArea(
-          child: Row(
-            children: [
-              if ((isDesktop || isTablet) && !isDetailView)
-                AppNavRail(
-                  currentIndex: currentIndex,
-                  isDesktop: isDesktop,
-                  onTap: (i) => _onNavTap(context, ref, i),
-                ),
-              Expanded(
-                child: Column(
-                  children: [
-                    AppTopBar(
-                      isDetailView: isDetailView,
-                      detailTitle: detailTitle,
-                      isMobile: isMobile,
-                      isLoggedIn: isLoggedIn,
-                    ),
-                    Expanded(child: bodyContainer()),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-        bottomNavigationBar: (isMobile && !isDetailView)
-            ? AppBottomNavBar(
-                currentIndex: currentIndex,
-                onTap: (i) => _onNavTap(context, ref, i),
-              )
-            : null,
+
+          // ৩. মেইন ইউআই (TopBar + Body)
+          SafeArea(
+            child: Row(
+              children: [
+                if ((_isDesktop(context) || _isTablet(context)) && !isDetailView)
+                  AppNavRail(
+                    currentIndex: currentIndex,
+                    isDesktop: _isDesktop(context),
+                    onTap: (i) => _onNavTap(context, ref, i),
+                  ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      // এখানে AppTopBar কল হচ্ছে (যা এখন স্বচ্ছ লাগবে)
+                      AppTopBar(
+                        isDetailView: isDetailView,
+                        detailTitle: detailTitle,
+                        isMobile: isMobile,
+                        isLoggedIn: isLoggedIn,
+                      ),
+                      // বডি কন্টেইনার
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(isMobile && !isDetailView ? 32.r : 0),
+                              topRight: Radius.circular(isMobile && !isDetailView ? 32.r : 0),
+                            ),
+                          ),
+                          child: child
+                              .animate(key: ValueKey(location))
+                              .fadeIn(duration: 400.ms)
+                              .moveY(begin: 10, end: 0),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+      drawer: isDetailView
+          ? null
+          : AppDrawer(
+              isLoggedIn: isLoggedIn,
+              isDesktop: _isDesktop(context),
+              isTablet: _isTablet(context),
+            ),
+      bottomNavigationBar: (isMobile && !isDetailView)
+          ? AppBottomNavBar(
+              currentIndex: currentIndex,
+              onTap: (i) => _onNavTap(context, ref, i),
+            )
+          : null,
     );
   }
 }
