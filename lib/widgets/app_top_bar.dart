@@ -27,17 +27,19 @@ class AppTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // এখানে টপ বারের নিচের কোনা বাঁকানো (Rounded) করা হয়েছে
+    // এখানে কোনা বাঁকানোর রেডিয়াস নির্ধারণ করা হয়েছে
+    final double borderRadiusValue = isMobile ? 32.r : 28;
+
     return ClipRRect(
       borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(isMobile ? 30.r : 24),
-        bottomRight: Radius.circular(isMobile ? 30.r : 24),
+        bottomLeft: Radius.circular(borderRadiusValue),
+        bottomRight: Radius.circular(borderRadiusValue),
       ),
       child: SizedBox(
         height: isMobile ? 65.h : 75,
         child: Stack(
           children: [
-            // ১. ব্যাকগ্রাউন্ড এনিমেশন
+            // ১. ব্যাকগ্রাউন্ড এনিমেশন লেয়ার
             Positioned.fill(
               child: Lottie.network(
                 'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json',
@@ -46,27 +48,33 @@ class AppTopBar extends ConsumerWidget {
               ),
             ),
 
-            // ২. গ্লাস-মর্ফিজম ইফেক্ট
+            // ২. গ্লাস-মর্ফিজম ইফেক্ট (আকাশী কালার ও ব্লার)
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  color: skyBlue.withOpacity(0.5),
+                  decoration: BoxDecoration(
+                    color: skyBlue.withOpacity(0.55),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(borderRadiusValue),
+                      bottomRight: Radius.circular(borderRadiusValue),
+                    ),
+                  ),
                 ),
               ),
             ),
 
-            // ৩. কন্টেন্ট লেয়ার
+            // ৩. মেইন কন্টেন্ট (আইকন ও টাইটেল)
             SafeArea(
               bottom: false,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                padding: EdgeInsets.symmetric(horizontal: 12.w),
                 child: Row(
                   children: [
-                    // আইফোনের স্টাইল ব্যাক আইকন এবং মেনু আইকন লজিক
+                    // আইফোন স্টাইল ব্যাক বাটন অথবা ড্রয়ার মেনু
                     _buildLeadingIcon(context, ref),
 
-                    // মাঝখানের টাইটেল
+                    // টাইটেল লেবেল
                     Expanded(
                       child: Center(
                         child: Text(
@@ -80,7 +88,7 @@ class AppTopBar extends ConsumerWidget {
                             letterSpacing: 0.5,
                             shadows: const [
                               Shadow(
-                                color: Colors.black26,
+                                color: Colors.black12,
                                 blurRadius: 4,
                                 offset: Offset(0, 2),
                               ),
@@ -90,7 +98,7 @@ class AppTopBar extends ConsumerWidget {
                       ),
                     ),
 
-                    // ডান পাশের স্পেস বা নোটিফিকেশন আইকন
+                    // ডান পাশের অ্যাকশন বাটন বা খালি জায়গা
                     _buildTrailingAction(),
                   ],
                 ),
@@ -102,17 +110,17 @@ class AppTopBar extends ConsumerWidget {
     );
   }
 
-  // --- লিডিং আইকন মেথড (iPhone Style Back Icon) ---
+  // --- আইফোন স্টাইল ব্যাক আইকন ও ড্রয়ার লজিক ---
   Widget _buildLeadingIcon(BuildContext context, WidgetRef ref) {
     if (isDetailView) {
       return IconButton(
-        // এখানে আইফোনের মতো ব্যাক আইকন দেওয়া হয়েছে
         icon: const Icon(
-          Icons.arrow_back_ios_new_rounded, 
-          color: Colors.white, 
-          size: 22
+          Icons.arrow_back_ios_new_rounded, // লেটেস্ট আইফোন স্টাইল ব্যাক আইকন
+          color: Colors.white,
+          size: 22,
         ),
         onPressed: () {
+          // স্টেট আপডেট
           ref.read(isDetailViewProvider.notifier).state = false;
           ref.read(detailViewTitleProvider.notifier).state = '';
 
@@ -125,6 +133,7 @@ class AppTopBar extends ConsumerWidget {
       );
     }
 
+    // ড্রয়ার ওপেন করার মেনু আইকন
     return Builder(
       builder: (ctx) => IconButton(
         icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
@@ -133,6 +142,7 @@ class AppTopBar extends ConsumerWidget {
     );
   }
 
+  // --- নোটিফিকেশন আইকন বা প্লেসহোল্ডার ---
   Widget _buildTrailingAction() {
     if (!isDetailView && isLoggedIn) {
       return IconButton(
@@ -140,6 +150,7 @@ class AppTopBar extends ConsumerWidget {
         icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
       );
     }
+    // ডিটেইলস পেজে আইকন না থাকলে টাইটেল সেন্টার রাখতে সমান জায়গা রাখা হয়েছে
     return SizedBox(width: 48.w);
   }
 }
