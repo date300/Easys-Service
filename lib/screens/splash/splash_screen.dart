@@ -110,7 +110,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                     ),
                     SizedBox(height: 5.h),
                     Text(
-                      "TECH SOLUTION",
+                      "Target Win",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16.sp,
