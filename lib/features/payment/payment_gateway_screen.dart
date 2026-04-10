@@ -52,7 +52,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
       logoAsset: 'assets/images/nagad.png',
       primaryColor: Color(0xFFFF6600),
       secondaryColor: Color(0xFFFFAA55),
-      available: true,
+      available: false,
     ),
     PaymentMethod(
       id: 'binance',
@@ -61,7 +61,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
       logoAsset: 'assets/images/binance.png',
       primaryColor: Color(0xFFF0B90B),
       secondaryColor: Color(0xFFFFDA6A),
-      available: true,
+      available: false,
     ),
   ];
 
@@ -142,7 +142,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // ✅ AppBar নেই — MainWrapper এর AppTopBar back arrow দেখাবে
+      // ? AppBar ??? ? MainWrapper ?? AppTopBar back arrow ??????
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SlideTransition(
