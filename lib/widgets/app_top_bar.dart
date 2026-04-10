@@ -27,7 +27,7 @@ class AppTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // আগের মতো নিচের কোনা বাঁকানো স্টাইল দেওয়ার জন্য ClipRRect এ borderRadius যোগ করা হয়েছে
+    // এখানে টপ বারের নিচের কোনা বাঁকানো (Rounded) করা হয়েছে
     return ClipRRect(
       borderRadius: BorderRadius.only(
         bottomLeft: Radius.circular(isMobile ? 30.r : 24),
@@ -106,7 +106,7 @@ class AppTopBar extends ConsumerWidget {
   Widget _buildLeadingIcon(BuildContext context, WidgetRef ref) {
     if (isDetailView) {
       return IconButton(
-        // এখানে Icons.arrow_back_ios_new_rounded ব্যবহার করা হয়েছে যা একদম আইফোনের ব্যাক আইকনের মতো
+        // এখানে আইফোনের মতো ব্যাক আইকন দেওয়া হয়েছে
         icon: const Icon(
           Icons.arrow_back_ios_new_rounded, 
           color: Colors.white, 
