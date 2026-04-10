@@ -12,7 +12,7 @@ class DriveScreen extends StatefulWidget {
 }
 
 class _DriveScreenState extends State<DriveScreen> {
-  final List<String> operators = ['gp', 'robi', 'airtel', 'bl', 'teletalk', 'skitto', 'brilliant'];
+  final List<String> operators = ['gp', 'robi', 'airtel', 'bl', 'teletalk', 'skitto'];
 
   final Map<String, String> operatorNames = {
     'gp': 'Grameenphone',
@@ -21,7 +21,6 @@ class _DriveScreenState extends State<DriveScreen> {
     'bl': 'Banglalink',
     'teletalk': 'Teletalk',
     'skitto': 'Skitto',
-    'brilliant': 'Brilliant',
   };
 
   final Map<String, Color> operatorColors = {
@@ -31,7 +30,6 @@ class _DriveScreenState extends State<DriveScreen> {
     'bl': Color(0xFFE8000D),
     'teletalk': Color(0xFF003399),
     'skitto': Color(0xFFFF6B00),
-    'brilliant': Color(0xFF1E88E5),
   };
 
   final Map<String, String> operatorCodes = {
@@ -41,7 +39,6 @@ class _DriveScreenState extends State<DriveScreen> {
     'bl': 'BL',
     'teletalk': 'TT',
     'skitto': 'SK',
-    'brilliant': 'BT',
   };
 
   final Map<String, List<String>> operatorCategories = {
@@ -51,7 +48,6 @@ class _DriveScreenState extends State<DriveScreen> {
     'bl': ['All', 'Internet', 'Minute', 'Bundle', 'Star'],
     'teletalk': ['All', 'Internet', 'Minute', 'Bundle', 'Special'],
     'skitto': ['All', 'Data', 'Voice', 'Combo'],
-    'brilliant': ['All', 'Internet', 'Minute', 'Bundle'],
   };
 
   String selectedOperator = 'gp';
@@ -91,7 +87,7 @@ class _DriveScreenState extends State<DriveScreen> {
           });
         } else {
           setState(() {
-            // FIX: outer double quote দিয়ে inner single quote conflict এড়ানো হয়েছে
+            // FIX: outer double quote ????? inner single quote conflict ?????? ??????
             errorMessage = "API Error: ${json['message'] ?? 'Unknown error'}";
             isLoading = false;
           });
@@ -179,20 +175,16 @@ class _DriveScreenState extends State<DriveScreen> {
         right: 20.w,
       ),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Colors.white,
       ),
-     
-          ),
+      child: Row(
+        children: [
           const Spacer(),
           Text(
             '${filteredDrives.length} Packages',
             style: GoogleFonts.poppins(
               fontSize: 12.sp,
-              color: Colors.white54,
+              color: Colors.black54,
             ),
           ),
         ],
@@ -202,7 +194,7 @@ class _DriveScreenState extends State<DriveScreen> {
 
   Widget _buildOperatorTabs() {
     return Container(
-      color: const Color(0xFF1A1A2E),
+      color: Colors.white,
       height: 56.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -261,7 +253,7 @@ class _DriveScreenState extends State<DriveScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 12.sp,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: isSelected ? Colors.white : Colors.white70,
+                      color: isSelected ? Colors.white : Colors.black87,
                     ),
                   ),
                 ],
@@ -398,7 +390,7 @@ class _DriveScreenState extends State<DriveScreen> {
     final duration = drive['duration'] ?? '30';
     final title = (drive['title'] ?? '') as String;
 
-    // FIX: garbled unicode regex ঠিক করা হয়েছে
+    // FIX: garbled unicode regex ??? ??? ??????
     final cleanTitle = title.replaceAll(RegExp(r'\(.*?\)'), '').trim();
     final isGift = title.contains('GIFT');
 
@@ -468,11 +460,11 @@ class _DriveScreenState extends State<DriveScreen> {
                     SizedBox(height: 10.h),
                     Row(
                       children: [
-                        _infoChip(Icons.currency_exchange_rounded, '৳$price', color),
+                        _infoChip(Icons.currency_exchange_rounded, '?$price', color),
                         SizedBox(width: 8.w),
                         _infoChip(Icons.calendar_today_rounded, '${duration}d', Colors.blueGrey),
                         SizedBox(width: 8.w),
-                        _infoChip(Icons.trending_up_rounded, '+৳$commission', Colors.green),
+                        _infoChip(Icons.trending_up_rounded, '+?$commission', Colors.green),
                         const Spacer(),
                         GestureDetector(
                           onTap: () {
