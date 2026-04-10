@@ -1,12 +1,12 @@
-import 'dart:ui'; // ব্লার ইফেক্টের জন্য প্রয়োজন
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart'; // লটি প্যাকেজটি অবশ্যই থাকতে হবে
+import 'package:lottie/lottie.dart';
 
-// আপনার প্রোপ্রাইডার ইম্পোর্ট (আপনার প্রোজেক্ট পাথ অনুযায়ী ঠিক করে নিন)
+// আপনার মেইন ফাইলের লোকেশন অনুযায়ী নিচের ইমপোর্টটি নিশ্চিত করুন
 import '../main.dart'; 
 
 class AppTopBar extends ConsumerWidget {
@@ -27,71 +27,57 @@ class AppTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ClipRRect( // ব্লার যেন বারের বাইরে ছড়িয়ে না যায়
+    return ClipRRect(
       child: SizedBox(
-        height: isMobile ? 65.h : 70, // অ্যানিমেশন দেখানোর জন্য হাইট সামান্য বাড়ানো হয়েছে
+        height: isMobile ? 65.h : 70, 
         child: Stack(
           children: [
-            // ১. ব্যাকগ্রাউন্ডে লটি অ্যানিমেশন
+            // ১. ব্যাকগ্রাউন্ড এনিমেশন (Lottie)
             Positioned.fill(
               child: Lottie.network(
-                'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json', // একটি প্রিমিয়াম লটি লিংক দেওয়া হয়েছে
+                'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json',
                 fit: BoxFit.cover,
                 repeat: true,
               ),
             ),
 
-            // ২. ঝাপসা আকাশী লেয়ার (Blur + Color Overlay)
+            // ২. গ্লাস-মর্ফিজম ইফেক্ট (Blur + Overlay)
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // ঝাপসা করার পরিমাণ
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  color: skyBlue.withOpacity(0.45), // আকাশী কালারের স্বচ্ছ আস্তর
+                  color: skyBlue.withOpacity(0.45),
                 ),
               ),
             ),
 
-            // ৩. মেইন কন্টেন্ট (আইকন ও টাইটেল)
+            // ৩. কন্টেন্ট লেয়ার
             SafeArea(
               bottom: false,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8.w),
                 child: Row(
                   children: [
-                    if (isDetailView)
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_rounded,
-                            color: Colors.white, size: 22),
-                        onPressed: () {
-                          // আপনার অরিজিনাল লজিক
-                          ref.read(isDetailViewProvider.notifier).state = false;
-                          ref.read(detailViewTitleProvider.notifier).state = '';
-                          context.go('/home');
-                        },
-                      )
-                    else
-                      Builder(
-                        builder: (ctx) => IconButton(
-                          icon: const Icon(Icons.menu_open_rounded,
-                              color: Colors.white, size: 28),
-                          onPressed: () => Scaffold.of(ctx).openDrawer(),
-                        ),
-                      ),
+                    // বাম পাশের আইকন: ডিটেইল ভিউ হলে 'Back', নাহলে 'Menu'
+                    _buildLeadingIcon(context, ref),
                     
+                    // মাঝখানের টাইটেল
                     Expanded(
                       child: Center(
                         child: Text(
                           isDetailView ? detailTitle : 'Easy Service',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: isMobile ? 18.sp : 20,
                             letterSpacing: 0.5,
-                            shadows: [
+                            shadows: const [
                               Shadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black26,
                                 blurRadius: 4,
-                                offset: const Offset(0, 2),
+                                offset: Offset(0, 2),
                               ),
                             ],
                           ),
@@ -99,14 +85,8 @@ class AppTopBar extends ConsumerWidget {
                       ),
                     ),
 
-                    if (!isDetailView && isLoggedIn)
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.notifications_outlined,
-                            color: Colors.white, size: 26),
-                      )
-                    else
-                      SizedBox(width: 48.w), // ব্যালেন্স রাখার জন্য গ্যাপ
+                    // ডান পাশের স্পেস বা নোটিফিকেশন আইকন (সমান্তরাল রাখার জন্য)
+                    _buildTrailingAction(),
                   ],
                 ),
               ),
@@ -115,5 +95,45 @@ class AppTopBar extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  // --- হেল্পার মেথড: লিডিং আইকন (Back/Menu) ---
+  Widget _buildLeadingIcon(BuildContext context, WidgetRef ref) {
+    if (isDetailView) {
+      return IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 22),
+        onPressed: () {
+          // স্টেট রিসেট করা
+          ref.read(isDetailViewProvider.notifier).state = false;
+          ref.read(detailViewTitleProvider.notifier).state = '';
+          
+          // পেজ থেকে ব্যাক করা
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/home'); // যদি পপ করার কিছু না থাকে তবে হোমে যাবে
+          }
+        },
+      );
+    }
+
+    return Builder(
+      builder: (ctx) => IconButton(
+        icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
+        onPressed: () => Scaffold.of(ctx).openDrawer(),
+      ),
+    );
+  }
+
+  // --- হেল্পার মেথড: ট্রেইলিং আইকন (Notifications/Empty) ---
+  Widget _buildTrailingAction() {
+    if (!isDetailView && isLoggedIn) {
+      return IconButton(
+        onPressed: () {},
+        icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
+      );
+    }
+    // ডিটেইল ভিউতে টাইটেল সেন্টারে রাখার জন্য ডানপাশে সমপরিমাণ খালি জায়গা
+    return SizedBox(width: 48.w);
   }
 }
