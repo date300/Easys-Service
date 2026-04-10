@@ -34,24 +34,14 @@ class AppDrawer extends ConsumerWidget {
         backgroundColor: Colors.white,
         child: Column(
           children: [
-            // Header (Profile text removed)
+            // Header (Icon and Profile Info fully removed)
             Container(
               width: double.infinity,
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 20,
-                bottom: 20,
-              ),
+              height: MediaQuery.of(context).padding.top + 40, // Height adjusted
               decoration: const BoxDecoration(
                 color: skyBlue,
                 borderRadius: BorderRadius.only(
                   bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: const Center(
-                child: CircleAvatar(
-                  radius: 35,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person_rounded, color: skyBlue, size: 40),
                 ),
               ),
             ),

@@ -12,51 +12,43 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // উপরের স্পেসিং এবং প্রোফাইল আইকন
-          SizedBox(height: 70.h),
-          const Center(
-            child: CircleAvatar(
-              radius: 50,
-              backgroundColor: skyBlue,
-              child: Icon(Icons.person, size: 50, color: Colors.white),
-            ),
-          ),
-          
-          // টেক্সটগুলো রিমুভ করে দিয়ে সরাসরি লিস্টে যাওয়ার জন্য গ্যাপ
-          SizedBox(height: 40.h),
-          
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _buildProfileItem(
-                  context,
-                  Icons.edit_outlined,
-                  "Edit Profile",
-                  onTap: () => Navigator.push(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ওপরে অল্প কিছু গ্যাপ দেওয়া হয়েছে যাতে দেখতে ভালো লাগে
+            SizedBox(height: 20.h), 
+            
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildProfileItem(
                     context,
-                    MaterialPageRoute(
-                        builder: (_) => const EditProfileScreen()),
+                    Icons.edit_outlined,
+                    "Edit Profile",
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const EditProfileScreen()),
+                    ),
                   ),
-                ),
-                _buildProfileItem(
-                    context, Icons.wallet, "My Wallet"),
-                _buildProfileItem(
-                    context, Icons.history, "Order History"),
-                _buildProfileItem(
-                    context, Icons.settings, "Settings"),
-                _buildProfileItem(
-                    context, Icons.help_outline, "Support Center"),
-                _buildProfileItem(
-                    context, Icons.logout, "Logout",
-                    isLast: true),
-              ],
+                  _buildProfileItem(
+                      context, Icons.wallet, "My Wallet"),
+                  _buildProfileItem(
+                      context, Icons.history, "Order History"),
+                  _buildProfileItem(
+                      context, Icons.settings, "Settings"),
+                  _buildProfileItem(
+                      context, Icons.help_outline, "Support Center"),
+                  _buildProfileItem(
+                      context, Icons.logout, "Logout",
+                      isLast: true),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
