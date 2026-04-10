@@ -1,9 +1,9 @@
- import 'dart:async';
+
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import '../models/payment_method.dart';
-// import '../widgets/payment_widgets.dart'; // প্রয়োজন না হলে কমেন্ট করে রাখতে পারেন
 
 class BkashPaymentFlow extends StatefulWidget {
   final PaymentMethod method;
@@ -26,7 +26,9 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
   bool _isLoading = false;
   String? _errorText;
   
-  // আপনার দেয়া প্রাপক নম্বর
+  // bKash Brand Color
+  static const Color bkashPink = Color(0xFFE2136E);
+  static const Color bkashLightPink = Color(0xFFFCE4EC);
   final String _receiverNumber = '01576584250';
 
   @override
@@ -39,10 +41,11 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$label কপি করা হয়েছে'),
-        backgroundColor: const Color(0xFF87CEEB), // Sky Blue
+        content: Text('$label কপি হয়েছে'),
+        backgroundColor: bkashPink,
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -51,7 +54,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
     final trxId = _trxIdController.text.trim();
     
     if (trxId.isEmpty) {
-      setState(() => _errorText = 'অনুগ্রহ করে Transaction ID দিন');
+      setState(() => _errorText = 'দয়া করে Transaction ID দিন');
       return;
     }
 
@@ -60,23 +63,21 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
       _errorText = null;
     });
 
-    // এখানে আপনার সার্ভার বা API চেক করার কোড হবে
     await Future.delayed(const Duration(seconds: 2)); 
 
     setState(() => _isLoading = false);
 
     if (!mounted) return;
     
-    // সফল হলে আগের পেজে ফিরে যাবে
     Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Charcoal Black
+      backgroundColor: Colors.white, // White Background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: bkashPink, // bKash Pink
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
@@ -84,100 +85,184 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
         ),
         title: Text(
           '${widget.method.name} Payment',
-          style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600),
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // পেমেন্ট ইন্সট্রাকশন কার্ড
+              // bKash Style Instructions Card
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF333333)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: bkashPink.withOpacity(0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: bkashPink.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'পেমেন্ট করার নিয়মঃ',
-                      style: TextStyle(color: Color(0xFFFFD700), fontSize: 16, fontWeight: FontWeight.bold),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: bkashLightPink,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.info_outline, color: bkashPink, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'পেমেন্ট নির্দেশনা',
+                          style: TextStyle(
+                            color: bkashPink, 
+                            fontSize: 16, 
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 16),
+                    _buildStepText('১. bKash অ্যাপে যান বা *247# ডায়াল করুন এবং Send Money সিলেক্ট করুন'),
                     const SizedBox(height: 12),
-                    _buildStepText('১. bKash অ্যাপ বা *247# ডায়াল করে Send Money করুন।'),
-                    const SizedBox(height: 15),
                     
-                    // প্রাপক নম্বর রো
-                    _buildInfoTile('প্রাপক নম্বরঃ', _receiverNumber, Icons.phone_android),
+                    // Receiver Number Tile
+                    _buildInfoTile('প্রাপক নম্বর', _receiverNumber, Icons.phone_android),
                     const SizedBox(height: 10),
                     
-                    // টাকার পরিমাণ রো
-                    _buildInfoTile('মোট টাকার পরিমাণঃ', '৳${widget.amount.toStringAsFixed(2)}', Icons.account_balance_wallet, valueColor: const Color(0xFFFFD700)),
+                    // Amount Tile
+                    _buildInfoTile('টাকার পরিমাণ', '৳${widget.amount.toStringAsFixed(2)}', Icons.account_balance_wallet),
                     
-                    const SizedBox(height: 15),
-                    _buildStepText('২. পিন দিয়ে পেমেন্ট সফল হওয়ার পর নিচের বক্সে Transaction ID দিন।'),
+                    const SizedBox(height: 12),
+                    _buildStepText('২. পেমেন্ট সম্পন্ন হলে Transaction ID নিচে বসান'),
                   ],
                 ),
               ),
               
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               
-              // Transaction ID ইনপুট ফিল্ড
+              // Transaction ID Input Section
               const Text(
-                'Transaction ID দিন',
-                style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+                'Transaction ID',
+                style: TextStyle(
+                  color: Colors.black87, 
+                  fontSize: 14, 
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               TextField(
                 controller: _trxIdController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87, fontSize: 16),
+                textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
                   hintText: 'যেমন: TX1234ABC',
-                  hintStyle: const TextStyle(color: Colors.white24),
+                  hintStyle: TextStyle(color: Colors.grey[400]),
                   filled: true,
-                  fillColor: const Color(0xFF1E1E1E),
-                  prefixIcon: const Icon(Icons.qr_code_scanner, color: Color(0xFF87CEEB)),
+                  fillColor: Colors.grey[50],
+                  prefixIcon: const Icon(Icons.confirmation_number, color: bkashPink),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF333333)),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF87CEEB)),
+                    borderSide: const BorderSide(color: bkashPink, width: 2),
                   ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.red),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
               ),
 
-              // এরর মেসেজ (যদি থাকে)
+              // Error Text
               if (_errorText != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(_errorText!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        _errorText!, 
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                    ],
+                  ),
                 ),
 
               const SizedBox(height: 32),
 
-              // সাবমিট বাটন
+              // Submit Button (bKash Style)
               SizedBox(
                 width: double.infinity,
-                height: 55,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitTransaction,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF87CEEB), // Sky Blue
-                    foregroundColor: Colors.black,
+                    backgroundColor: bkashPink, // bKash Pink
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
+                    elevation: 2,
+                    shadowColor: bkashPink.withOpacity(0.4),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.black)
-                      : const Text('Submit', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'কনফার্ম করুন', 
+                              style: TextStyle(
+                                fontSize: 16, 
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward, size: 18),
+                          ],
+                        ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Security Note
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.verified_user, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      'নিরাপদ পেমেন্ট গ্যারান্টি',
+                      style: TextStyle(
+                        color: Colors.grey[600], 
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -188,36 +273,82 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
   }
 
   Widget _buildStepText(String text) {
-    return Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4));
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 6),
+          width: 6,
+          height: 6,
+          decoration: const BoxDecoration(
+            color: bkashPink,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text, 
+            style: TextStyle(
+              color: Colors.grey[700], 
+              fontSize: 14, 
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  Widget _buildInfoTile(String label, String value, IconData icon, {Color? valueColor}) {
+  Widget _buildInfoTile(String label, String value, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF121212),
+        color: bkashLightPink.withOpacity(0.3),
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: bkashPink.withOpacity(0.1)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF87CEEB), size: 18),
-          const SizedBox(width: 10),
+          Icon(icon, color: bkashPink, size: 20),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                Text(value, style: TextStyle(color: valueColor ?? Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                Text(
+                  label, 
+                  style: TextStyle(
+                    color: Colors.grey[600], 
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value, 
+                  style: const TextStyle(
+                    color: Colors.black87, 
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.copy, color: Colors.white54, size: 18),
-            onPressed: () => _copyToClipboard(value, label),
-          )
+          Material(
+            color: bkashPink.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => _copyToClipboard(value, label),
+              child: const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.copy, color: bkashPink, size: 18),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
-
