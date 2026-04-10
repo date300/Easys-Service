@@ -26,7 +26,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
   
   static const Color bkashPink = Color(0xFFE2136E);
   static const Color bkashLightPink = Color(0xFFFCE4EC);
-  final String _receiverNumber = '01576584250'; // ফেক নাম্বার (যেমনটি চেয়েছেন)
+  final String _receiverNumber = '01576584250';
 
   @override
   void dispose() {
@@ -73,10 +73,9 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
       appBar: AppBar(
         backgroundColor: bkashPink,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-          onPressed: () => Navigator.pop(context, null),
-        ),
+        // ✅ ব্যাক আইকন রিমুভ করা হয়েছে (leading: null)
+        leading: null,
+        automaticallyImplyLeading: false, // ✅ ডিফল্ট ব্যাক বাটনও ডিসেবল
         title: Image.asset(
           'assets/images/bkash.png',
           height: 28,
@@ -93,29 +92,11 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // bKash Logo at top
-              Center(
-                child: Image.asset(
-                  'assets/images/bkash.png',                  height: 70,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 70,
-                    decoration: BoxDecoration(
-                      color: bkashLightPink,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'bKash',
-                        style: TextStyle(color: bkashPink, fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+              // ✅ উপরের অতিরিক্ত লোগো রিমুভ করা হয়েছে
               
-              // Instructions Card
-              Container(
+              const SizedBox(height: 16),
+              
+              // Instructions Card              Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -145,7 +126,8 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                         const SizedBox(width: 12),
                         const Text(
                           'প্রয়োজনীয় নির্দেশাবলী',
-                          style: TextStyle(                            color: bkashPink, 
+                          style: TextStyle(
+                            color: bkashPink, 
                             fontSize: 16, 
                             fontWeight: FontWeight.bold,
                           ),
@@ -163,8 +145,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                     // Amount Tile - ব্যাগ আইকন রিমুভ, ১৯৯৳ সেট করা হয়েছে
                     _buildInfoTile('টাকার পরিমাণ', '১৯৯৳', null),
                     
-                    const SizedBox(height: 12),
-                    _buildStepText('২. পেমেন্ট সম্পন্ন করার পর Transaction ID দিয়ে সাবমিট করুন'),
+                    const SizedBox(height: 12),                    _buildStepText('২. পেমেন্ট সম্পন্ন করার পর Transaction ID দিয়ে সাবমিট করুন'),
                   ],
                 ),
               ),
@@ -194,7 +175,8 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),                  focusedBorder: OutlineInputBorder(
+                  ),
+                  focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: bkashPink, width: 2),
                   ),
@@ -212,8 +194,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                   child: Row(
                     children: [
                       const Icon(Icons.error_outline, color: Colors.red, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
+                      const SizedBox(width: 4),                      Text(
                         _errorText!, 
                         style: const TextStyle(color: Colors.red, fontSize: 13),
                       ),
@@ -243,7 +224,8 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                           child: CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2,
-                          ),                        )
+                          ),
+                        )
                       : const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -261,8 +243,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
               const SizedBox(height: 16),
               
               // Security Note
-              Center(
-                child: Row(
+              Center(                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.verified_user, size: 14, color: Colors.grey[600]),
@@ -292,7 +273,8 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
           decoration: const BoxDecoration(color: bkashPink, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
-        Expanded(          child: Text(
+        Expanded(
+          child: Text(
             text, 
             style: TextStyle(color: Colors.grey[700], fontSize: 14, height: 1.5),
           ),
@@ -310,8 +292,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
         border: Border.all(color: bkashPink.withOpacity(0.1)),
       ),
       child: Row(
-        children: [
-          if (icon != null) ...[
+        children: [          if (icon != null) ...[
             Icon(icon, color: bkashPink, size: 20),
             const SizedBox(width: 12),
           ],
@@ -341,6 +322,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
             ),
           ),
         ],
-      ),    );
+      ),
+    );
   }
 }
