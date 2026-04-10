@@ -14,23 +14,22 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // উপরের স্পেসিং এবং প্রোফাইল আইকন
-          SizedBox(height: 70.h),
-          const Center(
-            child: CircleAvatar(
-              radius: 50,
-              backgroundColor: skyBlue,
-              child: Icon(Icons.person, size: 50, color: Colors.white),
-            ),
+          SizedBox(height: 60.h),
+          const CircleAvatar(
+            radius: 50,
+            backgroundColor: skyBlue,
+            child: Icon(Icons.person, size: 50, color: Colors.white),
           ),
-          
-          // টেক্সটগুলো রিমুভ করে দিয়ে সরাসরি লিস্টে যাওয়ার জন্য গ্যাপ
-          SizedBox(height: 40.h),
-          
+          SizedBox(height: 15.h),
+          Text("Easy Service User",
+              style: GoogleFonts.poppins(
+                  fontSize: 22.sp, fontWeight: FontWeight.bold)),
+          Text("user@easyservice.com",
+              style: GoogleFonts.poppins(
+                  color: Colors.grey, fontSize: 13.sp)),
+          SizedBox(height: 30.h),
           Expanded(
             child: ListView(
-              padding: EdgeInsets.symmetric(horizontal: 10.w),
-              physics: const BouncingScrollPhysics(),
               children: [
                 _buildProfileItem(
                   context,
@@ -74,7 +73,7 @@ class ProfileScreen extends StatelessWidget {
           style: GoogleFonts.poppins(
               color: isLast ? Colors.red : Colors.black87,
               fontSize: 14.sp)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
       onTap: onTap ?? () {},
     );
   }
