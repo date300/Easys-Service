@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // রিভারপড যুক্ত করা হয়েছে
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import '../../features/payment/payment_gateway_screen.dart';
 
-// ============================================
-//  VerificationModal - Reusable popup
-//  How to call:
-//  VerificationModal.show(context);
-// ============================================
+// আপনার মেইন ফাইল থেকে প্রোভাইডার ইমপোর্ট করুন (পাথ ঠিক করে নিন)
+import '../../main.dart'; 
+
 class VerificationModal {
-  /// Main method to show the bottom sheet modal
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -21,7 +19,7 @@ class VerificationModal {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withOpacity(0.6),
-      builder: (_) => _VerificationBottomSheet(
+      builder: (_) => _VerificationBottomSheet( // এটি এখন একটি ConsumerWidget
         amount: amount,
         purpose: purpose,
         onVerified: onVerified,
@@ -29,7 +27,6 @@ class VerificationModal {
     );
   }
 
-  /// Method to show as a dialog
   static Future<void> showDialog(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -48,7 +45,7 @@ class VerificationModal {
           child: FadeTransition(opacity: anim, child: child),
         );
       },
-      pageBuilder: (_, __, ___) => _VerificationDialog(
+      pageBuilder: (_, __, ___) => _VerificationDialog( // এটি এখন একটি ConsumerWidget
         amount: amount,
         purpose: purpose,
         onVerified: onVerified,
@@ -58,9 +55,9 @@ class VerificationModal {
 }
 
 // ============================================
-//  Bottom Sheet UI
+//  Bottom Sheet UI (ConsumerWidget এ রূপান্তর করা হয়েছে)
 // ============================================
-class _VerificationBottomSheet extends StatelessWidget {
+class _VerificationBottomSheet extends ConsumerWidget {
   final double amount;
   final String purpose;
   final VoidCallback? onVerified;
@@ -72,10 +69,10 @@ class _VerificationBottomSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white, // White background
+        color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
@@ -87,7 +84,6 @@ class _VerificationBottomSheet extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
               Container(
                 width: 40,
                 height: 4,
@@ -97,8 +93,6 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Lottie animation instead of icon
               Lottie.network(
                 'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json',
                 width: 120,
@@ -106,7 +100,6 @@ class _VerificationBottomSheet extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
               const SizedBox(height: 16),
-
               Text(
                 'Account Verification Required',
                 style: GoogleFonts.poppins(
@@ -126,8 +119,6 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Benefits
               _BenefitRow(text: 'Full access to all features'),
               const SizedBox(height: 10),
               _BenefitRow(text: 'Priority customer support'),
@@ -145,20 +136,17 @@ class _VerificationBottomSheet extends StatelessWidget {
                       colors: [Color(0xFF6C63FF), Color(0xFF9B59B6)],
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6C63FF).withOpacity(0.35),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
                   ),
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
-                        Navigator.pop(context);
+                        // --- নেভিগেশন স্টেট আপডেট ---
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Payment';
+
+                        Navigator.pop(context); // মোডাল বন্ধ করা
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -172,7 +160,7 @@ class _VerificationBottomSheet extends StatelessWidget {
                       },
                       child: Center(
                         child: Text(
-                          'Verify Now — \$$amount',
+                          'Verify Now ? \$$amount',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontSize: 15,
@@ -185,8 +173,6 @@ class _VerificationBottomSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // Cancel
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
@@ -206,9 +192,9 @@ class _VerificationBottomSheet extends StatelessWidget {
 }
 
 // ============================================
-//  Dialog UI
+//  Dialog UI (ConsumerWidget এ রূপান্তর করা হয়েছে)
 // ============================================
-class _VerificationDialog extends StatelessWidget {
+class _VerificationDialog extends ConsumerWidget {
   final double amount;
   final String purpose;
   final VoidCallback? onVerified;
@@ -220,7 +206,7 @@ class _VerificationDialog extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -229,17 +215,12 @@ class _VerificationDialog extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: Colors.white, // White background
+              color: Colors.white,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Colors.black.withOpacity(0.08),
-                width: 1,
-              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Lottie animation instead of icon
                 Lottie.network(
                   'https://assets9.lottiefiles.com/packages/lf20_touohxv0.json',
                   width: 100,
@@ -276,9 +257,12 @@ class _VerificationDialog extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      elevation: 0,
                     ),
                     onPressed: () {
+                      // --- নেভিগেশন স্টেট আপডেট ---
+                      ref.read(isDetailViewProvider.notifier).state = true;
+                      ref.read(detailViewTitleProvider.notifier).state = 'Payment';
+
                       Navigator.pop(context);
                       Navigator.push(
                         context,
@@ -292,7 +276,7 @@ class _VerificationDialog extends StatelessWidget {
                       );
                     },
                     child: Text(
-                      'Verify Now — \$$amount',
+                      'Verify Now ? \$$amount',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -321,19 +305,15 @@ class _VerificationDialog extends StatelessWidget {
   }
 }
 
-// ============================================
-//  Benefit Row Widget - No icon, text only with dot
-// ============================================
+// Benefit Row (বাকি কোড অপরিবর্তিত)
 class _BenefitRow extends StatelessWidget {
   final String text;
-
   const _BenefitRow({required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Lottie small checkmark instead of icon
         Lottie.network(
           'https://assets2.lottiefiles.com/packages/lf20_jfe6xnkr.json',
           width: 28,
@@ -352,4 +332,3 @@ class _BenefitRow extends StatelessWidget {
     );
   }
 }
-
