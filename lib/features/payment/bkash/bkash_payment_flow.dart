@@ -12,14 +12,14 @@ class BkashPaymentFlow extends StatefulWidget {
     super.key, 
     required this.method, 
     required this.amount, 
-    required this.purpose
+    required this.purpose,
   });
 
   @override
   State<BkashPaymentFlow> createState() => _BkashPaymentFlowState();
 }
 
-class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerProviderStateMixin {
+class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
   final _trxIdController = TextEditingController();
   bool _isLoading = false;
   String? _errorText;
@@ -73,9 +73,8 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
       appBar: AppBar(
         backgroundColor: bkashPink,
         elevation: 0,
-        // ✅ ব্যাক আইকন রিমুভ করা হয়েছে (leading: null)
         leading: null,
-        automaticallyImplyLeading: false, // ✅ ডিফল্ট ব্যাক বাটনও ডিসেবল
+        automaticallyImplyLeading: false,
         title: Image.asset(
           'assets/images/bkash.png',
           height: 28,
@@ -92,15 +91,12 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ✅ উপরের অতিরিক্ত লোগো রিমুভ করা হয়েছে
-              
               const SizedBox(height: 16),
               
-              // Instructions Card              Container(
+              Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white,                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: bkashPink.withOpacity(0.3)),
                   boxShadow: [
                     BoxShadow(
@@ -137,25 +133,19 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                     const SizedBox(height: 16),
                     _buildStepText('১. bKash অ্যাপ থেকে অথবা *247# ডায়াল করে Send Money অপশনে যান'),
                     const SizedBox(height: 12),
-                    
-                    // Receiver Number Tile
                     _buildInfoTile('রিসিভার নাম্বার', _receiverNumber, Icons.phone_android),
                     const SizedBox(height: 10),
-                    
-                    // Amount Tile - ব্যাগ আইকন রিমুভ, ১৯৯৳ সেট করা হয়েছে
                     _buildInfoTile('টাকার পরিমাণ', '১৯৯৳', null),
-                    
-                    const SizedBox(height: 12),                    _buildStepText('২. পেমেন্ট সম্পন্ন করার পর Transaction ID দিয়ে সাবমিট করুন'),
+                    const SizedBox(height: 12),
+                    _buildStepText('২. পেমেন্ট সম্পন্ন করার পর Transaction ID দিয়ে সাবমিট করুন'),
                   ],
                 ),
               ),
               
               const SizedBox(height: 24),
               
-              // Transaction ID Input
               const Text(
-                'Transaction ID',
-                style: TextStyle(
+                'Transaction ID',                style: TextStyle(
                   color: Colors.black87, 
                   fontSize: 14, 
                   fontWeight: FontWeight.w600,
@@ -194,7 +184,8 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                   child: Row(
                     children: [
                       const Icon(Icons.error_outline, color: Colors.red, size: 16),
-                      const SizedBox(width: 4),                      Text(
+                      const SizedBox(width: 4),
+                      Text(
                         _errorText!, 
                         style: const TextStyle(color: Colors.red, fontSize: 13),
                       ),
@@ -203,8 +194,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                 ),
 
               const SizedBox(height: 32),
-
-              // Submit Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -242,8 +231,8 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
               
               const SizedBox(height: 16),
               
-              // Security Note
-              Center(                child: Row(
+              Center(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.verified_user, size: 14, color: Colors.grey[600]),
@@ -254,8 +243,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
                     ),
                   ],
                 ),
-              ),
-            ],
+              ),            ],
           ),
         ),
       ),
@@ -292,19 +280,28 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> with SingleTickerPr
         border: Border.all(color: bkashPink.withOpacity(0.1)),
       ),
       child: Row(
-        children: [          if (icon != null) ...[
+        children: [
+          if (icon != null) ...[
             Icon(icon, color: bkashPink, size: 20),
             const SizedBox(width: 12),
+          ] else ...[
+            const SizedBox(width: 8),
           ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                Text(
+                  label,                   style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   value, 
-                  style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.black87, 
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
