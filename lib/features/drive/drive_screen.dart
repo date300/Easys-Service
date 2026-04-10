@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
-import 'package:lottie/lottie.dart'; // Lottie ইমপোর্ট করা হলো
+import 'package:lottie/lottie.dart';
 
 class DriveScreen extends StatefulWidget {
   const DriveScreen({super.key});
@@ -14,13 +14,13 @@ class DriveScreen extends StatefulWidget {
 }
 
 class _DriveScreenState extends State<DriveScreen> {
-  // ডিজাইন টোকেন
+  // Design Tokens
   static const Color kBackground = Color(0xFFF8FAFC);
   static const Color kTextDark   = Color(0xFF0F172A);
   static const Color kTextMid    = Color(0xFF475569);
   static const Color kPrimary    = Color(0xFF29B6F6);
 
-  // অপারেটর ডাটা
+  // Operator Data
   final List<String> operators = ['gp', 'robi', 'airtel', 'bl', 'teletalk', 'skitto'];
 
   final Map<String, String> operatorNames = {
@@ -59,7 +59,7 @@ class _DriveScreenState extends State<DriveScreen> {
     fetchDrives(selectedOperator);
   }
 
-  // ১. ড্রাইভ লিস্ট নিয়ে আসার এপিআই
+  // 1. Fetch Drives API
   Future<void> fetchDrives(String operator) async {
     setState(() {
       isLoading = true;
@@ -82,15 +82,15 @@ class _DriveScreenState extends State<DriveScreen> {
           });
         } else {
           setState(() {
-            errorMessage = "এপিআই এরর: ${json['message'] ?? 'Unknown'}";
+            errorMessage = "API Error: ${json['message'] ?? 'Unknown'}";
             isLoading = false;
           });
         }
       } else {
-        setState(() { errorMessage = 'সার্ভার এরর: ${response.statusCode}'; isLoading = false; });
+        setState(() { errorMessage = 'Server Error: ${response.statusCode}'; isLoading = false; });
       }
     } catch (_) {
-      setState(() { errorMessage = 'কানেকশন ফেইলড! আবার চেষ্টা করুন।'; isLoading = false; });
+      setState(() { errorMessage = 'Connection failed! Please try again.'; isLoading = false; });
     }
   }
 
@@ -109,7 +109,7 @@ class _DriveScreenState extends State<DriveScreen> {
     }).toList();
   }
 
-  // ২. ড্রাইভ কেনার মূল ফাংশন
+  // 2. Purchase Execution
   Future<void> _executePurchase(Map<String, dynamic> drive, String number, String pin) async {
     showDialog(
       context: context,
@@ -133,17 +133,17 @@ class _DriveScreenState extends State<DriveScreen> {
         body: jsonEncode(payload),
       ).timeout(const Duration(seconds: 20));
 
-      Navigator.pop(context); // লোডিং বন্ধ করা
+      Navigator.pop(context); // Close Loading
 
       final resData = jsonDecode(response.body);
       if (response.statusCode == 200 && resData['success'] == true) {
-        _showStatusSnack("রিকোয়েস্ট সফল হয়েছে! TRX ID: ${resData['trxid']}", Colors.green);
+        _showStatusSnack("Purchase successful! TRX ID: ${resData['trxid']}", Colors.green);
       } else {
-        _showStatusSnack(resData['message'] ?? "কেনা ব্যর্থ হয়েছে!", Colors.red);
+        _showStatusSnack(resData['message'] ?? "Purchase failed!", Colors.red);
       }
     } catch (e) {
       Navigator.pop(context);
-      _showStatusSnack("সার্ভার কানেকশন এরর!", Colors.red);
+      _showStatusSnack("Server connection error!", Colors.red);
     }
   }
 
@@ -153,7 +153,7 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  // ৩. নম্বর এবং পিন নেওয়ার জন্য বটম শীট
+  // 3. Bottom Sheet for Number and PIN
   void _openPurchaseSheet(Map<String, dynamic> drive) {
     final TextEditingController numController = TextEditingController();
     final TextEditingController pinController = TextEditingController();
@@ -206,7 +206,7 @@ class _DriveScreenState extends State<DriveScreen> {
                     Navigator.pop(context);
                     _executePurchase(drive, numController.text, pinController.text);
                   } else {
-                    _showStatusSnack("সঠিক নম্বর এবং পিন দিন", Colors.orange);
+                    _showStatusSnack("Please enter a valid number and PIN", Colors.orange);
                   }
                 },
                 child: Text('Buy Now ৳${drive['price']}', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14.sp)),
@@ -288,7 +288,7 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  // 🌟 আপডেট: মূল বডি (ডেটা না থাকলে Lottie দেখাবে)
+  // 🌟 Updated: Main Body with Lottie Empty State in English
   Widget _buildBody() {
     if (isLoading) return const Center(child: CircularProgressIndicator());
     
@@ -305,14 +305,14 @@ class _DriveScreenState extends State<DriveScreen> {
       );
     }
 
-    // 🔥 যদি কোনো ডেটা বা অফার না থাকে
+    // 🔥 If no data/offers available
     if (filteredDrives.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Lottie.network(
-              'https://lottie.host/17e089d8-99ed-498c-850f-f1cbba20251c/MowR12iE75.json', // Empty box/No Data Lottie link
+              'https://lottie.host/17e089d8-99ed-498c-850f-f1cbba20251c/MowR12iE75.json', // Empty box animation
               height: 180.h,
               width: 180.w,
               fit: BoxFit.cover,
@@ -321,11 +321,11 @@ class _DriveScreenState extends State<DriveScreen> {
             ),
             SizedBox(height: 15.h),
             Text(
-              'দুঃখিত, কোনো অফার পাওয়া যায়নি!',
+              'Sorry, no offers found!',
               style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: kTextMid),
             ),
             Text(
-              'অন্য ক্যাটাগরি বা অপারেটর চেক করুন।',
+              'Please check another category or operator.',
               style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey),
             ),
           ],
@@ -333,7 +333,7 @@ class _DriveScreenState extends State<DriveScreen> {
       );
     }
 
-    // ডেটা থাকলে লিস্ট দেখাবে
+    // List of offers
     return ListView.builder(
       itemCount: filteredDrives.length,
       padding: EdgeInsets.all(16.w),
