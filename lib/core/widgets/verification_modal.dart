@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // রিভারপড যুক্ত করা হয়েছে
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // রিভারপড ইমপোর্ট
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
-import '../../features/payment/payment_gateway_screen.dart';
+import 'package:go_router/go_router.dart'; // GoRouter ইমপোর্ট
 
-// আপনার মেইন ফাইল থেকে প্রোভাইডার ইমপোর্ট করুন (পাথ ঠিক করে নিন)
+// আপনার প্রোজেক্টের পাথ অনুযায়ী main.dart ইমপোর্ট করুন (যেখানে প্রোভাইডার আছে)
 import '../../main.dart'; 
 
 class VerificationModal {
+  /// Bottom Sheet দেখানোর মেথড
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -19,7 +20,7 @@ class VerificationModal {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withOpacity(0.6),
-      builder: (_) => _VerificationBottomSheet( // এটি এখন একটি ConsumerWidget
+      builder: (_) => _VerificationBottomSheet(
         amount: amount,
         purpose: purpose,
         onVerified: onVerified,
@@ -27,6 +28,7 @@ class VerificationModal {
     );
   }
 
+  /// Dialog দেখানোর মেথড
   static Future<void> showDialog(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -45,7 +47,7 @@ class VerificationModal {
           child: FadeTransition(opacity: anim, child: child),
         );
       },
-      pageBuilder: (_, __, ___) => _VerificationDialog( // এটি এখন একটি ConsumerWidget
+      pageBuilder: (_, __, ___) => _VerificationDialog(
         amount: amount,
         purpose: purpose,
         onVerified: onVerified,
@@ -55,7 +57,7 @@ class VerificationModal {
 }
 
 // ============================================
-//  Bottom Sheet UI (ConsumerWidget এ রূপান্তর করা হয়েছে)
+//  Bottom Sheet UI (ConsumerWidget ব্যবহার করা হয়েছে)
 // ============================================
 class _VerificationBottomSheet extends ConsumerWidget {
   final double amount;
@@ -142,21 +144,15 @@ class _VerificationBottomSheet extends ConsumerWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
-                        // --- নেভিগেশন স্টেট আপডেট ---
+                        // ১. স্টেট আপডেট (ডিটেইল ভিউ অন করা)
                         ref.read(isDetailViewProvider.notifier).state = true;
                         ref.read(detailViewTitleProvider.notifier).state = 'Payment';
 
-                        Navigator.pop(context); // মোডাল বন্ধ করা
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PaymentGatewayScreen(
-                              amount: amount,
-                              purpose: purpose,
-                              onPaymentSuccess: onVerified,
-                            ),
-                          ),
-                        );
+                        // ২. মোডাল বন্ধ করা
+                        Navigator.pop(context);
+
+                        // ৩. GoRouter ব্যবহার করে নেভিগেট করা
+                        context.push('/payment'); 
                       },
                       child: Center(
                         child: Text(
@@ -192,7 +188,7 @@ class _VerificationBottomSheet extends ConsumerWidget {
 }
 
 // ============================================
-//  Dialog UI (ConsumerWidget এ রূপান্তর করা হয়েছে)
+//  Dialog UI (ConsumerWidget ব্যবহার করা হয়েছে)
 // ============================================
 class _VerificationDialog extends ConsumerWidget {
   final double amount;
@@ -259,21 +255,15 @@ class _VerificationDialog extends ConsumerWidget {
                       ),
                     ),
                     onPressed: () {
-                      // --- নেভিগেশন স্টেট আপডেট ---
+                      // ১. স্টেট আপডেট
                       ref.read(isDetailViewProvider.notifier).state = true;
                       ref.read(detailViewTitleProvider.notifier).state = 'Payment';
 
+                      // ২. ডায়ালগ বন্ধ করা
                       Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PaymentGatewayScreen(
-                            amount: amount,
-                            purpose: purpose,
-                            onPaymentSuccess: onVerified,
-                          ),
-                        ),
-                      );
+
+                      // ৩. নেভিগেট করা
+                      context.push('/payment');
                     },
                     child: Text(
                       'Verify Now ? \$$amount',
@@ -305,7 +295,6 @@ class _VerificationDialog extends ConsumerWidget {
   }
 }
 
-// Benefit Row (বাকি কোড অপরিবর্তিত)
 class _BenefitRow extends StatelessWidget {
   final String text;
   const _BenefitRow({required this.text});
