@@ -26,7 +26,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
   
   static const Color bkashPink = Color(0xFFE2136E);
   static const Color bkashLightPink = Color(0xFFFCE4EC);
-  final String _receiverNumber = '01576584250';
+  final String _receiverNumber = '01700000000';
 
   @override
   void dispose() {

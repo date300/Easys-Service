@@ -69,7 +69,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   children: [
                     // আইকনের বদলে আপনার লোগো বসানো হয়েছে
                     Image.asset(
-                      'assets/EasyService.png',
+                      'assets/ultra5G.png',
                       width: 100.w, // লোগোর সাইজ প্রয়োজন মতো কাস্টমাইজ করে নিতে পারবেন
                       height: 100.w,
                     )
