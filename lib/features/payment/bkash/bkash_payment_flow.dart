@@ -75,13 +75,10 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
         elevation: 0,
         leading: null,
         automaticallyImplyLeading: false,
-        title: Image.asset(
-          'assets/images/bkash.png',
-          height: 28,
-          errorBuilder: (context, error, stackTrace) => const Text(
-            'bKash',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
-          ),
+        // ✅ লোগো রিমুভ করে সাধারণ টেক্সট টাইটেল
+        title: const Text(
+          'bKash Payment',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
@@ -96,10 +93,10 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: bkashPink.withOpacity(0.3)),
-                  boxShadow: [
-                    BoxShadow(
+                  boxShadow: [                    BoxShadow(
                       color: bkashPink.withOpacity(0.1),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
@@ -145,10 +142,10 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
               const SizedBox(height: 24),
               
               const Text(
-                'Transaction ID',                style: TextStyle(
+                'Transaction ID',
+                style: TextStyle(
                   color: Colors.black87, 
-                  fontSize: 14, 
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
@@ -194,10 +191,10 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
                 ),
 
               const SizedBox(height: 32),
+
               SizedBox(
                 width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
+                height: 50,                child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitTransaction,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: bkashPink,
@@ -243,10 +240,10 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
                     ),
                   ],
                 ),
-              ),            ],
+              ),
+            ],
           ),
-        ),
-      ),
+        ),      ),
     );
   }
 
@@ -292,10 +289,10 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,                   style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  label, 
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
-                const SizedBox(height: 2),
-                Text(
+                const SizedBox(height: 2),                Text(
                   value, 
                   style: const TextStyle(
                     color: Colors.black87, 
