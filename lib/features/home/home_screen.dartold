@@ -6,9 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/guards/verification_guard.dart'; // আপনার ভেরিফিকেশন গার্ড
+import '../../core/guards/verification_guard.dart'; // ????? ?????????? ?????
 
-/// Service Model (আপনার দেওয়া অরিজিনাল মডেল)
+/// Service Model (????? ????? ???????? ????)
 class Service {
   final String name;
   final IconData icon;
@@ -27,7 +27,7 @@ class Service {
   });
 }
 
-/// Riverpod Provider (আপনার অরিজিনাল ডাটা, শুধু আইকনগুলো প্রিমিয়াম Cupertino করা হয়েছে)
+/// Riverpod Provider (????? ???????? ????, ???? ???????? ????????? Cupertino ??? ?????)
 final servicesProvider = Provider<List<Service>>((ref) {
   return const [
     Service(
@@ -39,11 +39,11 @@ final servicesProvider = Provider<List<Service>>((ref) {
     ),
     Service(
       name: 'Drive Offer',
-      icon: CupertinoIcons.car_detailed,
+      icon: CupertinoIcons.gift,
       color: Color(0xFF0284C7),
       secondaryColor: Color(0xFF38BDF8),
       route: '/drive',
-      requiresVerification: true,
+      requiresVerification: false,
     ),
     Service(
       name: 'Reselling',
@@ -117,8 +117,8 @@ final servicesProvider = Provider<List<Service>>((ref) {
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  static const Color kPrimary = Color(0xFF29B6F6); // স্কাই ব্লু থিম
-  static const Color kBackground = Color(0xFFF8FAFC); // ক্লিন সাদা ব্যাকগ্রাউন্ড
+  static const Color kPrimary = Color(0xFF29B6F6); // ????? ???? ???
+  static const Color kBackground = Color(0xFFF8FAFC); // ????? ???? ?????????????
   static const Color kTextDark = Color(0xFF0F172A);
   static const Color kTextMid = Color(0xFF475569);
 
@@ -219,7 +219,7 @@ class HomeScreen extends ConsumerWidget {
     } else if (screenWidth >= 600) {
       crossAxisCount = 5;
     } else {
-      crossAxisCount = 4; // মোবাইলে ৪টা কলাম, স্লিম ডিজাইনের জন্য
+      crossAxisCount = 4; // ??????? ??? ????, ????? ???????? ????
     }
 
     return GridView.builder(
@@ -229,7 +229,7 @@ class HomeScreen extends ConsumerWidget {
         crossAxisCount: crossAxisCount,
         mainAxisSpacing: isDesktop ? 24 : 20.h,
         crossAxisSpacing: isDesktop ? 20 : 15.w,
-        childAspectRatio: 0.75, // স্লিম লুকের জন্য
+        childAspectRatio: 0.75, // ????? ????? ????
       ),
       itemCount: services.length,
       itemBuilder: (context, index) {
@@ -254,14 +254,14 @@ class _ServiceCard extends StatelessWidget {
 
   const _ServiceCard({required this.service, this.isDesktop = false});
 
-  // আপনার অরিজিনাল ট্যাপ লজিক (Verification Guard সহ)
+  // ????? ???????? ????? ???? (Verification Guard ??)
   void _onTap(BuildContext context) {
     if (service.route == null) {
       // Coming Soon Notification
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${service.name} — Coming Soon!',
+            '${service.name} ? Coming Soon!',
             style: GoogleFonts.poppins(fontSize: 13.sp),
           ),
           behavior: SnackBarBehavior.floating,
@@ -302,7 +302,7 @@ class _ServiceCard extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              // স্লিম এবং হোয়াইট সার্কেল কন্টেইনার
+              // ????? ??? ?????? ??????? ?????????
               Container(
                 height: isDesktop ? 65.w : 52.w,
                 width: isDesktop ? 65.w : 52.w,
@@ -324,13 +324,13 @@ class _ServiceCard extends StatelessWidget {
                 child: Center(
                   child: Icon(
                     service.icon,
-                    // লক থাকলে ধূসর, নাহলে আপনার অরিজিনাল কালার
+                    // ?? ????? ????, ????? ????? ???????? ?????
                     color: hasRoute ? service.color : Colors.grey.shade400,
                     size: isDesktop ? 28.sp : 24.sp,
                   ),
                 ),
               ),
-              // লটি অ্যানিমেশনের বদলে ক্লিন লক আইকন
+              // ??? ???????????? ???? ????? ?? ????
               if (!hasRoute)
                 Positioned(
                   right: -2,
@@ -352,7 +352,7 @@ class _ServiceCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: isDesktop ? 12.h : 8.h),
-          // ক্লিন টেক্সট
+          // ????? ??????
           Text(
             service.name,
             style: GoogleFonts.poppins(
