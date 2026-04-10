@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
+import 'package:lottie/lottie.dart'; // Lottie ইমপোর্ট করা হলো
 
 class DriveScreen extends StatefulWidget {
   const DriveScreen({super.key});
@@ -108,9 +109,8 @@ class _DriveScreenState extends State<DriveScreen> {
     }).toList();
   }
 
-  // ২. ড্রাইভ কেনার মূল ফাংশন (API Execution)
+  // ২. ড্রাইভ কেনার মূল ফাংশন
   Future<void> _executePurchase(Map<String, dynamic> drive, String number, String pin) async {
-    // লোডিং ডায়ালগ দেখানো
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -124,7 +124,7 @@ class _DriveScreenState extends State<DriveScreen> {
         "operator": operatorCodes[selectedOperator],
         "package_id": drive['driveId'].toString(),
         "type": "drive",
-        "pin": pin // আপনার ব্যাকএন্ডে পিন চেক করার জন্য
+        "pin": pin
       };
 
       final response = await http.post(
@@ -238,7 +238,6 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  // অপারেটর ট্যাব ডিজাইন
   Widget _buildOperatorTabs() {
     return Container(
       height: 65.h, color: Colors.white,
@@ -266,7 +265,6 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  // ক্যাটাগরি চিপস ডিজাইন
   Widget _buildCategoryChips() {
     final cats = operatorCategories[selectedOperator]!;
     return Container(
@@ -290,11 +288,52 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  // মূল বডি (ড্রাইভ কার্ড লিস্ট)
+  // 🌟 আপডেট: মূল বডি (ডেটা না থাকলে Lottie দেখাবে)
   Widget _buildBody() {
     if (isLoading) return const Center(child: CircularProgressIndicator());
-    if (errorMessage != null) return Center(child: Text(errorMessage!, style: GoogleFonts.poppins()));
+    
+    if (errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 50.sp, color: Colors.redAccent),
+            SizedBox(height: 10.h),
+            Text(errorMessage!, style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextMid)),
+          ],
+        ),
+      );
+    }
 
+    // 🔥 যদি কোনো ডেটা বা অফার না থাকে
+    if (filteredDrives.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Lottie.network(
+              'https://lottie.host/17e089d8-99ed-498c-850f-f1cbba20251c/MowR12iE75.json', // Empty box/No Data Lottie link
+              height: 180.h,
+              width: 180.w,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => 
+                  Icon(CupertinoIcons.folder_open, size: 80.sp, color: Colors.grey.shade400),
+            ),
+            SizedBox(height: 15.h),
+            Text(
+              'দুঃখিত, কোনো অফার পাওয়া যায়নি!',
+              style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: kTextMid),
+            ),
+            Text(
+              'অন্য ক্যাটাগরি বা অপারেটর চেক করুন।',
+              style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ডেটা থাকলে লিস্ট দেখাবে
     return ListView.builder(
       itemCount: filteredDrives.length,
       padding: EdgeInsets.all(16.w),
@@ -341,4 +380,3 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 }
-
