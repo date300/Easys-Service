@@ -6,8 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
-// আপনার মেইন ফাইলের লোকেশন অনুযায়ী নিচের ইমপোর্টটি নিশ্চিত করুন
-import '../main.dart'; 
+// আপনার মেইন ফাইলের লোকেশন অনুযায়ী ইমপোর্টটি নিশ্চিত করুন
+import '../main.dart';
 
 class AppTopBar extends ConsumerWidget {
   final bool isDetailView;
@@ -27,12 +27,17 @@ class AppTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // আগের মতো নিচের কোনা বাঁকানো স্টাইল দেওয়ার জন্য ClipRRect এ borderRadius যোগ করা হয়েছে
     return ClipRRect(
+      borderRadius: BorderRadius.only(
+        bottomLeft: Radius.circular(isMobile ? 30.r : 24),
+        bottomRight: Radius.circular(isMobile ? 30.r : 24),
+      ),
       child: SizedBox(
-        height: isMobile ? 65.h : 70, 
+        height: isMobile ? 65.h : 75,
         child: Stack(
           children: [
-            // ১. ব্যাকগ্রাউন্ড এনিমেশন (Lottie)
+            // ১. ব্যাকগ্রাউন্ড এনিমেশন
             Positioned.fill(
               child: Lottie.network(
                 'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json',
@@ -41,12 +46,12 @@ class AppTopBar extends ConsumerWidget {
               ),
             ),
 
-            // ২. গ্লাস-মর্ফিজম ইফেক্ট (Blur + Overlay)
+            // ২. গ্লাস-মর্ফিজম ইফেক্ট
             Positioned.fill(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  color: skyBlue.withOpacity(0.45),
+                  color: skyBlue.withOpacity(0.5),
                 ),
               ),
             ),
@@ -55,12 +60,12 @@ class AppTopBar extends ConsumerWidget {
             SafeArea(
               bottom: false,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                padding: EdgeInsets.symmetric(horizontal: 10.w),
                 child: Row(
                   children: [
-                    // বাম পাশের আইকন: ডিটেইল ভিউ হলে 'Back', নাহলে 'Menu'
+                    // আইফোনের স্টাইল ব্যাক আইকন এবং মেনু আইকন লজিক
                     _buildLeadingIcon(context, ref),
-                    
+
                     // মাঝখানের টাইটেল
                     Expanded(
                       child: Center(
@@ -85,7 +90,7 @@ class AppTopBar extends ConsumerWidget {
                       ),
                     ),
 
-                    // ডান পাশের স্পেস বা নোটিফিকেশন আইকন (সমান্তরাল রাখার জন্য)
+                    // ডান পাশের স্পেস বা নোটিফিকেশন আইকন
                     _buildTrailingAction(),
                   ],
                 ),
@@ -97,21 +102,24 @@ class AppTopBar extends ConsumerWidget {
     );
   }
 
-  // --- হেল্পার মেথড: লিডিং আইকন (Back/Menu) ---
+  // --- লিডিং আইকন মেথড (iPhone Style Back Icon) ---
   Widget _buildLeadingIcon(BuildContext context, WidgetRef ref) {
     if (isDetailView) {
       return IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 22),
+        // এখানে Icons.arrow_back_ios_new_rounded ব্যবহার করা হয়েছে যা একদম আইফোনের ব্যাক আইকনের মতো
+        icon: const Icon(
+          Icons.arrow_back_ios_new_rounded, 
+          color: Colors.white, 
+          size: 22
+        ),
         onPressed: () {
-          // স্টেট রিসেট করা
           ref.read(isDetailViewProvider.notifier).state = false;
           ref.read(detailViewTitleProvider.notifier).state = '';
-          
-          // পেজ থেকে ব্যাক করা
+
           if (context.canPop()) {
             context.pop();
           } else {
-            context.go('/home'); // যদি পপ করার কিছু না থাকে তবে হোমে যাবে
+            context.go('/home');
           }
         },
       );
@@ -125,7 +133,6 @@ class AppTopBar extends ConsumerWidget {
     );
   }
 
-  // --- হেল্পার মেথড: ট্রেইলিং আইকন (Notifications/Empty) ---
   Widget _buildTrailingAction() {
     if (!isDetailView && isLoggedIn) {
       return IconButton(
@@ -133,7 +140,6 @@ class AppTopBar extends ConsumerWidget {
         icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
       );
     }
-    // ডিটেইল ভিউতে টাইটেল সেন্টারে রাখার জন্য ডানপাশে সমপরিমাণ খালি জায়গা
     return SizedBox(width: 48.w);
   }
 }
