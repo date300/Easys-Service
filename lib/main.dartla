@@ -6,7 +6,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// আপনার প্রজেক্টের রাউটার এবং উইজেটগুলোর ইমপোর্ট (পাথ ঠিক আছে কি না শিওর হয়ে নিবেন)
 import 'router/app_router.dart';
 import 'widgets/app_bottom_nav_bar.dart';
 import 'widgets/app_nav_rail.dart';
@@ -85,7 +84,7 @@ class MyApp extends StatelessWidget {
 }
 
 // ============================================
-// MAIN WRAPPER (FIXED FOR ROUNDED CORNERS)
+// MAIN WRAPPER
 // ============================================
 
 class MainWrapper extends ConsumerWidget {
@@ -131,35 +130,43 @@ class MainWrapper extends ConsumerWidget {
     final isTablet = _isTablet(context);
     final isMobile = _isMobile(context);
 
+    // এডিট প্রোফাইল পেজ কি না চেক করা হচ্ছে
     final isEditProfile = location.contains('edit_profile');
-    final isPaymentPage = location == '/payment';
     
-    // ডিটেইল ভিউ লজিক
+    final isPaymentPage = location == '/payment';
     final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
-    final detailTitle = isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
+    final detailTitle =
+        isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
 
     final animatedChild = child
         .animate(key: ValueKey(location))
         .fadeIn(duration: 400.ms)
         .moveY(begin: 10, end: 0);
 
-    // বডি কন্টেইনার (সব সময় রাউন্ডেড থাকবে যাতে ডিজাইন ফুটে ওঠে)
     Widget bodyContainer() {
-      double bodyRadius = isMobile ? 32.r : 24;
+      // যদি ডিটেইল ভিউ বা এডিট প্রোফাইল হয়, তবে ফুল স্ক্রিন কন্টেইনার (বর্ডার ছাড়া)
+      if (isDetailView || isEditProfile) {
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.white,
+          child: animatedChild,
+        );
+      }
       return Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(bodyRadius),
-            topRight: Radius.circular(bodyRadius),
+            topLeft: Radius.circular(isMobile ? 32.r : 24),
+            topRight: Radius.circular(isMobile ? 32.r : 24),
           ),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(bodyRadius),
-            topRight: Radius.circular(bodyRadius),
+            topLeft: Radius.circular(isMobile ? 32.r : 24),
+            topRight: Radius.circular(isMobile ? 32.r : 24),
           ),
           child: animatedChild,
         ),
@@ -175,8 +182,7 @@ class MainWrapper extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        // আকাশী ব্যাকগ্রাউন্ড, যাতে টপ বার এবং বডির ফাঁকা অংশে এই কালারটি দেখা যায়
-        backgroundColor: const Color(0xFF29B6F6), 
+        backgroundColor: const Color(0xFF29B6F6),
         drawer: (isDetailView || isEditProfile)
             ? null
             : AppDrawer(
@@ -185,6 +191,7 @@ class MainWrapper extends ConsumerWidget {
                 isTablet: isTablet,
               ),
         body: SafeArea(
+          // এডিট প্রোফাইলে টপবার নেই, তাই SafeArea উপর থেকে শুরু হবে
           top: !isEditProfile,
           child: Row(
             children: [
@@ -197,7 +204,7 @@ class MainWrapper extends ConsumerWidget {
               Expanded(
                 child: Column(
                   children: [
-                    // টপ বার সবসময় থাকবে (যদি না এডিট প্রোফাইল হয়)
+                    // কন্ডিশনাল টপবার: এডিট প্রোফাইল হলে দেখাবে না
                     if (!isEditProfile)
                       AppTopBar(
                         isDetailView: isDetailView,
@@ -205,7 +212,6 @@ class MainWrapper extends ConsumerWidget {
                         isMobile: isMobile,
                         isLoggedIn: isLoggedIn,
                       ),
-                    // বডি কন্টেইনার যা উপরের টপ বারের সাথে সুন্দরভাবে মিলবে
                     Expanded(child: bodyContainer()),
                   ],
                 ),
@@ -213,6 +219,7 @@ class MainWrapper extends ConsumerWidget {
             ],
           ),
         ),
+        // বটম নেভিগেশন: মোবাইল হলে দেখাবে, তবে ডিটেইল ভিউতে না (ব্যতিক্রম: এডিট প্রোফাইল)
         bottomNavigationBar: (isMobile && (!isDetailView || isEditProfile))
             ? AppBottomNavBar(
                 currentIndex: currentIndex,
