@@ -1,26 +1,14 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/verification_modal.dart';
-// ─────────────────────────────────────────────
-//  VerificationGuard
-//  যেকোনো button বা action এ ব্যবহার করো।
-//
-//  Example:
-//  onTap: () => VerificationGuard.check(
-//    context,
-//    onVerified: () { /* verified হলে এখানে */ },
-//  ),
-// ─────────────────────────────────────────────
+
 class VerificationGuard {
-  /// Check করে verified কিনা।
-  /// Verified হলে onVerified() call করে।
-  /// না হলে VerificationModal দেখায়।
   static Future<void> check(
     BuildContext context, {
     required VoidCallback onVerified,
-    double amount = 199.00,
+    double amount = 300.00,
     String purpose = 'Account Verification Fee',
-    bool useDialog = false, // true হলে bottom sheet এর বদলে dialog দেখাবে
+    bool useDialog = false,
   }) async {
     final verified = await AuthService.isVerified();
 
@@ -47,13 +35,11 @@ class VerificationGuard {
     }
   }
 
-  /// Widget wrap করার জন্য।
-  /// Verified না হলে child এর উপর tap করলে modal দেখাবে।
   static Widget wrap({
     required BuildContext context,
     required Widget child,
     required VoidCallback onVerified,
-    double amount = 199.00,
+    double amount = 300.00,
     String purpose = 'Account Verification Fee',
   }) {
     return GestureDetector(
@@ -68,25 +54,11 @@ class VerificationGuard {
   }
 }
 
-// ─────────────────────────────────────────────
-//  VerificationGuardWidget — auto check on build
-//  Screen load হলেই verify check করে।
-//
-//  Example:
-//  @override
-//  void initState() {
-//    super.initState();
-//    WidgetsBinding.instance.addPostFrameCallback((_) {
-//      VerificationGuardWidget.autoCheck(context);
-//    });
-//  }
-// ─────────────────────────────────────────────
 class VerificationGuardWidget {
-  /// Screen open হলেই check করে, verified না হলে modal দেখায়
   static Future<void> autoCheck(
     BuildContext context, {
     VoidCallback? onVerified,
-    double amount = 199.00,
+    double amount = 300.00,
     String purpose = 'Account Verification Fee',
   }) async {
     final verified = await AuthService.isVerified();
