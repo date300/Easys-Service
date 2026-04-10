@@ -26,7 +26,7 @@ class AmountCard extends StatelessWidget {
               children: [
                 Text(purpose, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 6),
-                Text('? ${amount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+                Text('à§³ ${amount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
               ],
             ),
           ),
@@ -78,7 +78,7 @@ class PaymentMethodCard extends StatelessWidget {
                 children: [
                   Text(method.name, style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 2),
-                  Text(method.subtitle + (isAvailable ? '' : ' ? Locked'), style: TextStyle(color: isAvailable ? Colors.black45 : Colors.grey[400], fontSize: 12)),
+                  Text(method.subtitle + (isAvailable ? '' : ' ð Locked'), style: TextStyle(color: isAvailable ? Colors.black45 : Colors.grey[400], fontSize: 12)),
                 ],
               ),
             ),
@@ -182,7 +182,7 @@ class PaymentSummaryHeader extends StatelessWidget {
           Container(width: 44, height: 44, decoration: BoxDecoration(color: method.primaryColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.asset(method.logoAsset, fit: BoxFit.contain))),
           const SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(method.name, style: TextStyle(color: method.primaryColor, fontSize: 14, fontWeight: FontWeight.w700)), Text(method.subtitle, style: const TextStyle(color: Colors.black45, fontSize: 12))])),
-          Text('? ${amount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w800)),
+          Text('à§³ ${amount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -294,5 +294,3 @@ class PaymentResultDialog extends StatelessWidget {
         ),
       ),
     );
-  }
-}
