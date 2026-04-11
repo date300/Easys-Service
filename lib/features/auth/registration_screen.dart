@@ -76,16 +76,16 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
       );
       final data = jsonDecode(response.body);
       if (data['status'] == "success") {
-        await AppSoundService.instance.playOtp(); // 📨 OTP sent
+        await AppSoundService.instance.playOtp();
         if (!mounted) return;
         _showSnack(data['message'], Colors.green);
         setState(() => _isOtpSent = true);
       } else {
-        await AppSoundService.instance.playError(); // ❌ Register fail
+        await AppSoundService.instance.playError();
         _showSnack(data['message'], Colors.red);
       }
     } catch (_) {
-      await AppSoundService.instance.playError(); // ❌ Network error
+      await AppSoundService.instance.playError();
       _showSnack("Connection error!", Colors.red);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -95,7 +95,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   Future<void> _verifyOtp() async {
     final otp = _otpController.text.trim();
     if (otp.length < 6) {
-      await AppSoundService.instance.playError(); // ❌ OTP too short
+      await AppSoundService.instance.playError();
       _showSnack("Please enter 6-digit OTP", Colors.red);
       return;
     }
@@ -111,17 +111,17 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
       );
       final data = jsonDecode(response.body);
       if (data['status'] == "success") {
-        await AppSoundService.instance.playLogin(); // 🔐 Login success
+        await AppSoundService.instance.playLogin();
         await ref.read(authProvider.notifier).loginWithToken(data['token']);
         if (!mounted) return;
         _showSnack(data['message'], Colors.green);
         context.go('/home');
       } else {
-        await AppSoundService.instance.playError(); // ❌ OTP wrong
+        await AppSoundService.instance.playError();
         _showSnack(data['message'], Colors.red);
       }
     } catch (_) {
-      await AppSoundService.instance.playError(); // ❌ Network error
+      await AppSoundService.instance.playError();
       _showSnack("Connection error!", Colors.red);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -230,8 +230,8 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             child: Stack(
               children: [
                 Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 8.w, vertical: 8.h),
                   child: Row(
                     children: [
                       IconButton(
@@ -384,7 +384,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                     child: CircularProgressIndicator(color: skyBlue))
                 : ElevatedButton(
                     onPressed: () {
-                      AppSoundService.instance.playTap(); // 👆 tap feedback
+                      AppSoundService.instance.playTap();
                       _register();
                     },
                     style: ElevatedButton.styleFrom(
@@ -470,7 +470,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                   child: CircularProgressIndicator(color: skyBlue))
               : ElevatedButton(
                   onPressed: () {
-                    AppSoundService.instance.playTap(); // 👆 tap feedback
+                    AppSoundService.instance.playTap();
                     _verifyOtp();
                   },
                   style: ElevatedButton.styleFrom(
@@ -541,5 +541,69 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             color: Colors.black38, fontSize: _fs(ctx, 13, 13, 14)),
         filled: true,
         fillColor: const Color(0xFFF3F4F6),
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: h
+        contentPadding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radius),
+          borderSide: const BorderSide(color: skyBlue, width: 1.5),
+        ),
+        suffixIcon: passField != 0
+            ? IconButton(
+                icon: Icon(
+                  passField == 1
+                      ? (_passVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined)
+                      : (_confirmPassVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
+                  color: Colors.black38,
+                  size: _fs(ctx, 20, 21, 22),
+                ),
+                onPressed: () => setState(() {
+                  if (passField == 1) {
+                    _passVisible = !_passVisible;
+                  } else {
+                    _confirmPassVisible = !_confirmPassVisible;
+                  }
+                }),
+              )
+            : null,
+      ),
+      validator: (value) {
+        if (!optional && (value == null || value.isEmpty)) {
+          return "$hint is required";
+        }
+        if (passField == 2 && value != _passController.text) {
+          return "Passwords do not match";
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _dot(double size, Color color) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      );
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _mobileController.dispose();
+    _emailController.dispose();
+    _passController.dispose();
+    _confirmPassController.dispose();
+    _refController.dispose();
+    _otpController.dispose();
+    super.dispose();
+  }
+}
