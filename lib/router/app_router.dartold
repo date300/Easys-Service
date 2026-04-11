@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+// আপনার স্প্ল্যাশ স্ক্রিন ফাইলটি ইমপোর্ট করুন (পাথ ঠিক আছে কি না দেখে নিন)
+import '../screens/splash/splash_screen.dart'; 
+import '../features/recharge/recharge_screen.dart';
 import '../features/drive/drive_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/reselling/reselling_screen.dart';
@@ -12,14 +15,22 @@ import '../features/payment/payment_gateway_screen.dart';
 import '../main.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/home',
+  // ১. অ্যাপ শুরু হবে স্প্ল্যাশ স্ক্রিন দিয়ে
+  initialLocation: '/splash', 
+  
   routes: [
+    // ২. স্প্ল্যাশ স্ক্রিন রাউট (এটি ShellRoute এর বাইরে থাকবে)
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
+
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
 
-    // ✅ ShellRoute — সব পেজ এখানে (Bottom Nav + AppTopBar সহ)
+    // ShellRoute — সব পেজ এখানে (Bottom Nav + AppTopBar সহ)
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
@@ -28,9 +39,9 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const HomeScreen(),
         ),
         GoRoute(
-        path: '/drive',
-       builder: (context, state) => const DriveScreen(),
-),
+          path: '/drive',
+          builder: (context, state) => const DriveScreen(),
+        ),
         GoRoute(
           path: '/reselling',
           builder: (context, state) => const ResellingScreen(),
@@ -43,15 +54,15 @@ final GoRouter appRouter = GoRouter(
           path: '/campaigns',
           builder: (context, state) => const CampaignsScreen(),
         ),
-
-        // ✅ Profile — ShellRoute এর ভেতরে
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
+                GoRoute(
+          path: '/recharge',
+          builder: (context, state) => const RechargeScreen(),
+        ),
 
-        // ✅ Payment — ShellRoute এর ভেতরে
-        // MainWrapper isDetailView=true দেখবে → শুধু back arrow, কোনো bottom nav নেই
         GoRoute(
           path: '/payment',
           builder: (context, state) {
@@ -66,15 +77,26 @@ final GoRouter appRouter = GoRouter(
       ],
     ),
   ],
+
+  // ৩. রিডাইরেক্ট লজিক আপডেট
   redirect: (context, state) async {
     final ref = ProviderScope.containerOf(context);
     await ref.read(authLoadingProvider.future);
     final isLoggedIn = ref.read(authProvider);
+    
     final loc = state.matchedLocation;
-    final goingToRegister = loc == '/registration';
+    final isSplash = loc == '/splash'; // স্প্ল্যাশ স্ক্রিনে আছে কি না
+    final isRegister = loc == '/registration';
 
-    if (!isLoggedIn && !goingToRegister) return '/registration';
-    if (isLoggedIn && goingToRegister) return '/home';
+    // যদি স্প্ল্যাশ স্ক্রিনে থাকে, তবে কোনো রিডাইরেক্ট হবে না (এনিমেশন শেষ হতে দিন)
+    if (isSplash) return null;
+
+    // লগইন না থাকলে এবং রেজিস্ট্রেশন পেজে না থাকলে রেজিস্ট্রেশনে পাঠাবে
+    if (!isLoggedIn && !isRegister) return '/registration';
+    
+    // লগইন থাকলে এবং রেজিস্ট্রেশন পেজে যাওয়ার চেষ্টা করলে হোমে পাঠাবে
+    if (isLoggedIn && isRegister) return '/home';
+
     return null;
   },
 );

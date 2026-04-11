@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-// আপনার স্প্ল্যাশ স্ক্রিন ফাইলটি ইমপোর্ট করুন (পাথ ঠিক আছে কি না দেখে নিন)
-import '../screens/splash/splash_screen.dart'; 
+
+import '../screens/splash/splash_screen.dart';
 import '../features/recharge/recharge_screen.dart';
 import '../features/drive/drive_screen.dart';
 import '../features/home/home_screen.dart';
@@ -11,26 +11,33 @@ import '../features/microjobs/microjobs_screen.dart';
 import '../features/campaigns/campaigns_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/auth/registration_screen.dart';
+import '../features/auth/login_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
 import '../main.dart';
 
 final GoRouter appRouter = GoRouter(
-  // ১. অ্যাপ শুরু হবে স্প্ল্যাশ স্ক্রিন দিয়ে
-  initialLocation: '/splash', 
-  
+  initialLocation: '/splash',
+
   routes: [
-    // ২. স্প্ল্যাশ স্ক্রিন রাউট (এটি ShellRoute এর বাইরে থাকবে)
+    // Splash
     GoRoute(
       path: '/splash',
       builder: (context, state) => const SplashScreen(),
     ),
 
+    // Registration
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
 
-    // ShellRoute — সব পেজ এখানে (Bottom Nav + AppTopBar সহ)
+    // Login ← নতুন
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
+
+    // ShellRoute — Bottom Nav + AppTopBar সহ
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
@@ -58,11 +65,10 @@ final GoRouter appRouter = GoRouter(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
-                GoRoute(
+        GoRoute(
           path: '/recharge',
           builder: (context, state) => const RechargeScreen(),
         ),
-
         GoRoute(
           path: '/payment',
           builder: (context, state) {
@@ -78,24 +84,25 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 
-  // ৩. রিডাইরেক্ট লজিক আপডেট
+  // Redirect logic
   redirect: (context, state) async {
     final ref = ProviderScope.containerOf(context);
     await ref.read(authLoadingProvider.future);
     final isLoggedIn = ref.read(authProvider);
-    
-    final loc = state.matchedLocation;
-    final isSplash = loc == '/splash'; // স্প্ল্যাশ স্ক্রিনে আছে কি না
-    final isRegister = loc == '/registration';
 
-    // যদি স্প্ল্যাশ স্ক্রিনে থাকে, তবে কোনো রিডাইরেক্ট হবে না (এনিমেশন শেষ হতে দিন)
+    final loc = state.matchedLocation;
+    final isSplash = loc == '/splash';
+    final isRegister = loc == '/registration';
+    final isLogin = loc == '/login';
+
+    // Splash এ থাকলে redirect নেই
     if (isSplash) return null;
 
-    // লগইন না থাকলে এবং রেজিস্ট্রেশন পেজে না থাকলে রেজিস্ট্রেশনে পাঠাবে
-    if (!isLoggedIn && !isRegister) return '/registration';
-    
-    // লগইন থাকলে এবং রেজিস্ট্রেশন পেজে যাওয়ার চেষ্টা করলে হোমে পাঠাবে
-    if (isLoggedIn && isRegister) return '/home';
+    // Login নেই + auth page এও নেই → login এ পাঠাও
+    if (!isLoggedIn && !isRegister && !isLogin) return '/login';
+
+    // Login আছে + auth page এ যাওয়ার চেষ্টা → home এ পাঠাও
+    if (isLoggedIn && (isLogin || isRegister)) return '/home';
 
     return null;
   },
