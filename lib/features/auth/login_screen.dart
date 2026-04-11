@@ -176,26 +176,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             height: _topHeight(ctx),
             child: Stack(
               children: [
+                // ✅ Back button সরানো হয়েছে — শুধু title
                 Padding(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 8.w, vertical: 8.h),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded,
-                            color: Colors.white),
-                        onPressed: () {
-                          if (context.canPop()) context.pop();
-                        },
-                      ),
-                      Text(
-                        'Login',
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: _fs(ctx, 20, 22, 24)),
-                      ),
-                    ],
+                      horizontal: 24.w, vertical: 8.h),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Login',
+                      style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: _fs(ctx, 20, 22, 24)),
+                    ),
                   ),
                 ),
                 Center(
@@ -292,7 +285,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           SizedBox(height: isDesktop ? 10 : 10.h),
 
-          // Forgot Password
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
@@ -311,7 +303,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           SizedBox(height: isDesktop ? 28 : 28.h),
 
-          // Login Button
           SizedBox(
             width: double.infinity,
             height: isDesktop ? 54 : 54.h,
@@ -341,7 +332,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           SizedBox(height: isDesktop ? 20 : 20.h),
 
-          // Register link
+          // ✅ Fixed: '/register' → '/registration' (router match)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -350,7 +341,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       color: Colors.black54,
                       fontSize: _fs(ctx, 13, 13, 14))),
               GestureDetector(
-                onTap: () => context.go('/register'),
+                onTap: () => context.go('/registration'),
                 child: Text("Register",
                     style: GoogleFonts.poppins(
                         color: skyBlue,
