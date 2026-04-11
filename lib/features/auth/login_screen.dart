@@ -176,33 +176,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             height: _topHeight(ctx),
             child: Stack(
               children: [
-                // ✅ Back button এবং Title ঠিক করা হয়েছে
+                // ✅ Back button সরানো হয়েছে — শুধু title
                 Padding(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 12.w, vertical: 8.h),
+                      horizontal: 24.w, vertical: 8.h),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            if (context.canPop()) {
-                              context.pop();
-                            } else {
-                              context.go('/'); // অথবা আপনার ডিফল্ট রুট
-                            }
-                          },
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-                        ),
-                        Text(
-                          'Login',
-                          style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: _fs(ctx, 20, 22, 24)),
-                        ),
-                      ],
+                    child: Text(
+                      'Login',
+                      style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: _fs(ctx, 20, 22, 24)),
                     ),
                   ),
                 ),
@@ -347,7 +332,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           SizedBox(height: isDesktop ? 20 : 20.h),
 
-          // ✅ Fixed Route: '/registration' → '/register'
+          // ✅ Fixed: '/register' → '/registration' (router match)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
