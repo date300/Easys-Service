@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// আপনার main.dart থেকে authProvider ইমপোর্ট করা হয়েছে
-import '../../main.dart'; 
+import '../../main.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -16,15 +15,35 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _rotationController;
+  late AnimationController _pulseController;
+
   @override
   void initState() {
     super.initState();
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+
     _navigateToNext();
   }
 
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
   void _navigateToNext() async {
-    // ৩ সেকেন্ডের স্প্ল্যাশ ডিউরেশন
     await Future.delayed(const Duration(seconds: 3));
 
     if (!mounted) return;
@@ -32,20 +51,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final isLoggedIn = ref.read(authProvider);
 
     if (isLoggedIn) {
-      context.go('/home'); 
+      context.go('/home');
     } else {
-      context.go('/registration'); 
+      context.go('/registration');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // স্ট্যাটাস বার এবং নেভিগেশন বার কন্ট্রোল
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent, 
-        statusBarIconBrightness: Brightness.light, 
-        systemNavigationBarColor: Color(0xFF1E88E5), 
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF1E88E5),
       ),
       child: Scaffold(
         body: Container(
@@ -67,35 +85,91 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // লোগো আরও ছোট করা হয়েছে (100 -> 65)
-                    Image.asset(
-                      'assets/ultra5G.png',
-                      width: 65.w, 
-                      height: 65.w,
-                    )
-                    .animate()
-                    .fadeIn(duration: 800.ms)
-                    .scale(begin: const Offset(0.5, 0.5), curve: Curves.elasticOut),
-                    
-                    SizedBox(height: 12.h), // স্পেসিং কমানো হয়েছে
-                    
-                    // অ্যাপের নাম ফন্ট সাইজ এবং ওয়েট কমানো হয়েছে
+                    // লোগোর চারপাশে ঘূর্ণমান আঁকাবাঁকা বর্ডার
+                    SizedBox(
+                      width: 120.w,
+                      height: 120.w,
+                      child: AnimatedBuilder(
+                        animation: _rotationController,
+                        builder: (context, child) {
+                          return CustomPaint(
+                            size: Size(120.w, 120.w),
+                            painter: RotatingBorderPainter(
+                              rotation: _rotationController.value,
+                            ),
+                            child: Center(
+                              child: Container(
+                                width: 85.w,
+                                height: 85.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withOpacity(0.1),
+                                ),
+                                child: Center(
+                                  child: Image.asset(
+                                    'assets/ultra5G.png',
+                                    width: 65.w,
+                                    height: 65.w,
+                                  )
+                                      .animate()
+                                      .fadeIn(duration: 800.ms)
+                                      .scale(
+                                          begin: const Offset(0.5, 0.5),
+                                          curve: Curves.elasticOut),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    SizedBox(height: 20.h),
+
                     Text(
                       "Easy Service",
                       style: GoogleFonts.poppins(
-                        fontSize: 22.sp, // 30 -> 22
-                        fontWeight: FontWeight.w600, // Bold এর বদলে Semi-bold
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
                         letterSpacing: 1.0,
                       ),
                     ).animate().fadeIn(delay: 400.ms).moveY(begin: 10, end: 0),
+
+                    SizedBox(height: 30.h),
+
+                    // ফেসবুক স্টাইল লোডিং ডটস
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (index) {
+                        return AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, child) {
+                            final double delay = index * 0.3;
+                            double value = (_pulseController.value - delay) % 1.0;
+                            double scale = 0.6 + (0.4 * (1 - (value * 2 - 1).abs()));
+                            double opacity = 0.4 + (0.6 * scale);
+
+                            return Container(
+                              margin: EdgeInsets.symmetric(horizontal: 4.w),
+                              width: 10.w,
+                              height: 10.w,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(opacity),
+                                shape: BoxShape.circle,
+                              ),
+                              transform: Matrix4.identity()..scale(scale),
+                            );
+                          },
+                        );
+                      }),
+                    ).animate().fadeIn(delay: 600.ms),
                   ],
                 ),
               ),
-              
-              // নিচের ব্রান্ডিং টেক্সট
+
               Positioned(
-                bottom: 45.h, // নিচ থেকে দূরত্ব কিছুটা কমানো হয়েছে
+                bottom: 45.h,
                 left: 0,
                 right: 0,
                 child: Column(
@@ -104,7 +178,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                       "from",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.6),
-                        fontSize: 10.sp, // 14 -> 10
+                        fontSize: 10.sp,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -113,9 +187,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                       "Target Win",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 12.sp, // 16 -> 12
-                        fontWeight: FontWeight.w500, // Bold এর বদলে Medium
-                        letterSpacing: 2.5, 
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 2.5,
                       ),
                     ),
                   ],
@@ -127,4 +201,68 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       ),
     );
   }
+}
+
+// ঘূর্ণমান আঁকাবাঁকা বর্ডার পেইন্টার
+class RotatingBorderPainter extends CustomPainter {
+  final double rotation;
+
+  RotatingBorderPainter({required this.rotation});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 5;
+
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    final segments = 8;
+
+    for (int i = 0; i < segments; i++) {
+      final startAngle = (2 * 3.14159 * i / segments) + (rotation * 2 * 3.14159);
+      final endAngle = startAngle + (3.14159 / segments * 1.2);
+
+      final startX = center.dx + radius * 0.85 * cos(startAngle);
+      final startY = center.dy + radius * 0.85 * sin(startAngle);
+      final endX = center.dx + radius * cos(endAngle);
+      final endY = center.dy + radius * sin(endAngle);
+
+      if (i == 0) {
+        path.moveTo(startX, startY);
+      } else {
+        path.lineTo(startX, startY);
+      }
+
+      path.quadraticBezierTo(
+        center.dx + radius * 1.1 * cos((startAngle + endAngle) / 2),
+        center.dy + radius * 1.1 * sin((startAngle + endAngle) / 2),
+        endX,
+        endY,
+      );
+    }
+
+    path.close();
+    canvas.drawPath(path, paint);
+
+    // ছোট ছোট ডটস
+    final dotPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 4; i++) {
+      final angle = (2 * 3.14159 * i / 4) + (rotation * 2 * 3.14159 * 1.5);
+      final dotX = center.dx + (radius + 15) * cos(angle);
+      final dotY = center.dy + (radius + 15) * sin(angle);
+
+      canvas.drawCircle(Offset(dotX, dotY), 4, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
