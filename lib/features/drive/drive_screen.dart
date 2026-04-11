@@ -210,7 +210,7 @@ class _DriveScreenState extends State<DriveScreen> {
     return Scaffold(
       backgroundColor: kBackground,
       appBar: AppBar(
-        title: Text('Drive Offers', style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: kTextDark)),
+        title: Text('All Sim Offers', style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: kTextDark)),
         backgroundColor: Colors.white, elevation: 0.5,
         centerTitle: true,
       ),
