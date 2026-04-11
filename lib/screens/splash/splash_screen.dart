@@ -1,3 +1,5 @@
+import 'dart:math'; // এটি যোগ করুন
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -224,8 +226,8 @@ class RotatingBorderPainter extends CustomPainter {
     final segments = 8;
 
     for (int i = 0; i < segments; i++) {
-      final startAngle = (2 * 3.14159 * i / segments) + (rotation * 2 * 3.14159);
-      final endAngle = startAngle + (3.14159 / segments * 1.2);
+      final startAngle = (2 * pi * i / segments) + (rotation * 2 * pi);
+      final endAngle = startAngle + (pi / segments * 1.2);
 
       final startX = center.dx + radius * 0.85 * cos(startAngle);
       final startY = center.dy + radius * 0.85 * sin(startAngle);
@@ -255,7 +257,7 @@ class RotatingBorderPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < 4; i++) {
-      final angle = (2 * 3.14159 * i / 4) + (rotation * 2 * 3.14159 * 1.5);
+      final angle = (2 * pi * i / 4) + (rotation * 2 * pi * 1.5);
       final dotX = center.dx + (radius + 15) * cos(angle);
       final dotY = center.dy + (radius + 15) * sin(angle);
 
