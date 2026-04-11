@@ -7,7 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/guards/verification_guard.dart'; 
-// স্টেট এবং provider গুলো main.dart থেকে বা প্রয়োজনীয় ফাইল থেকে আসছে
+// ????? ??? provider ???? main.dart ???? ?? ????????? ???? ???? ????
 import '../../main.dart'; 
 
 class Service {
@@ -35,7 +35,6 @@ final servicesProvider = Provider<List<Service>>((ref) {
     Service(name: 'Reselling', icon: CupertinoIcons.bag, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: '/reselling', requiresVerification: true),
     Service(name: 'Microjob', icon: CupertinoIcons.doc_text, color: Color(0xFF0D9488), secondaryColor: Color(0xFF2DD4BF), route: '/microjobs', requiresVerification: true),
     Service(name: 'Loan', icon: CupertinoIcons.money_dollar_circle, color: Color(0xFF16A34A), secondaryColor: Color(0xFF4ADE80), route: null),
-    // Campaign আইকনটি এখানে আপডেট করা হয়েছে
     Service(name: 'Campaign', icon: Icons.campaign, color: Color(0xFF7C3AED), secondaryColor: Color(0xFFA78BFA), route: '/campaigns', requiresVerification: true),
     Service(name: 'Education', icon: CupertinoIcons.book, color: Color(0xFFD97706), secondaryColor: Color(0xFFFBBF24), route: null),
     Service(name: 'Easy Bus', icon: CupertinoIcons.bus, color: Color(0xFF2563EB), secondaryColor: Color(0xFF60A5FA), route: null),
@@ -44,6 +43,9 @@ final servicesProvider = Provider<List<Service>>((ref) {
     Service(name: 'Used Item', icon: CupertinoIcons.arrow_2_circlepath, color: Color(0xFF78716C), secondaryColor: Color(0xFFD6D3D1), route: null),
   ];
 });
+
+// See More অপশনটি কন্ট্রোল করার জন্য Provider
+final isExpandedProvider = StateProvider<bool>((ref) => false);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -80,7 +82,7 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       _buildSectionHeader(context, isDesktop),
                       SizedBox(height: isDesktop ? 28 : 20.h),
-                      _buildCategoriesGrid(context, services, isDesktop: isDesktop, screenWidth: screenWidth),
+                      _buildCategoriesGrid(context, ref, services, isDesktop: isDesktop, screenWidth: screenWidth),
                       SizedBox(height: 40.h),
                     ],
                   ),
@@ -109,25 +111,51 @@ class HomeScreen extends ConsumerWidget {
     ).animate().fadeIn(duration: 500.ms).slideX();
   }
 
-  Widget _buildCategoriesGrid(BuildContext context, List<Service> services, {required bool isDesktop, required double screenWidth}) {
+  Widget _buildCategoriesGrid(BuildContext context, WidgetRef ref, List<Service> services, {required bool isDesktop, required double screenWidth}) {
     int crossAxisCount = screenWidth >= 1200 ? 8 : (screenWidth >= 900 ? 6 : (screenWidth >= 600 ? 5 : 4));
+    
+    // Check if user clicked 'See More'
+    final isExpanded = ref.watch(isExpandedProvider);
+    
+    // Calculate items for 2 rows
+    final int initialItemsCount = crossAxisCount * 2;
+    
+    final displayedServices = isExpanded ? services : services.take(initialItemsCount).toList();
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: isDesktop ? 24 : 20.h,
-        crossAxisSpacing: isDesktop ? 20 : 15.w,
-        childAspectRatio: 0.75,
-      ),
-      itemCount: services.length,
-      itemBuilder: (context, index) {
-        return _ServiceCard(service: services[index], isDesktop: isDesktop)
-            .animate()
-            .fade(duration: 400.ms, delay: (index * 40).ms)
-            .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack);
-      },
+    return Column(
+      children: [
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: isDesktop ? 24 : 20.h,
+            crossAxisSpacing: isDesktop ? 20 : 15.w,
+            childAspectRatio: 0.75,
+          ),
+          itemCount: displayedServices.length,
+          itemBuilder: (context, index) {
+            return _ServiceCard(service: displayedServices[index], isDesktop: isDesktop)
+                .animate()
+                .fade(duration: 400.ms, delay: (index * 40).ms)
+                .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack);
+          },
+        ),
+        
+        // Show 'See More' button if there are more items than initial count
+        if (services.length > initialItemsCount)
+          Padding(
+            padding: EdgeInsets.only(top: 16.h),
+            child: TextButton.icon(
+              onPressed: () => ref.read(isExpandedProvider.notifier).state = !isExpanded,
+              icon: Icon(isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, size: 16.sp, color: kPrimary),
+              label: Text(
+                isExpanded ? 'Show Less' : 'See More Services',
+                style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w600, color: kPrimary),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -145,6 +173,11 @@ class _ServiceCard extends ConsumerWidget {
   }
 
   void _onTap(BuildContext context, WidgetRef ref) {
+    // Under construction check
+    if (service.name == 'Loan' || service.name == 'Campaign') {
+      return; 
+    }
+
     if (service.route == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -172,7 +205,8 @@ class _ServiceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bool hasRoute = service.route != null;
+    final bool isUnderConstruction = service.name == 'Loan' || service.name == 'Campaign';
+    final bool hasRoute = service.route != null && !isUnderConstruction;
 
     return GestureDetector(
       onTap: () => _onTap(context, ref),
@@ -202,7 +236,7 @@ class _ServiceCard extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (!hasRoute)
+              if (!hasRoute || isUnderConstruction)
                 Positioned(
                   right: -2,
                   top: -2,
@@ -213,23 +247,39 @@ class _ServiceCard extends ConsumerWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
-                    child: Icon(CupertinoIcons.lock_fill, size: 10.sp, color: Colors.grey.shade500),
+                    child: Icon(
+                      isUnderConstruction ? Icons.construction : CupertinoIcons.lock_fill, 
+                      size: 10.sp, 
+                      color: Colors.grey.shade500
+                    ),
                   ),
                 ),
             ],
           ),
           SizedBox(height: isDesktop ? 12.h : 8.h),
-          Text(
-            service.name,
-            style: GoogleFonts.poppins(
-              fontSize: isDesktop ? 12.sp : 10.sp,
-              fontWeight: hasRoute ? FontWeight.w500 : FontWeight.w400,
-              color: hasRoute ? HomeScreen.kTextDark : Colors.grey.shade500,
-              height: 1.2,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  isUnderConstruction ? 'Coming Soon!' : service.name,
+                  style: GoogleFonts.poppins(
+                    fontSize: isDesktop ? 12.sp : 10.sp,
+                    fontWeight: hasRoute ? FontWeight.w500 : FontWeight.w400,
+                    color: hasRoute ? HomeScreen.kTextDark : Colors.grey.shade500,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isUnderConstruction) ...[
+                SizedBox(width: 4.w),
+                Icon(Icons.construction, size: 12.sp, color: Colors.orange.shade700),
+              ]
+            ],
           ),
         ],
       ),

@@ -7,7 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/guards/verification_guard.dart'; 
-// নিশ্চিত হোন যে main.dart থেকে এই প্রোভাইডারগুলো ইমপোর্ট করা আছে
+// স্টেট এবং provider গুলো main.dart থেকে বা প্রয়োজনীয় ফাইল থেকে আসছে
 import '../../main.dart'; 
 
 class Service {
@@ -30,12 +30,13 @@ class Service {
 
 final servicesProvider = Provider<List<Service>>((ref) {
   return const [
-    Service(name: 'Recharge', icon: CupertinoIcons.device_phone_portrait, color: Color(0xFF6366F1), secondaryColor: Color(0xFF818CF8), route: null),
+    Service(name: 'Recharge', icon: CupertinoIcons.device_phone_portrait, color: Color(0xFF6366F1), secondaryColor: Color(0xFF818CF8), route: '/recharge', requiresVerification: false),
     Service(name: 'Drive Offer', icon: CupertinoIcons.gift, color: Color(0xFF0284C7), secondaryColor: Color(0xFF38BDF8), route: '/drive', requiresVerification: false),
     Service(name: 'Reselling', icon: CupertinoIcons.bag, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: '/reselling', requiresVerification: true),
     Service(name: 'Microjob', icon: CupertinoIcons.doc_text, color: Color(0xFF0D9488), secondaryColor: Color(0xFF2DD4BF), route: '/microjobs', requiresVerification: true),
     Service(name: 'Loan', icon: CupertinoIcons.money_dollar_circle, color: Color(0xFF16A34A), secondaryColor: Color(0xFF4ADE80), route: null),
-    Service(name: 'Campaign', icon: CupertinoIcons.speaker_2, color: Color(0xFF7C3AED), secondaryColor: Color(0xFFA78BFA), route: '/campaigns', requiresVerification: true),
+    // Campaign আইকনটি এখানে আপডেট করা হয়েছে
+    Service(name: 'Campaign', icon: Icons.campaign, color: Color(0xFF7C3AED), secondaryColor: Color(0xFFA78BFA), route: '/campaigns', requiresVerification: true),
     Service(name: 'Education', icon: CupertinoIcons.book, color: Color(0xFFD97706), secondaryColor: Color(0xFFFBBF24), route: null),
     Service(name: 'Easy Bus', icon: CupertinoIcons.bus, color: Color(0xFF2563EB), secondaryColor: Color(0xFF60A5FA), route: null),
     Service(name: 'Courier', icon: CupertinoIcons.cube_box, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: null),
@@ -131,7 +132,6 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-// ConsumerWidget এ কনভার্ট করা হয়েছে যাতে রিভারপড ব্যবহার করা যায়
 class _ServiceCard extends ConsumerWidget {
   final Service service;
   final bool isDesktop;
@@ -139,11 +139,8 @@ class _ServiceCard extends ConsumerWidget {
   const _ServiceCard({required this.service, this.isDesktop = false});
 
   void _navigateToDetail(BuildContext context, WidgetRef ref) {
-    // ১. স্টেট আপডেট করা (সব পেজের জন্য ডিটেইল ভিউ এনাবেল করা)
     ref.read(isDetailViewProvider.notifier).state = true;
     ref.read(detailViewTitleProvider.notifier).state = service.name;
-
-    // ২. নেভিগেশন করা
     context.go(service.route!);
   }
 
