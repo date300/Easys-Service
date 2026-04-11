@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../main.dart';
+import '../../core/services/app_sound_service.dart';
 
 class RegistrationScreen extends ConsumerStatefulWidget {
   const RegistrationScreen({super.key});
@@ -75,14 +76,17 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
       );
       final data = jsonDecode(response.body);
       if (data['status'] == "success") {
+        await AppSoundService.instance.playOtp();
         if (!mounted) return;
         _showSnack(data['message'], Colors.green);
         setState(() => _isOtpSent = true);
       } else {
+        await AppSoundService.instance.playError();
         _showSnack(data['message'], Colors.red);
       }
     } catch (_) {
-      _showSnack("??????? ????? ?????? ??????!", Colors.red);
+      await AppSoundService.instance.playError();
+      _showSnack("Connection error!", Colors.red);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -91,7 +95,8 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   Future<void> _verifyOtp() async {
     final otp = _otpController.text.trim();
     if (otp.length < 6) {
-      _showSnack("???? ? ??????? OTP ???", Colors.red);
+      await AppSoundService.instance.playError();
+      _showSnack("Please enter 6-digit OTP", Colors.red);
       return;
     }
     setState(() => _isLoading = true);
@@ -106,15 +111,18 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
       );
       final data = jsonDecode(response.body);
       if (data['status'] == "success") {
+        await AppSoundService.instance.playLogin();
         await ref.read(authProvider.notifier).loginWithToken(data['token']);
         if (!mounted) return;
         _showSnack(data['message'], Colors.green);
         context.go('/home');
       } else {
+        await AppSoundService.instance.playError();
         _showSnack(data['message'], Colors.red);
       }
     } catch (_) {
-      _showSnack("??????? ????? ?????? ??????!", Colors.red);
+      await AppSoundService.instance.playError();
+      _showSnack("Connection error!", Colors.red);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -139,7 +147,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     );
   }
 
-  // ?? Desktop ??????????????????????????????????????????????????????
+  // ── Desktop ──────────────────────────────────────────────────
   Widget _desktopLayout(BuildContext ctx) {
     return Center(
       child: SingleChildScrollView(
@@ -211,7 +219,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     );
   }
 
-  // ?? Mobile & Tablet ??????????????????????????????????????????????
+  // ── Mobile & Tablet ──────────────────────────────────────────
   Widget _mobileTabletLayout(BuildContext ctx, bool isTablet) {
     return Column(
       children: [
@@ -222,8 +230,8 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             child: Stack(
               children: [
                 Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 8.w, vertical: 8.h),
                   child: Row(
                     children: [
                       IconButton(
@@ -330,7 +338,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     );
   }
 
-  // ?? Registration Form ????????????????????????????????????????????
+  // ── Registration Form ────────────────────────────────────────
   Widget _buildRegForm(BuildContext ctx) {
     final isDesktop = _isDesktop(ctx);
     return Form(
@@ -362,7 +370,6 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
               passField: 2),
           _gap(ctx),
 
-          // Affiliate ID ? Optional
           _label(ctx, "Affiliate ID (Optional)"),
           _field(ctx, _refController, "Enter your affiliate id",
               optional: true),
@@ -376,7 +383,10 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(color: skyBlue))
                 : ElevatedButton(
-                    onPressed: _register,
+                    onPressed: () {
+                      AppSoundService.instance.playTap();
+                      _register();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: skyBlue,
                       foregroundColor: Colors.white,
@@ -417,7 +427,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     );
   }
 
-  // ?? OTP Form ?????????????????????????????????????????????????????
+  // ── OTP Form ─────────────────────────────────────────────────
   Widget _buildOtpForm(BuildContext ctx) {
     final isDesktop = _isDesktop(ctx);
     return Column(
@@ -459,7 +469,10 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
               ? const Center(
                   child: CircularProgressIndicator(color: skyBlue))
               : ElevatedButton(
-                  onPressed: _verifyOtp,
+                  onPressed: () {
+                    AppSoundService.instance.playTap();
+                    _verifyOtp();
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: skyBlue,
                     foregroundColor: Colors.white,
@@ -486,7 +499,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     );
   }
 
-  // ?? Helpers ???????????????????????????????????????????????????????
+  // ── Helpers ──────────────────────────────────────────────────
   Widget _label(BuildContext ctx, String text) => Padding(
         padding: EdgeInsets.only(bottom: _isDesktop(ctx) ? 6 : 6.h),
         child: Text(text,
@@ -528,8 +541,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             color: Colors.black38, fontSize: _fs(ctx, 13, 13, 14)),
         filled: true,
         fillColor: const Color(0xFFF3F4F6),
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+        contentPadding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radius),
           borderSide: BorderSide.none,
