@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 // আপনার স্প্ল্যাশ স্ক্রিন ফাইলটি ইমপোর্ট করুন (পাথ ঠিক আছে কি না দেখে নিন)
 import '../screens/splash/splash_screen.dart'; 
-
+import '../features/recharge/recharge_screen.dart';
 import '../features/drive/drive_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/reselling/reselling_screen.dart';
@@ -58,6 +58,11 @@ final GoRouter appRouter = GoRouter(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
+                GoRoute(
+          path: '/recharge',
+          builder: (context, state) => const RechargeScreen(),
+        ),
+
         GoRoute(
           path: '/payment',
           builder: (context, state) {
