@@ -176,18 +176,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             height: _topHeight(ctx),
             child: Stack(
               children: [
-                // ✅ Back button সরানো হয়েছে — শুধু title
+                // ✅ Back button এবং Title ঠিক করা হয়েছে
                 Padding(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 24.w, vertical: 8.h),
+                      horizontal: 12.w, vertical: 8.h),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Login',
-                      style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: _fs(ctx, 20, 22, 24)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go('/'); // অথবা আপনার ডিফল্ট রুট
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                        ),
+                        Text(
+                          'Login',
+                          style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: _fs(ctx, 20, 22, 24)),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -332,7 +347,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           SizedBox(height: isDesktop ? 20 : 20.h),
 
-          // ✅ Fixed: '/register' → '/registration' (router match)
+          // ✅ Fixed Route: '/registration' → '/register'
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -341,7 +356,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       color: Colors.black54,
                       fontSize: _fs(ctx, 13, 13, 14))),
               GestureDetector(
-                onTap: () => context.go('/registration'),
+                onTap: () => context.go('/register'),
                 child: Text("Register",
                     style: GoogleFonts.poppins(
                         color: skyBlue,
