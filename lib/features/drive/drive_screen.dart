@@ -34,7 +34,7 @@ class _DriveScreenState extends State<DriveScreen> {
   };
 
   final Map<String, String> operatorCodes = {
-    'gp': 'GP', 'robi': 'RB', 'airtel': 'AT', 'bl': 'BL', 'teletalk': 'TT', 'skitto': 'SK',
+    'gp': 'GP', 'robi': 'ROBI', 'airtel': 'AIRTEL', 'bl': 'BL', 'teletalk': 'TELETALK', 'skitto': 'SKITTO',
   };
 
   final Map<String, List<String>> operatorCategories = {
@@ -67,7 +67,7 @@ class _DriveScreenState extends State<DriveScreen> {
     });
 
     try {
-      final opCode = operatorCodes[operator]!.toLowerCase();
+      final opCode = operator.toLowerCase();
       final response = await http
           .get(Uri.parse('https://easy.ltcminematrix.com/api/recharge/drives/$opCode'))
           .timeout(const Duration(seconds: 15));
@@ -109,8 +109,8 @@ class _DriveScreenState extends State<DriveScreen> {
     }).toList();
   }
 
-  // 2. Purchase Execution
-  Future<void> _executePurchase(Map<String, dynamic> drive, String number, String pin) async {
+  // 2. Purchase Execution (No PIN)
+  Future<void> _executePurchase(Map<String, dynamic> drive, String number) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -121,10 +121,7 @@ class _DriveScreenState extends State<DriveScreen> {
       final payload = {
         "number": number,
         "amount": drive['price'],
-        "operator": operatorCodes[selectedOperator],
-        "package_id": drive['driveId'].toString(),
-        "type": "drive",
-        "pin": pin
+        "operator": selectedOperator.toLowerCase(), // Your backend handles case
       };
 
       final response = await http.post(
@@ -137,7 +134,7 @@ class _DriveScreenState extends State<DriveScreen> {
 
       final resData = jsonDecode(response.body);
       if (response.statusCode == 200 && resData['success'] == true) {
-        _showStatusSnack("Purchase successful! TRX ID: ${resData['trxid']}", Colors.green);
+        _showStatusSnack("Order Placed! TRX ID: ${resData['trxid']}", Colors.green);
       } else {
         _showStatusSnack(resData['message'] ?? "Purchase failed!", Colors.red);
       }
@@ -153,10 +150,9 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  // 3. Bottom Sheet for Number and PIN
+  // 3. Updated Bottom Sheet (Removed PIN)
   void _openPurchaseSheet(Map<String, dynamic> drive) {
     final TextEditingController numController = TextEditingController();
-    final TextEditingController pinController = TextEditingController();
     final color = operatorColors[selectedOperator]!;
 
     showModalBottomSheet(
@@ -171,7 +167,7 @@ class _DriveScreenState extends State<DriveScreen> {
           children: [
             Center(child: Container(width: 40.w, height: 4.h, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
             SizedBox(height: 15.h),
-            Text('Confirm Purchase', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16.sp)),
+            Text('Confirm Order', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16.sp)),
             SizedBox(height: 5.h),
             Text(drive['title'], style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
             SizedBox(height: 20.h),
@@ -180,18 +176,8 @@ class _DriveScreenState extends State<DriveScreen> {
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
                 labelText: 'Mobile Number',
+                hintText: '01XXXXXXXXX',
                 prefixIcon: const Icon(CupertinoIcons.phone),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
-              ),
-            ),
-            SizedBox(height: 15.h),
-            TextField(
-              controller: pinController,
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'App PIN',
-                prefixIcon: const Icon(CupertinoIcons.lock),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
               ),
             ),
@@ -202,14 +188,14 @@ class _DriveScreenState extends State<DriveScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: color, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r))),
                 onPressed: () {
-                  if (numController.text.length == 11 && pinController.text.isNotEmpty) {
+                  if (numController.text.length == 11) {
                     Navigator.pop(context);
-                    _executePurchase(drive, numController.text, pinController.text);
+                    _executePurchase(drive, numController.text);
                   } else {
-                    _showStatusSnack("Please enter a valid number and PIN", Colors.orange);
+                    _showStatusSnack("Please enter a valid 11-digit number", Colors.orange);
                   }
                 },
-                child: Text('Buy Now ৳${drive['price']}', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                child: Text('Confirm Purchase ৳${drive['price']}', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14.sp)),
               ),
             ),
             SizedBox(height: 20.h),
@@ -288,52 +274,31 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  // 🌟 Updated: Main Body with Lottie Empty State in English
   Widget _buildBody() {
     if (isLoading) return const Center(child: CircularProgressIndicator());
     
     if (errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 50.sp, color: Colors.redAccent),
-            SizedBox(height: 10.h),
-            Text(errorMessage!, style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextMid)),
-          ],
-        ),
-      );
+      return Center(child: Text(errorMessage!, style: GoogleFonts.poppins(color: Colors.redAccent)));
     }
 
-    // 🔥 If no data/offers available
     if (filteredDrives.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Lottie.network(
-              'https://lottie.host/17e089d8-99ed-498c-850f-f1cbba20251c/MowR12iE75.json', // Empty box animation
-              height: 180.h,
-              width: 180.w,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => 
-                  Icon(CupertinoIcons.folder_open, size: 80.sp, color: Colors.grey.shade400),
+              'https://lottie.host/17e089d8-99ed-498c-850f-f1cbba20251c/MowR12iE75.json',
+              height: 200.h,
+              errorBuilder: (context, error, stackTrace) => const Icon(Icons.folder_open, size: 80, color: Colors.grey),
             ),
-            SizedBox(height: 15.h),
-            Text(
-              'Sorry, no offers found!',
-              style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: kTextMid),
-            ),
-            Text(
-              'Please check another category or operator.',
-              style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey),
-            ),
+            SizedBox(height: 10.h),
+            Text('No Offers Found!', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: kTextMid)),
+            Text('Try checking another operator.', style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey)),
           ],
         ),
       );
     }
 
-    // List of offers
     return ListView.builder(
       itemCount: filteredDrives.length,
       padding: EdgeInsets.all(16.w),
@@ -341,35 +306,31 @@ class _DriveScreenState extends State<DriveScreen> {
         final drive = filteredDrives[i];
         return Container(
           margin: EdgeInsets.only(bottom: 12.h),
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.all(15.w),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15.r),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 5))]
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(drive['title'], style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-              SizedBox(height: 8.h),
+              const Divider(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Price: ৳${drive['price']}", style: GoogleFonts.poppins(fontSize: 12.sp, color: kPrimary, fontWeight: FontWeight.w600)),
+                      Text("৳${drive['price']}", style: GoogleFonts.poppins(fontSize: 16.sp, color: kPrimary, fontWeight: FontWeight.bold)),
                       Text("Validity: ${drive['duration']} Days", style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid)),
                     ],
                   ),
                   ElevatedButton(
                     onPressed: () => _openPurchaseSheet(drive),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: operatorColors[selectedOperator],
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                      elevation: 0
-                    ),
-                    child: Text('Buy Now', style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(backgroundColor: operatorColors[selectedOperator], shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r))),
+                    child: Text('Buy Now', style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
