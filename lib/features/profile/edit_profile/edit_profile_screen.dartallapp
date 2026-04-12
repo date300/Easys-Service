@@ -131,6 +131,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   // POST /api/user/upload-profile-pic
+  // fromBytes ব্যবহার করা হয়েছে — Web + Android + iOS সব জায়গায় কাজ করবে
   Future<void> _pickAndUploadImage() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -156,9 +157,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       request.headers['Authorization'] = 'Bearer $token';
 
-      final multipartFile = await http.MultipartFile.fromPath(
+      // readAsBytes — dart:io ছাড়াই কাজ করে (Web সাপোর্ট)
+      final bytes = await pickedFile.readAsBytes();
+      final multipartFile = http.MultipartFile.fromBytes(
         'profile_picture',
-        pickedFile.path,
+        bytes,
+        filename: pickedFile.name,
       );
       request.files.add(multipartFile);
 
@@ -400,7 +404,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           color: skyBlue,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        child: const Icon(Icons.camera_alt,
+                            color: Colors.white, size: 20),
                       ),
                     ),
                   ),
@@ -410,7 +415,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 SizedBox(height: 8.h),
                 TextButton.icon(
                   onPressed: _isUploadingImage ? null : _deleteProfilePicture,
-                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                  icon: const Icon(Icons.delete_outline,
+                      color: Colors.red, size: 18),
                   label: Text(
                     "Remove Photo",
                     style: GoogleFonts.poppins(color: Colors.red, fontSize: 12),
@@ -451,7 +457,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 Expanded(
                   child: Text(
                     _nameChangeMessage!,
-                    style: GoogleFonts.poppins(color: Colors.orange, fontSize: 12),
+                    style: GoogleFonts.poppins(
+                        color: Colors.orange, fontSize: 12),
                   ),
                 ),
               ],
@@ -536,7 +543,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: Colors.grey[300],
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r),
+                      borderRadius:
+                          BorderRadius.circular(isDesktop ? 14 : 14.r),
                     ),
                     elevation: 0,
                   ),
@@ -567,7 +575,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           children: [
             Text(
               "Profile Picture",
-              style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.poppins(
+                  fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20.h),
             ListTile(
@@ -611,7 +620,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
       );
 
-  Widget _gap(BuildContext ctx) => SizedBox(height: _isDesktop(ctx) ? 14 : 14.h);
+  Widget _gap(BuildContext ctx) =>
+      SizedBox(height: _isDesktop(ctx) ? 14 : 14.h);
 
   Widget _field(
     BuildContext ctx,
@@ -634,7 +644,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         hintStyle: GoogleFonts.poppins(
             color: Colors.black38, fontSize: _fs(ctx, 13, 13, 14)),
         filled: true,
-        fillColor: readOnly ? const Color(0xFFEEEEEE) : const Color(0xFFF3F4F6),
+        fillColor:
+            readOnly ? const Color(0xFFEEEEEE) : const Color(0xFFF3F4F6),
         contentPadding: EdgeInsets.symmetric(
           horizontal: isDesktop ? 16 : 16.w,
           vertical: isDesktop ? 15 : 14.h,
@@ -644,7 +655,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           borderSide: BorderSide.none,
         ),
         suffixIcon: readOnly
-            ? const Icon(Icons.lock_outline_rounded, color: Colors.black26, size: 18)
+            ? const Icon(Icons.lock_outline_rounded,
+                color: Colors.black26, size: 18)
             : null,
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
@@ -131,7 +132,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   // POST /api/user/upload-profile-pic
-  // fromBytes ব্যবহার করা হয়েছে — Web + Android + iOS সব জায়গায় কাজ করবে
   Future<void> _pickAndUploadImage() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -157,12 +157,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       request.headers['Authorization'] = 'Bearer $token';
 
-      // readAsBytes — dart:io ছাড়াই কাজ করে (Web সাপোর্ট)
+      // ✅ readAsBytes + contentType — Web/Android/iOS সব জায়গায় কাজ করে
       final bytes = await pickedFile.readAsBytes();
+      final fileName = pickedFile.name;
+      final ext = fileName.split('.').last.toLowerCase();
+
+      // file extension অনুযায়ী contentType ঠিক করা
+      String mimeSubtype = 'jpeg';
+      if (ext == 'png') mimeSubtype = 'png';
+      if (ext == 'gif') mimeSubtype = 'gif';
+      if (ext == 'webp') mimeSubtype = 'webp';
+
       final multipartFile = http.MultipartFile.fromBytes(
         'profile_picture',
         bytes,
-        filename: pickedFile.name,
+        filename: fileName,
+        contentType: MediaType('image', mimeSubtype),
       );
       request.files.add(multipartFile);
 
