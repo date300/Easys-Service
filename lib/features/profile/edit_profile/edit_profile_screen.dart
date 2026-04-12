@@ -257,7 +257,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   String _getProfileImageUrl() {
     if (_profilePicture == null) return "";
-    return "$baseUrl/uploads/profile_pics/$_profilePicture";
+    return "$baseUrl/user/upload-profile-pic/$_profilePicture";
   }
 
   @override
