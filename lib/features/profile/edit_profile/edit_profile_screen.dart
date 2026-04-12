@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -25,8 +28,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isUploadingImage = false;
   bool _idVerified = false;
   String? _errorMsg;
+  String? _profilePicture;
+  DateTime? _lastNameChange;
+  bool _canChangeName = true;
+  String? _nameChangeMessage;
+
+  final ImagePicker _picker = ImagePicker();
 
   bool _isDesktop(BuildContext ctx) => MediaQuery.of(ctx).size.width >= 1100;
   bool _isTablet(BuildContext ctx) =>
@@ -77,6 +87,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         _referralCodeController.text = user['referral_code'] ?? '';
         _referredByController.text = user['referred_by']?.toString() ?? '';
         _idVerified = user['id_verified'] == 1 || user['id_verified'] == true;
+        _profilePicture = user['profile_picture'];
+        
+        // Parse last_name_change
+        if (user['last_name_change'] != null) {
+          _lastNameChange = DateTime.parse(user['last_name_change']);
+          _checkNameChangeEligibility();
+        }
       } else {
         _errorMsg = data['message'] ?? 'Failed to load profile';
       }
@@ -87,10 +104,160 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  void _checkNameChangeEligibility() {
+    if (_lastNameChange == null) {
+      _canChangeName = true;
+      return;
+    }
+
+    final now = DateTime.now();
+    final difference = now.difference(_lastNameChange!);
+    final daysRemaining = 15 - difference.inDays;
+
+    if (difference.inDays < 15) {
+      _canChangeName = false;
+      _nameChangeMessage = "You can change your name again in $daysRemaining days";
+    } else {
+      _canChangeName = true;
+      _nameChangeMessage = null;
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final token = await _getToken();
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse("$baseUrl/user/upload-profile-pic"),
+      );
+
+      request.headers['Authorization'] = 'Bearer $token';
+      request.files.add(await http.MultipartFile.fromPath(
+        'profile_picture',
+        pickedFile.path,
+      ));
+
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+      final data = jsonDecode(responseData);
+
+      if (data['status'] == 'success') {
+        _showSnack("Profile picture updated successfully", Colors.green);
+        _fetchProfile(); // Refresh to get new image
+      } else {
+        _showSnack(data['message'] ?? "Failed to upload image", Colors.red);
+      }
+    } catch (e) {
+      _showSnack("Failed to upload image", Colors.red);
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
+  Future<void> _deleteProfilePicture() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Delete Profile Picture", style: GoogleFonts.poppins()),
+        content: Text("Are you sure you want to delete your profile picture?", 
+            style: GoogleFonts.poppins()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text("Cancel", style: GoogleFonts.poppins()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text("Delete", style: GoogleFonts.poppins(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isUploadingImage = true);
+
+    try {
+      final token = await _getToken();
+      final response = await http.delete(
+        Uri.parse("$baseUrl/user/delete-profile-pic"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['status'] == 'success') {
+        _showSnack("Profile picture deleted successfully", Colors.green);
+        setState(() => _profilePicture = null);
+      } else {
+        _showSnack(data['message'] ?? "Failed to delete image", Colors.red);
+      }
+    } catch (e) {
+      _showSnack("Failed to delete image", Colors.red);
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    // Only name can be changed now
+    if (!_canChangeName) {
+      _showSnack(_nameChangeMessage ?? "You cannot change name now", Colors.orange);
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final token = await _getToken();
+      final response = await http.put(
+        Uri.parse("$baseUrl/user/change-full-name"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "full_name": _nameController.text.trim(),
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['status'] == 'success') {
+        _showSnack("Full name updated successfully", Colors.green);
+        _fetchProfile(); // Refresh to get updated last_name_change
+      } else {
+        _showSnack(data['message'] ?? "Update failed", Colors.red);
+      }
+    } catch (_) {
+      _showSnack("Something went wrong!", Colors.red);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
+  }
+
+  String _getProfileImageUrl() {
+    if (_profilePicture == null) return "";
+    return "$baseUrl/uploads/profile_pics/$_profilePicture";
   }
 
   @override
@@ -99,9 +266,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final isTablet = _isTablet(context);
     final maxW = isDesktop ? 520.0 : isTablet ? 540.0 : double.infinity;
 
-    // এখানে আমরা Scaffold বাদ দিয়েছি কারণ MainWrapper নিজেই একটি Scaffold
     return Container(
-      color: Colors.white, // ব্যাকগ্রাউন্ড সাদা রাখছি যেন বডি কন্টেইনারের সাথে মিলে যায়
+      color: Colors.white,
       child: _isLoading
           ? const Center(child: CircularProgressIndicator(color: skyBlue))
           : _errorMsg != null
@@ -145,7 +311,76 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // একটি কাস্টম টাইটেল যেহেতু আমরা মেইন টপবার সরিয়ে ফেলেছি
+        // Profile Picture Section
+        Center(
+          child: Column(
+            children: [
+              Stack(
+                children: [
+                  Container(
+                    width: isDesktop ? 120 : 100.w,
+                    height: isDesktop ? 120 : 100.w,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      shape: BoxShape.circle,
+                      border: Border.all(color: skyBlue, width: 3),
+                      image: _profilePicture != null
+                          ? DecorationImage(
+                              image: NetworkImage(_getProfileImageUrl()),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: _profilePicture == null
+                        ? Icon(Icons.person, size: isDesktop ? 60 : 50.w, color: Colors.grey)
+                        : null,
+                  ),
+                  if (_isUploadingImage)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _showImageOptions,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: skyBlue,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (_profilePicture != null) ...[
+                SizedBox(height: 8.h),
+                TextButton.icon(
+                  onPressed: _isUploadingImage ? null : _deleteProfilePicture,
+                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                  label: Text(
+                    "Remove Photo",
+                    style: GoogleFonts.poppins(color: Colors.red, fontSize: 12),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        SizedBox(height: 24.h),
+
         Text(
           "Edit Profile",
           style: GoogleFonts.poppins(
@@ -156,14 +391,46 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
         SizedBox(height: 20.h),
         
+        // Full Name with change restriction info
         _label(ctx, "Full Name"),
-        _field(ctx, _nameController, "Enter your full name",
-            keyboardType: TextInputType.name),
+        if (!_canChangeName) ...[
+          Container(
+            padding: EdgeInsets.all(12.w),
+            margin: EdgeInsets.only(bottom: 8.h),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Colors.orange, size: 18),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    _nameChangeMessage ?? "Name change not available",
+                    style: GoogleFonts.poppins(
+                      color: Colors.orange,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        _field(
+          ctx, 
+          _nameController, 
+          "Enter your full name",
+          keyboardType: TextInputType.name,
+          readOnly: !_canChangeName,
+        ),
         _gap(ctx),
 
         _label(ctx, "Mobile Number"),
         _field(ctx, _mobileController, "Enter your mobile number",
-            keyboardType: TextInputType.phone),
+            keyboardType: TextInputType.phone, readOnly: true),
         _gap(ctx),
 
         _label(ctx, "Email Address"),
@@ -217,10 +484,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: _isSaving
               ? const Center(child: CircularProgressIndicator(color: skyBlue))
               : ElevatedButton(
-                  onPressed: _saveProfile,
+                  onPressed: _canChangeName ? _saveProfile : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: skyBlue,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey[300],
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r)),
                     elevation: 0,
@@ -231,38 +499,54 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           fontSize: _fs(ctx, 15, 16, 17))),
                 ),
         ),
-        SizedBox(height: 80.h), // নিচে একটু এক্সট্রা জায়গা রাখা হলো যেন বটম বারে ঢেকে না যায়
+        SizedBox(height: 80.h),
       ],
     );
   }
 
-  Future<void> _saveProfile() async {
-    setState(() => _isSaving = true);
-    try {
-      final token = await _getToken();
-      final response = await http.put(
-        Uri.parse("$baseUrl/user/profile"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
-          "full_name": _nameController.text.trim(),
-          "mobile": _mobileController.text.trim(),
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-      if (data['status'] == 'success') {
-        _showSnack("Profile updated successfully", Colors.green);
-      } else {
-        _showSnack(data['message'] ?? "Update failed", Colors.red);
-      }
-    } catch (_) {
-      _showSnack("Something went wrong!", Colors.red);
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+  void _showImageOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "Profile Picture",
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 20.h),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: skyBlue),
+              title: Text("Choose from Gallery", style: GoogleFonts.poppins()),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadImage();
+              },
+            ),
+            if (_profilePicture != null)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: Text("Remove Photo", 
+                    style: GoogleFonts.poppins(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _deleteProfilePicture();
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.cancel, color: Colors.grey),
+              title: Text("Cancel", style: GoogleFonts.poppins()),
+              onTap: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _label(BuildContext ctx, String text) => Padding(
@@ -322,3 +606,4 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 }
+

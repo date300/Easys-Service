@@ -379,7 +379,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       color: Colors.black54,
                       fontSize: _fs(ctx, 12, 12, 13))),
               GestureDetector(
-                onTap: () => context.go('/register'),
+                onTap: () => context.go('/registration'),
                 child: Text("Register",
                     style: GoogleFonts.poppins(
                         color: skyBlue,

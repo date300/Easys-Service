@@ -51,6 +51,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _fetchProfile() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMsg = null;
@@ -80,7 +81,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         _errorMsg = data['message'] ?? 'Failed to load profile';
       }
     } catch (e) {
-      _errorMsg = "সার্ভার সংযোগ ব্যর্থ হয়েছে!";
+      _errorMsg = "Something went wrong!";
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -98,140 +99,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final isTablet = _isTablet(context);
     final maxW = isDesktop ? 520.0 : isTablet ? 540.0 : double.infinity;
 
-    return Scaffold(
-      backgroundColor: skyBlue,
-      body: Column(
-        children: [
-          // ── Top Blue Header ─────────────────────────────────────
-          SafeArea(
-            bottom: false,
-            child: SizedBox(
-              height: isDesktop ? 180 : isTablet ? 190 : 180.h,
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 8.w, vertical: 8.h),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_rounded,
-                              color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        Text(
-                          'Edit Profile',
-                          style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: _fs(context, 20, 22, 24)),
-                        ),
-                        const Spacer(),
-                        if (_idVerified)
-                          Padding(
-                            padding: EdgeInsets.only(right: 16.w),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.verified_rounded,
-                                    color: Colors.white, size: 18),
-                                SizedBox(width: 4.w),
-                                Text("Verified",
-                                    style: GoogleFonts.poppins(
-                                        color: Colors.white,
-                                        fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                      ],
+    // এখানে আমরা Scaffold বাদ দিয়েছি কারণ MainWrapper নিজেই একটি Scaffold
+    return Container(
+      color: Colors.white, // ব্যাকগ্রাউন্ড সাদা রাখছি যেন বডি কন্টেইনারের সাথে মিলে যায়
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: skyBlue))
+          : _errorMsg != null
+              ? _buildError()
+              : SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 40 : isDesktop ? 32 : 24.w,
+                      vertical: 28.h),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxW),
+                      child: _buildForm(context),
                     ),
                   ),
-                  Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 30.h),
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: isDesktop ? 50 : isTablet ? 48 : 45.r,
-                            backgroundColor: Colors.white,
-                            child: Icon(Icons.person_rounded,
-                                color: skyBlue,
-                                size: isDesktop
-                                    ? 55
-                                    : isTablet
-                                        ? 52
-                                        : 50.sp),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle),
-                              padding: const EdgeInsets.all(4),
-                              child: Icon(Icons.camera_alt_rounded,
-                                  color: skyBlue, size: 18),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                      top: 30.h,
-                      left: 30.w,
-                      child: _dot(10, Colors.white.withOpacity(0.3))),
-                  Positioned(
-                      top: 60.h,
-                      right: 40.w,
-                      child: _dot(8, Colors.white.withOpacity(0.2))),
-                ],
-              ),
-            ),
-          ),
-
-          // ── White Card ──────────────────────────────────────────
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(32.r),
-                  topRight: Radius.circular(32.r),
                 ),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(32.r),
-                  topRight: Radius.circular(32.r),
-                ),
-                child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: skyBlue))
-                    : _errorMsg != null
-                        ? _buildError()
-                        : SingleChildScrollView(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: isTablet
-                                    ? 40
-                                    : isDesktop
-                                        ? 32
-                                        : 24.w,
-                                vertical: 28.h),
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints:
-                                    BoxConstraints(maxWidth: maxW),
-                                child: _buildForm(context),
-                              ),
-                            ),
-                          ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -242,15 +127,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         children: [
           const Icon(Icons.error_outline, color: Colors.red, size: 50),
           const SizedBox(height: 12),
-          Text(_errorMsg!,
-              style: GoogleFonts.poppins(color: Colors.red)),
+          Text(_errorMsg!, style: GoogleFonts.poppins(color: Colors.red)),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _fetchProfile,
             style: ElevatedButton.styleFrom(backgroundColor: skyBlue),
-            child: Text("Retry",
-                style:
-                    GoogleFonts.poppins(color: Colors.white)),
+            child: Text("Retry", style: GoogleFonts.poppins(color: Colors.white)),
           ),
         ],
       ),
@@ -263,6 +145,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // একটি কাস্টম টাইটেল যেহেতু আমরা মেইন টপবার সরিয়ে ফেলেছি
+        Text(
+          "Edit Profile",
+          style: GoogleFonts.poppins(
+            fontSize: _fs(ctx, 22, 24, 26),
+            fontWeight: FontWeight.bold,
+            color: skyBlue,
+          ),
+        ),
+        SizedBox(height: 20.h),
+        
         _label(ctx, "Full Name"),
         _field(ctx, _nameController, "Enter your full name",
             keyboardType: TextInputType.name),
@@ -273,30 +166,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             keyboardType: TextInputType.phone),
         _gap(ctx),
 
-        // Email — read only
         _label(ctx, "Email Address"),
-        _field(ctx, _emailController, "Email",
-            readOnly: true),
+        _field(ctx, _emailController, "Email", readOnly: true),
         _gap(ctx),
 
-        // Referral Code — read only
         _label(ctx, "Your Referral Code"),
-        _field(ctx, _referralCodeController, "Referral code",
-            readOnly: true),
+        _field(ctx, _referralCodeController, "Referral code", readOnly: true),
         _gap(ctx),
 
-        // Referred By — read only
         if (_referredByController.text.isNotEmpty) ...[
           _label(ctx, "Referred By"),
-          _field(ctx, _referredByController, "Referred by",
-              readOnly: true),
+          _field(ctx, _referredByController, "Referred by", readOnly: true),
           _gap(ctx),
         ],
 
-        // ID Verified badge
         Container(
-          padding: EdgeInsets.symmetric(
-              horizontal: 16.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           decoration: BoxDecoration(
             color: _idVerified
                 ? Colors.green.withOpacity(0.1)
@@ -314,9 +199,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
               SizedBox(width: 10.w),
               Text(
-                _idVerified
-                    ? "ID Verified"
-                    : "ID Not Verified",
+                _idVerified ? "ID Verified" : "ID Not Verified",
                 style: GoogleFonts.poppins(
                     color: _idVerified ? Colors.green : Colors.orange,
                     fontWeight: FontWeight.w600,
@@ -326,22 +209,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
         ),
 
-        SizedBox(height: isDesktop ? 30 : 30.h),
+        SizedBox(height: isDesktop ? 40 : 40.h),
 
         SizedBox(
           width: double.infinity,
           height: isDesktop ? 52 : 52.h,
           child: _isSaving
-              ? const Center(
-                  child: CircularProgressIndicator(color: skyBlue))
+              ? const Center(child: CircularProgressIndicator(color: skyBlue))
               : ElevatedButton(
                   onPressed: _saveProfile,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: skyBlue,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                            isDesktop ? 14 : 14.r)),
+                        borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r)),
                     elevation: 0,
                   ),
                   child: Text("Save Changes",
@@ -350,7 +231,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           fontSize: _fs(ctx, 15, 16, 17))),
                 ),
         ),
-        SizedBox(height: isDesktop ? 10 : 10.h),
+        SizedBox(height: 80.h), // নিচে একটু এক্সট্রা জায়গা রাখা হলো যেন বটম বারে ঢেকে না যায়
       ],
     );
   }
@@ -374,12 +255,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final data = jsonDecode(response.body);
       if (data['status'] == 'success') {
         _showSnack("Profile updated successfully", Colors.green);
-        if (mounted) Navigator.pop(context);
       } else {
         _showSnack(data['message'] ?? "Update failed", Colors.red);
       }
     } catch (_) {
-      _showSnack("সার্ভার সংযোগ ব্যর্থ হয়েছে!", Colors.red);
+      _showSnack("Something went wrong!", Colors.red);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -417,30 +297,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         hintStyle: GoogleFonts.poppins(
             color: Colors.black38, fontSize: _fs(ctx, 13, 13, 14)),
         filled: true,
-        fillColor: readOnly
-            ? const Color(0xFFEEEEEE)
-            : const Color(0xFFF3F4F6),
+        fillColor: readOnly ? const Color(0xFFEEEEEE) : const Color(0xFFF3F4F6),
         contentPadding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 16 : 16.w,
-            vertical: isDesktop ? 15 : 14.h),
+            horizontal: isDesktop ? 16 : 16.w, vertical: isDesktop ? 15 : 14.h),
         border: OutlineInputBorder(
-          borderRadius:
-              BorderRadius.circular(isDesktop ? 12 : 12.r),
+          borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
           borderSide: BorderSide.none,
         ),
         suffixIcon: readOnly
-            ? Icon(Icons.lock_outline_rounded,
+            ? const Icon(Icons.lock_outline_rounded,
                 color: Colors.black26, size: 18)
             : null,
       ),
     );
   }
-
-  Widget _dot(double size, Color color) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
 
   @override
   void dispose() {
