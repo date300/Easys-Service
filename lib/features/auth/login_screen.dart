@@ -27,31 +27,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
   bool _passVisible = false;
 
+  // Responsive breakpoints
   bool _isDesktop(BuildContext ctx) => MediaQuery.of(ctx).size.width >= 1100;
   bool _isTablet(BuildContext ctx) =>
       MediaQuery.of(ctx).size.width >= 600 &&
       MediaQuery.of(ctx).size.width < 1100;
 
+  // Responsive font size
   double _fs(BuildContext ctx, double m, double t, double d) {
     if (_isDesktop(ctx)) return d;
     if (_isTablet(ctx)) return t;
     return m;
   }
 
+  // Max width constraints
   double _maxWidth(BuildContext ctx) {
-    if (_isDesktop(ctx)) return 480;
-    if (_isTablet(ctx)) return 520;
+    if (_isDesktop(ctx)) return 400;
+    if (_isTablet(ctx)) return 450;
     return double.infinity;
   }
 
+  // Top section height
   double _topHeight(BuildContext ctx) {
-    if (_isTablet(ctx)) return 170;
-    return 155.h;
+    if (_isTablet(ctx)) return 140;
+    return 120.h;
   }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+    
     setState(() => _isLoading = true);
+    
     try {
       final response = await http.post(
         Uri.parse("https://easy.ltcminematrix.com/api/auth/login"),
@@ -61,12 +67,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           "password": _passController.text,
         }),
       );
+
       final data = jsonDecode(response.body);
+
       if (data['status'] == "success") {
         await AppSoundService.instance.playLogin();
         await ref.read(authProvider.notifier).loginWithToken(data['token']);
+        
         if (!mounted) return;
         _showSnack(data['message'], Colors.green);
+        
+        // Navigate to home
         context.go('/home');
       } else {
         await AppSoundService.instance.playError();
@@ -82,8 +93,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: GoogleFonts.poppins(fontSize: 12)),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -99,52 +117,53 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  // ── Desktop ──────────────────────────────────────────────────
+  // Desktop Layout
   Widget _desktopLayout(BuildContext ctx) {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 40),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: _maxWidth(ctx)),
           child: Card(
-            elevation: 10,
+            elevation: 8,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28)),
+                borderRadius: BorderRadius.circular(20)),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(20),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     color: skyBlue,
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                        vertical: 36, horizontal: 32),
+                        vertical: 24, horizontal: 24),
                     child: Column(
                       children: [
                         SizedBox(
-                          width: 90,
-                          height: 90,
+                          width: 70,
+                          height: 70,
                           child: Lottie.network(
                             'https://assets2.lottiefiles.com/packages/lf20_vvplpqub.json',
                             fit: BoxFit.contain,
                             errorBuilder: (_, __, ___) => const Icon(
                               Icons.lock_rounded,
-                              size: 80,
+                              size: 60,
                               color: Colors.white,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Text(
                           'Welcome Back',
                           style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 24),
+                              fontSize: 20),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Sign in to your account',
+                          'Login to your account',
                           style: GoogleFonts.poppins(
                               color: Colors.white70,
                               fontSize: 13),
@@ -154,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 28),
+                        horizontal: 24, vertical: 20),
                     child: _buildLoginForm(ctx),
                   ),
                 ],
@@ -166,7 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  // ── Mobile & Tablet ──────────────────────────────────────────
+  // Mobile & Tablet Layout
   Widget _mobileTabletLayout(BuildContext ctx, bool isTablet) {
     return Column(
       children: [
@@ -176,51 +195,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             height: _topHeight(ctx),
             child: Stack(
               children: [
-                // ✅ Back button সরানো হয়েছে — শুধু title
                 Padding(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 24.w, vertical: 8.h),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Login',
-                      style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: _fs(ctx, 20, 22, 24)),
-                    ),
+                      horizontal: 4.w, vertical: 4.h),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded,
+                            color: Colors.white, size: 22),
+                        onPressed: () => context.pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Login',
+                        style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: _fs(ctx, 18, 20, 22)),
+                      ),
+                    ],
                   ),
                 ),
                 Center(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 20.h),
+                    padding: EdgeInsets.only(top: 16.h),
                     child: SizedBox(
-                      width: isTablet ? 115 : 90.sp,
-                      height: isTablet ? 115 : 90.sp,
+                      width: isTablet ? 90 : 70.sp,
+                      height: isTablet ? 90 : 70.sp,
                       child: Lottie.network(
                         'https://assets2.lottiefiles.com/packages/lf20_vvplpqub.json',
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Icon(
                           Icons.lock_rounded,
-                          size: isTablet ? 110 : 95.sp,
+                          size: isTablet ? 85 : 75.sp,
                           color: Colors.white.withOpacity(0.9),
                         ),
                       ),
                     ),
                   ),
                 ),
+                // Decorative dots
                 Positioned(
-                    top: 30.h,
-                    left: 30.w,
-                    child: _dot(10, Colors.white.withOpacity(0.3))),
+                    top: 20.h,
+                    left: 20.w,
+                    child: _dot(8, Colors.white.withOpacity(0.3))),
                 Positioned(
-                    top: 60.h,
-                    right: 40.w,
-                    child: _dot(8, Colors.white.withOpacity(0.2))),
+                    top: 45.h,
+                    right: 30.w,
+                    child: _dot(6, Colors.white.withOpacity(0.2))),
                 Positioned(
-                    bottom: 20.h,
-                    left: 60.w,
-                    child: _dot(6, Colors.white.withOpacity(0.25))),
+                    bottom: 15.h,
+                    left: 45.w,
+                    child: _dot(5, Colors.white.withOpacity(0.25))),
               ],
             ),
           ),
@@ -231,29 +259,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(36.r),
-                topRight: Radius.circular(36.r),
+                topLeft: Radius.circular(24.r),
+                topRight: Radius.circular(24.r),
               ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, -4),
+                  blurRadius: 15,
+                  offset: const Offset(0, -3),
                 ),
               ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(36.r),
-                topRight: Radius.circular(36.r),
+                topLeft: Radius.circular(24.r),
+                topRight: Radius.circular(24.r),
               ),
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.only(
-                    left: isTablet ? 40 : 24.w,
-                    right: isTablet ? 40 : 24.w,
-                    top: 32.h,
-                    bottom: 40.h),
+                    left: isTablet ? 32 : 20.w,
+                    right: isTablet ? 32 : 20.w,
+                    top: 24.h,
+                    bottom: 24.h),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: _maxWidth(ctx)),
@@ -268,47 +296,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  // ── Login Form ───────────────────────────────────────────────
+  // Login Form
   Widget _buildLoginForm(BuildContext ctx) {
     final isDesktop = _isDesktop(ctx);
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _label(ctx, "Email Address"),
-          _fieldEmail(ctx),
+          _field(ctx, _emailController, "Enter your email address",
+              keyboardType: TextInputType.emailAddress),
           _gap(ctx),
 
           _label(ctx, "Password"),
-          _fieldPassword(ctx),
-
-          SizedBox(height: isDesktop ? 10 : 10.h),
-
+          _field(ctx, _passController, "Enter your password", passField: true),
+          
+          SizedBox(height: isDesktop ? 8 : 8.h),
+          
+          // Forgot Password
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
               onTap: () {
-                // TODO: forgot password route
+                AppSoundService.instance.playTap();
+                // Navigate to forgot password
+                context.go('/forgot-password');
               },
               child: Text(
                 "Forgot Password?",
                 style: GoogleFonts.poppins(
                     color: skyBlue,
-                    fontSize: _fs(ctx, 12, 13, 13),
-                    fontWeight: FontWeight.w500),
+                    fontWeight: FontWeight.w500,
+                    fontSize: _fs(ctx, 12, 12, 13)),
               ),
             ),
           ),
 
-          SizedBox(height: isDesktop ? 28 : 28.h),
+          SizedBox(height: isDesktop ? 24 : 24.h),
 
           SizedBox(
             width: double.infinity,
-            height: isDesktop ? 54 : 54.h,
+            height: isDesktop ? 46 : 46.h,
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: skyBlue))
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                          color: skyBlue, strokeWidth: 2.5),
+                    ),
+                  )
                 : ElevatedButton(
                     onPressed: () {
                       AppSoundService.instance.playTap();
@@ -319,70 +358,77 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
-                              isDesktop ? 16 : 16.r)),
-                      elevation: 2,
-                      shadowColor: skyBlue.withOpacity(0.4),
+                              isDesktop ? 12 : 12.r)),
+                      elevation: 1.5,
+                      shadowColor: skyBlue.withOpacity(0.3),
+                      padding: EdgeInsets.zero,
                     ),
                     child: Text("Login",
                         style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: _fs(ctx, 15, 16, 17))),
+                            fontWeight: FontWeight.w600,
+                            fontSize: _fs(ctx, 14, 15, 16))),
                   ),
           ),
 
-          SizedBox(height: isDesktop ? 20 : 20.h),
-
-          // ✅ Fixed: '/register' → '/registration' (router match)
+          SizedBox(height: isDesktop ? 16 : 16.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text("Don't have an account? ",
                   style: GoogleFonts.poppins(
                       color: Colors.black54,
-                      fontSize: _fs(ctx, 13, 13, 14))),
+                      fontSize: _fs(ctx, 12, 12, 13))),
               GestureDetector(
-                onTap: () => context.go('/registration'),
+                onTap: () => context.go('/register'),
                 child: Text("Register",
                     style: GoogleFonts.poppins(
                         color: skyBlue,
-                        fontWeight: FontWeight.bold,
-                        fontSize: _fs(ctx, 13, 13, 14))),
+                        fontWeight: FontWeight.w600,
+                        fontSize: _fs(ctx, 12, 12, 13))),
               ),
             ],
           ),
-          SizedBox(height: isDesktop ? 10 : 10.h),
+          SizedBox(height: isDesktop ? 8 : 8.h),
         ],
       ),
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────
+  // Helpers
   Widget _label(BuildContext ctx, String text) => Padding(
-        padding: EdgeInsets.only(bottom: _isDesktop(ctx) ? 6 : 6.h),
+        padding: EdgeInsets.only(bottom: _isDesktop(ctx) ? 4 : 4.h),
         child: Text(text,
             style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: _fs(ctx, 13, 13, 14),
+                fontWeight: FontWeight.w600,
+                fontSize: _fs(ctx, 12, 12, 13),
                 color: Colors.black87)),
       );
 
   Widget _gap(BuildContext ctx) =>
-      SizedBox(height: _isDesktop(ctx) ? 16 : 16.h);
+      SizedBox(height: _isDesktop(ctx) ? 12 : 12.h);
 
-  Widget _fieldEmail(BuildContext ctx) {
+  Widget _field(
+    BuildContext ctx,
+    TextEditingController controller,
+    String hint, {
+    bool passField = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    final obscure = passField ? !_passVisible : false;
     final isDesktop = _isDesktop(ctx);
-    final radius = isDesktop ? 14.0 : 14.r;
-    final vPad = isDesktop ? 16.0 : 15.h;
-    final hPad = isDesktop ? 18.0 : 16.w;
+    final radius = isDesktop ? 10.0 : 10.r;
+    final vPad = isDesktop ? 12.0 : 12.h;
+    final hPad = isDesktop ? 14.0 : 14.w;
 
     return TextFormField(
-      controller: _emailController,
-      keyboardType: TextInputType.emailAddress,
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
       style: GoogleFonts.poppins(fontSize: _fs(ctx, 13, 13, 14)),
       decoration: InputDecoration(
-        hintText: "Enter your email address",
+        hintText: hint,
         hintStyle: GoogleFonts.poppins(
-            color: Colors.black38, fontSize: _fs(ctx, 13, 13, 14)),
+            color: Colors.black38, fontSize: _fs(ctx, 12, 12, 13)),
         filled: true,
         fillColor: const Color(0xFFF3F4F6),
         contentPadding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
@@ -398,68 +444,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           borderRadius: BorderRadius.circular(radius),
           borderSide: const BorderSide(color: skyBlue, width: 1.5),
         ),
+        suffixIcon: passField
+            ? IconButton(
+                icon: Icon(
+                  obscure ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.black45,
+                  size: isDesktop ? 20 : 18.sp,
+                ),
+                onPressed: () {
+                  AppSoundService.instance.playTap();
+                  setState(() => _passVisible = !_passVisible);
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              )
+            : null,
+        isDense: true,
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) return "Email is required";
-        if (!value.contains('@')) return "Enter a valid email";
+        if (value == null || value.trim().isEmpty) {
+          return "Required";
+        }
+        if (keyboardType == TextInputType.emailAddress &&
+            !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+          return "Invalid email";
+        }
         return null;
       },
     );
   }
 
-  Widget _fieldPassword(BuildContext ctx) {
-    final isDesktop = _isDesktop(ctx);
-    final radius = isDesktop ? 14.0 : 14.r;
-    final vPad = isDesktop ? 16.0 : 15.h;
-    final hPad = isDesktop ? 18.0 : 16.w;
-
-    return TextFormField(
-      controller: _passController,
-      obscureText: !_passVisible,
-      style: GoogleFonts.poppins(fontSize: _fs(ctx, 13, 13, 14)),
-      decoration: InputDecoration(
-        hintText: "Enter your password",
-        hintStyle: GoogleFonts.poppins(
-            color: Colors.black38, fontSize: _fs(ctx, 13, 13, 14)),
-        filled: true,
-        fillColor: const Color(0xFFF3F4F6),
-        contentPadding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radius),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radius),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radius),
-          borderSide: const BorderSide(color: skyBlue, width: 1.5),
-        ),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _passVisible
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
-            color: Colors.black38,
-            size: _fs(ctx, 20, 21, 22),
-          ),
-          onPressed: () => setState(() => _passVisible = !_passVisible),
-        ),
+  Widget _dot(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
       ),
-      validator: (value) {
-        if (value == null || value.isEmpty) return "Password is required";
-        if (value.length < 6) return "Password must be at least 6 characters";
-        return null;
-      },
     );
   }
-
-  Widget _dot(double size, Color color) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
 
   @override
   void dispose() {
@@ -468,4 +492,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 }
-
