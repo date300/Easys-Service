@@ -192,7 +192,7 @@ class ProfileScreen extends StatelessWidget {
 
   // প্রোফাইল আইটেম বিল্ডার
   Widget _buildProfileItem(
-    BuildContext context,
+    BuildContext context,  // ✅ context প্যারামিটার যোগ করা হয়েছে
     IconData icon,
     String title, {
     bool isLast = false,
@@ -252,21 +252,21 @@ class ProfileScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _languageOption('English'),
-            _languageOption('বাংলা'),
-            _languageOption('हिंदी'),
+            _languageOption(context, 'English'),
+            _languageOption(context, 'বাংলা'),
+            _languageOption(context, 'हिंदी'),
           ],
         ),
       ),
     );
   }
 
-  Widget _languageOption(String language) {
+  Widget _languageOption(BuildContext context, String language) {
     return ListTile(
       title: Text(language, style: GoogleFonts.poppins()),
       onTap: () {
         // Language change logic
-        Navigator.pop();
+        Navigator.pop(context);  // ✅ context সহ
       },
     );
   }
@@ -286,7 +286,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context),  // ✅ context সহ
             child: Text(
               'Cancel',
               style: GoogleFonts.poppins(color: Colors.grey),
@@ -294,7 +294,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(context);  // ✅ context সহ
               // Logout logic here
             },
             child: Text(
@@ -328,7 +328,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context),  // ✅ context সহ
             child: Text(
               'Cancel',
               style: GoogleFonts.poppins(color: Colors.grey),
@@ -336,7 +336,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(context);  // ✅ context সহ
               // Delete account logic here
             },
             child: Text(
