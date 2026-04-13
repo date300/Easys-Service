@@ -64,18 +64,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // 🔥 DYNAMIC THEME COLORS
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // Light Mode: Blue Gradient | Dark Mode: Dark Blue/Purple Gradient
+    // Light Mode: আকাশী (Sky Blue) Gradient
+    // Dark Mode: Pure Dark (Black/Grey) - কোনো Sky Blue নয়
     final gradientColors = isDark 
-        ? const [Color(0xFF0D47A1), Color(0xFF1A237E)]  // Dark blue gradient
-        : const [Color(0xFF2FB7F3), Color(0xFF1E88E5)]; // Light blue gradient
+        ? const [Color(0xFF121212), Color(0xFF1E1E1E)]  // 🔥 Pure Dark
+        : const [Color(0xFF2FB7F3), Color(0xFF1E88E5)]; // 🔥 আকাশী Sky Blue
     
-    final navBarColor = isDark ? const Color(0xFF0D47A1) : const Color(0xFF1E88E5);
-    final statusBarBrightness = isDark ? Brightness.light : Brightness.light; // Always light for splash
+    final navBarColor = isDark ? const Color(0xFF121212) : const Color(0xFF1E88E5);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: statusBarBrightness,
+        statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: navBarColor,  // 🔥 DYNAMIC
       ),
       child: Scaffold(
@@ -114,7 +114,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                 height: 85.w,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.1),
+                                  color: isDark 
+                                      ? const Color(0xFF2C2C2C)  // 🔥 Dark mode: dark grey
+                                      : Colors.white.withOpacity(0.1), // Light mode: transparent white
                                 ),
                                 child: Center(
                                   child: Image.asset(
@@ -229,14 +231,14 @@ class RotatingBorderPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 5;
 
-    // 🔥 DYNAMIC COLORS
+    // 🔥 DYNAMIC COLORS - Pure white for both modes, but different opacity
     final borderColor = isDark 
-        ? Colors.white.withOpacity(0.6)  // Dark mode: slightly dimmer
-        : Colors.white.withOpacity(0.8);  // Light mode: brighter
+        ? Colors.white.withOpacity(0.5)  // Dark mode: dimmer white
+        : Colors.white.withOpacity(0.8);  // Light mode: brighter white
     
     final dotColor = isDark
-        ? Colors.white.withOpacity(0.9)  // Dark mode: slightly dimmer
-        : Colors.white;                    // Light mode: pure white
+        ? Colors.white.withOpacity(0.7)   // Dark mode: dimmer
+        : Colors.white;                   // Light mode: pure white
 
     final paint = Paint()
       ..color = borderColor  // 🔥 DYNAMIC
