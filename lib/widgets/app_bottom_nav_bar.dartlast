@@ -7,6 +7,7 @@ class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final void Function(int) onTap;
 
+  // Primary Theme Color
   static const Color skyBlue = Color(0xFF29B6F6);
 
   const AppBottomNavBar({
@@ -18,7 +19,7 @@ class AppBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // ব্যাকগ্রাউন্ড এখন পুরোপুরি সাদা
+      // নিচের বারের শ্যাডো এবং ডিজাইন
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -31,7 +32,7 @@ class AppBottomNavBar extends StatelessWidget {
       ),
       child: SafeArea(
         child: Container(
-          height: 65.h, // হাইট কিছুটা কমিয়ে স্লিম করা হয়েছে
+          height: 65.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -39,7 +40,8 @@ class AppBottomNavBar extends StatelessWidget {
               _buildNavItem(0, CupertinoIcons.house, CupertinoIcons.house_fill, 'Home'),
               _buildNavItem(1, CupertinoIcons.bag, CupertinoIcons.bag_fill, 'Reselling'),
               _buildNavItem(2, CupertinoIcons.doc_text, CupertinoIcons.doc_text_fill, 'Jobs'),
-              _buildNavItem(3, CupertinoIcons.speaker_2, CupertinoIcons.speaker_2_fill, 'Campaign'),
+              // Campaign এর জন্য Icons.campaign ব্যবহার করা হয়েছে যা বিল্ড এরর দিবে না
+              _buildNavItem(3, Icons.campaign_outlined, Icons.campaign, 'Campaign'),
               _buildNavItem(4, CupertinoIcons.person, CupertinoIcons.person_fill, 'Profile'),
             ],
           ),
@@ -57,11 +59,11 @@ class AppBottomNavBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // আইকনের পেছনের হাইলাইট এখন অনেক চিকন
+          // আইকন অ্যানিমেশন
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
-            padding: EdgeInsets.all(isSelected ? 5.w : 2.w), // প্যাডিং কমানো হয়েছে যেন মোটা না লাগে
+            padding: EdgeInsets.all(isSelected ? 5.w : 2.w),
             decoration: BoxDecoration(
               color: isSelected ? skyBlue.withOpacity(0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(10.r),
@@ -69,24 +71,27 @@ class AppBottomNavBar extends StatelessWidget {
             child: Icon(
               isSelected ? activeIcon : inactiveIcon,
               color: isSelected ? skyBlue : Colors.grey.shade400,
-              size: 22.sp, // আইকন সাইজ অপ্টিমাইজড
+              size: 22.sp,
             ),
           ),
+          
           SizedBox(height: 2.h),
-          // লেবেল
+          
+          // লেবেল বা নাম
           Text(
             label,
             style: GoogleFonts.poppins(
               color: isSelected ? skyBlue : Colors.grey.shade500,
-              fontSize: 9.sp, // টেক্সট সাইজ কিছুটা ছোট করা হয়েছে স্লিম লুকের জন্য
+              fontSize: 9.sp,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
-          // নিচের ইন্ডিকেটর লাইনটিও চিকন করা হয়েছে
+          
+          // নিচের ছোট ইন্ডিকেটর লাইন
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             margin: EdgeInsets.only(top: 2.h),
-            height: 1.5.h, // লাইনের থিকনেস কমানো হয়েছে
+            height: 1.5.h,
             width: isSelected ? 10.w : 0,
             decoration: BoxDecoration(
               color: skyBlue,
