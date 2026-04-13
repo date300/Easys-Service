@@ -49,15 +49,15 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
 
   // Max width constraints
   double _maxWidth(BuildContext ctx) {
-    if (_isDesktop(ctx)) return 400; // Reduced from 480
-    if (_isTablet(ctx)) return 450; // Reduced from 520
+    if (_isDesktop(ctx)) return 400;
+    if (_isTablet(ctx)) return 450;
     return double.infinity;
   }
 
   // Top section height - smaller
   double _topHeight(BuildContext ctx) {
-    if (_isTablet(ctx)) return 140; // Reduced from 170
-    return 120.h; // Reduced from 155.h
+    if (_isTablet(ctx)) return 140;
+    return 120.h;
   }
 
   Future<void> _register() async {
@@ -134,10 +134,17 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
 
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
+    
+    // 🔥 DYNAMIC SNACKBAR
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: GoogleFonts.poppins(fontSize: 12)),
-        backgroundColor: color,
+        content: Text(
+          msg, 
+          style: GoogleFonts.poppins(fontSize: 12),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -149,40 +156,63 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   Widget build(BuildContext context) {
     final isDesktop = _isDesktop(context);
     final isTablet = _isTablet(context);
+    
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : skyBlue;
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.grey.shade400 : Colors.black54;
+    final hintColor = isDark ? Colors.grey.shade500 : Colors.black38;
+    final fieldBg = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF3F4F6);
+    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08);
 
     return Scaffold(
-      backgroundColor: skyBlue,
+      backgroundColor: scaffoldBg,  // 🔥 DYNAMIC
       body: isDesktop
-          ? _desktopLayout(context)
-          : _mobileTabletLayout(context, isTablet),
+          ? _desktopLayout(context, isDark, cardBg, textColor, subTextColor, fieldBg, shadowColor)
+          : _mobileTabletLayout(context, isTablet, isDark, cardBg, textColor, subTextColor, hintColor, fieldBg, shadowColor),
     );
   }
 
   // Desktop Layout - compact design
-  Widget _desktopLayout(BuildContext ctx) {
+  Widget _desktopLayout(
+    BuildContext ctx,
+    bool isDark,
+    Color cardBg,
+    Color textColor,
+    Color subTextColor,
+    Color fieldBg,
+    Color shadowColor,
+  ) {
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: _maxWidth(ctx)),
           child: Card(
-            elevation: 8,
+            elevation: isDark ? 0 : 8,
+            color: cardBg,  // 🔥 DYNAMIC
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20)),
+              borderRadius: BorderRadius.circular(20),
+              side: isDark ? const BorderSide(color: Color(0xFF333333)) : BorderSide.none,
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    color: skyBlue,
+                    color: skyBlue,  // Header always skyBlue
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                        vertical: 24, horizontal: 24),
+                      vertical: 24, 
+                      horizontal: 24,
+                    ),
                     child: Column(
                       children: [
                         SizedBox(
-                          width: 70, // Reduced from 90
+                          width: 70,
                           height: 70,
                           child: _isOtpSent
                               ? Lottie.network(
@@ -208,19 +238,22 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                         Text(
                           _isOtpSent ? 'OTP Verification' : 'Create Account',
                           style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20), // Reduced from 24
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 20),
+                      horizontal: 24, 
+                      vertical: 20,
+                    ),
                     child: _isOtpSent
-                        ? _buildOtpForm(ctx)
-                        : _buildRegForm(ctx),
+                        ? _buildOtpForm(ctx, isDark, textColor, subTextColor, fieldBg)
+                        : _buildRegForm(ctx, isDark, textColor, subTextColor, fieldBg),
                   ),
                 ],
               ),
@@ -232,7 +265,17 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   }
 
   // Mobile & Tablet Layout - compact design
-  Widget _mobileTabletLayout(BuildContext ctx, bool isTablet) {
+  Widget _mobileTabletLayout(
+    BuildContext ctx,
+    bool isTablet,
+    bool isDark,
+    Color cardBg,
+    Color textColor,
+    Color subTextColor,
+    Color hintColor,
+    Color fieldBg,
+    Color shadowColor,
+  ) {
     return Column(
       children: [
         SafeArea(
@@ -243,12 +286,17 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
               children: [
                 Padding(
                   padding: EdgeInsets.symmetric(
-                      horizontal: 4.w, vertical: 4.h),
+                    horizontal: 4.w, 
+                    vertical: 4.h,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded,
-                            color: Colors.white, size: 22),
+                        icon: Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                         onPressed: () {},
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -257,9 +305,10 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                       Text(
                         _isOtpSent ? 'OTP Verification' : 'Register',
                         style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: _fs(ctx, 18, 20, 22)),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: _fs(ctx, 18, 20, 22),
+                        ),
                       ),
                     ],
                   ),
@@ -268,7 +317,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                   child: Padding(
                     padding: EdgeInsets.only(top: 16.h),
                     child: SizedBox(
-                      width: isTablet ? 90 : 70.sp, // Reduced sizes
+                      width: isTablet ? 90 : 70.sp,
                       height: isTablet ? 90 : 70.sp,
                       child: _isOtpSent
                           ? Lottie.network(
@@ -294,17 +343,20 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                 ),
                 // Decorative dots - smaller
                 Positioned(
-                    top: 20.h,
-                    left: 20.w,
-                    child: _dot(8, Colors.white.withOpacity(0.3))),
+                  top: 20.h,
+                  left: 20.w,
+                  child: _dot(8, Colors.white.withOpacity(0.3)),
+                ),
                 Positioned(
-                    top: 45.h,
-                    right: 30.w,
-                    child: _dot(6, Colors.white.withOpacity(0.2))),
+                  top: 45.h,
+                  right: 30.w,
+                  child: _dot(6, Colors.white.withOpacity(0.2)),
+                ),
                 Positioned(
-                    bottom: 15.h,
-                    left: 45.w,
-                    child: _dot(5, Colors.white.withOpacity(0.25))),
+                  bottom: 15.h,
+                  left: 45.w,
+                  child: _dot(5, Colors.white.withOpacity(0.25)),
+                ),
               ],
             ),
           ),
@@ -313,14 +365,14 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardBg,  // 🔥 DYNAMIC
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24.r), // Reduced from 36.r
+                topLeft: Radius.circular(24.r),
                 topRight: Radius.circular(24.r),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: shadowColor,  // 🔥 DYNAMIC
                   blurRadius: 15,
                   offset: const Offset(0, -3),
                 ),
@@ -334,16 +386,17 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.only(
-                    left: isTablet ? 32 : 20.w,
-                    right: isTablet ? 32 : 20.w,
-                    top: 24.h,
-                    bottom: 24.h),
+                  left: isTablet ? 32 : 20.w,
+                  right: isTablet ? 32 : 20.w,
+                  top: 24.h,
+                  bottom: 24.h,
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: _maxWidth(ctx)),
                     child: _isOtpSent
-                        ? _buildOtpForm(ctx)
-                        : _buildRegForm(ctx),
+                        ? _buildOtpForm(ctx, isDark, textColor, subTextColor, fieldBg)
+                        : _buildRegForm(ctx, isDark, textColor, subTextColor, fieldBg),
                   ),
                 ),
               ),
@@ -355,7 +408,13 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   }
 
   // Registration Form - compact fields
-  Widget _buildRegForm(BuildContext ctx) {
+  Widget _buildRegForm(
+    BuildContext ctx,
+    bool isDark,
+    Color textColor,
+    Color subTextColor,
+    Color fieldBg,
+  ) {
     final isDesktop = _isDesktop(ctx);
     return Form(
       key: _formKey,
@@ -363,46 +422,91 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _label(ctx, "Full Name"),
-          _field(ctx, _nameController, "Enter your full name",
-              keyboardType: TextInputType.name),
+          _label(ctx, "Full Name", textColor),
+          _field(
+            ctx, 
+            _nameController, 
+            "Enter your full name",
+            keyboardType: TextInputType.name,
+            isDark: isDark,
+            textColor: textColor,
+            fieldBg: fieldBg,
+          ),
           _gap(ctx),
 
-          _label(ctx, "Mobile Number"),
-          _field(ctx, _mobileController, "Enter your mobile number",
-              keyboardType: TextInputType.phone),
+          _label(ctx, "Mobile Number", textColor),
+          _field(
+            ctx, 
+            _mobileController, 
+            "Enter your mobile number",
+            keyboardType: TextInputType.phone,
+            isDark: isDark,
+            textColor: textColor,
+            fieldBg: fieldBg,
+          ),
           _gap(ctx),
 
-          _label(ctx, "Email Address"),
-          _field(ctx, _emailController, "Enter your email address",
-              keyboardType: TextInputType.emailAddress),
+          _label(ctx, "Email Address", textColor),
+          _field(
+            ctx, 
+            _emailController, 
+            "Enter your email address",
+            keyboardType: TextInputType.emailAddress,
+            isDark: isDark,
+            textColor: textColor,
+            fieldBg: fieldBg,
+          ),
           _gap(ctx),
 
-          _label(ctx, "Password"),
-          _field(ctx, _passController, "Enter your password", passField: 1),
+          _label(ctx, "Password", textColor),
+          _field(
+            ctx, 
+            _passController, 
+            "Enter your password", 
+            passField: 1,
+            isDark: isDark,
+            textColor: textColor,
+            fieldBg: fieldBg,
+          ),
           _gap(ctx),
 
-          _label(ctx, "Confirm Password"),
-          _field(ctx, _confirmPassController, "Enter your password",
-              passField: 2),
+          _label(ctx, "Confirm Password", textColor),
+          _field(
+            ctx, 
+            _confirmPassController, 
+            "Enter your password",
+            passField: 2,
+            isDark: isDark,
+            textColor: textColor,
+            fieldBg: fieldBg,
+          ),
           _gap(ctx),
 
-          _label(ctx, "Affiliate ID (Optional)"),
-          _field(ctx, _refController, "Enter your affiliate id",
-              optional: true),
+          _label(ctx, "Affiliate ID (Optional)", textColor),
+          _field(
+            ctx, 
+            _refController, 
+            "Enter your affiliate id",
+            optional: true,
+            isDark: isDark,
+            textColor: textColor,
+            fieldBg: fieldBg,
+          ),
 
           SizedBox(height: isDesktop ? 20 : 20.h),
 
           SizedBox(
             width: double.infinity,
-            height: isDesktop ? 46 : 46.h, // Reduced from 54
+            height: isDesktop ? 46 : 46.h,
             child: _isLoading
-                ? const Center(
+                ? Center(
                     child: SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(
-                          color: skyBlue, strokeWidth: 2.5),
+                        color: skyBlue, 
+                        strokeWidth: 2.5,
+                      ),
                     ),
                   )
                 : ElevatedButton(
@@ -414,16 +518,19 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                       backgroundColor: skyBlue,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                              isDesktop ? 12 : 12.r)),
-                      elevation: 1.5,
+                        borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
+                      ),
+                      elevation: isDark ? 0 : 1.5,
                       shadowColor: skyBlue.withOpacity(0.3),
                       padding: EdgeInsets.zero,
                     ),
-                    child: Text("Register",
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: _fs(ctx, 14, 15, 16))),
+                    child: Text(
+                      "Register",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: _fs(ctx, 14, 15, 16),
+                      ),
+                    ),
                   ),
           ),
 
@@ -431,17 +538,23 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Already have an account? ",
-                  style: GoogleFonts.poppins(
-                      color: Colors.black54,
-                      fontSize: _fs(ctx, 12, 12, 13))),
+              Text(
+                "Already have an account? ",
+                style: GoogleFonts.poppins(
+                  color: subTextColor,  // 🔥 DYNAMIC
+                  fontSize: _fs(ctx, 12, 12, 13),
+                ),
+              ),
               GestureDetector(
                 onTap: () => context.go('/login'),
-                child: Text("Login",
-                    style: GoogleFonts.poppins(
-                        color: skyBlue,
-                        fontWeight: FontWeight.w600,
-                        fontSize: _fs(ctx, 12, 12, 13))),
+                child: Text(
+                  "Login",
+                  style: GoogleFonts.poppins(
+                    color: skyBlue,
+                    fontWeight: FontWeight.w600,
+                    fontSize: _fs(ctx, 12, 12, 13),
+                  ),
+                ),
               ),
             ],
           ),
@@ -452,20 +565,33 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
   }
 
   // OTP Form - compact design
-  Widget _buildOtpForm(BuildContext ctx) {
+  Widget _buildOtpForm(
+    BuildContext ctx,
+    bool isDark,
+    Color textColor,
+    Color subTextColor,
+    Color fieldBg,
+  ) {
     final isDesktop = _isDesktop(ctx);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(height: isDesktop ? 8 : 8.h),
-        Text("We have sent an OTP to",
-            style: GoogleFonts.poppins(
-                color: Colors.black54, fontSize: _fs(ctx, 13, 13, 14))),
-        Text(_emailController.text,
-            style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: _fs(ctx, 14, 14, 15),
-                color: Colors.black87)),
+        Text(
+          "We have sent an OTP to",
+          style: GoogleFonts.poppins(
+            color: subTextColor,  // 🔥 DYNAMIC
+            fontSize: _fs(ctx, 13, 13, 14),
+          ),
+        ),
+        Text(
+          _emailController.text,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: _fs(ctx, 14, 14, 15),
+            color: textColor,  // 🔥 DYNAMIC
+          ),
+        ),
         SizedBox(height: isDesktop ? 24 : 24.h),
         TextField(
           controller: _otpController,
@@ -473,24 +599,29 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
           maxLength: 6,
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
-              fontSize: isDesktop ? 24 : 24.sp, letterSpacing: 8),
+            fontSize: isDesktop ? 24 : 24.sp, 
+            letterSpacing: 8,
+            color: textColor,  // 🔥 DYNAMIC
+          ),
           decoration: InputDecoration(
             hintText: "------",
+            hintStyle: GoogleFonts.poppins(
+              color: isDark ? Colors.grey.shade600 : Colors.grey,  // 🔥 DYNAMIC
+            ),
             counterText: "",
             filled: true,
-            fillColor: const Color(0xFFF3F4F6),
+            fillColor: fieldBg,  // 🔥 DYNAMIC
             border: OutlineInputBorder(
-              borderRadius:
-                  BorderRadius.circular(isDesktop ? 12 : 12.r),
+              borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius:
-                  BorderRadius.circular(isDesktop ? 12 : 12.r),
+              borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
               borderSide: const BorderSide(color: skyBlue, width: 2),
             ),
             contentPadding: EdgeInsets.symmetric(
-                vertical: isDesktop ? 16 : 14.h),
+              vertical: isDesktop ? 16 : 14.h,
+            ),
           ),
         ),
         SizedBox(height: isDesktop ? 24 : 24.h),
@@ -498,12 +629,14 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
           width: double.infinity,
           height: isDesktop ? 46 : 46.h,
           child: _isLoading
-              ? const Center(
+              ? Center(
                   child: SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
-                        color: skyBlue, strokeWidth: 2.5),
+                      color: skyBlue, 
+                      strokeWidth: 2.5,
+                    ),
                   ),
                 )
               : ElevatedButton(
@@ -515,16 +648,19 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                     backgroundColor: skyBlue,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                            isDesktop ? 12 : 12.r)),
-                    elevation: 1.5,
+                      borderRadius: BorderRadius.circular(isDesktop ? 12 : 12.r),
+                    ),
+                    elevation: isDark ? 0 : 1.5,
                     shadowColor: skyBlue.withOpacity(0.3),
                     padding: EdgeInsets.zero,
                   ),
-                  child: Text("Verify & Login",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: _fs(ctx, 14, 15, 16))),
+                  child: Text(
+                    "Verify & Login",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: _fs(ctx, 14, 15, 16),
+                    ),
+                  ),
                 ),
         ),
         SizedBox(height: isDesktop ? 12 : 12.h),
@@ -535,22 +671,29 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: Text("Change Email Address",
-              style: GoogleFonts.poppins(
-                  color: skyBlue, fontSize: _fs(ctx, 12, 12, 13))),
+          child: Text(
+            "Change Email Address",
+            style: GoogleFonts.poppins(
+              color: skyBlue, 
+              fontSize: _fs(ctx, 12, 12, 13),
+            ),
+          ),
         ),
       ],
     );
   }
 
   // Helpers - compact sizes
-  Widget _label(BuildContext ctx, String text) => Padding(
+  Widget _label(BuildContext ctx, String text, Color textColor) => Padding(
         padding: EdgeInsets.only(bottom: _isDesktop(ctx) ? 4 : 4.h),
-        child: Text(text,
-            style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: _fs(ctx, 12, 12, 13),
-                color: Colors.black87)),
+        child: Text(
+          text,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: _fs(ctx, 12, 12, 13),
+            color: textColor,  // 🔥 DYNAMIC
+          ),
+        ),
       );
 
   Widget _gap(BuildContext ctx) =>
@@ -563,6 +706,9 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     int passField = 0,
     TextInputType keyboardType = TextInputType.text,
     bool optional = false,
+    required bool isDark,
+    required Color textColor,
+    required Color fieldBg,
   }) {
     final obscure = passField == 1
         ? !_passVisible
@@ -578,14 +724,22 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: GoogleFonts.poppins(fontSize: _fs(ctx, 13, 13, 14)),
+      style: GoogleFonts.poppins(
+        fontSize: _fs(ctx, 13, 13, 14),
+        color: textColor,  // 🔥 DYNAMIC
+      ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.poppins(
-            color: Colors.black38, fontSize: _fs(ctx, 12, 12, 13)),
+          color: isDark ? Colors.grey.shade500 : Colors.black38,  // 🔥 DYNAMIC
+          fontSize: _fs(ctx, 12, 12, 13),
+        ),
         filled: true,
-        fillColor: const Color(0xFFF3F4F6),
-        contentPadding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+        fillColor: fieldBg,  // 🔥 DYNAMIC
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: hPad, 
+          vertical: vPad,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radius),
           borderSide: BorderSide.none,
@@ -603,7 +757,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
             : IconButton(
                 icon: Icon(
                   obscure ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.black45,
+                  color: isDark ? Colors.grey.shade400 : Colors.black45,  // 🔥 DYNAMIC
                   size: isDesktop ? 20 : 18.sp,
                 ),
                 onPressed: () {
