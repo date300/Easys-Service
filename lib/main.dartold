@@ -6,7 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// আপনার প্রজেক্টের রাউটার এবং উইজেটগুলোর ইমপোর্ট
+// আপনার প্রজেক্টের রাউটার এবং উইজেটগুলোর ইমপোর্ট (পাথ ঠিক আছে কি না শিওর হয়ে নিবেন)
 import 'router/app_router.dart';
 import 'widgets/app_bottom_nav_bar.dart';
 import 'widgets/app_nav_rail.dart';
@@ -14,55 +14,7 @@ import 'widgets/app_top_bar.dart';
 import 'widgets/app_drawer.dart';
 
 // ============================================
-// THEME PROVIDERS (নতুন যোগ করা)
-// ============================================
-
-// Theme Mode Provider
-final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
-  return ThemeModeController();
-});
-
-class ThemeModeController extends StateNotifier<ThemeMode> {
-  ThemeModeController() : super(ThemeMode.system) {
-    _loadTheme();
-  }
-
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedTheme = prefs.getString('app_theme');
-    
-    if (savedTheme != null) {
-      state = _stringToThemeMode(savedTheme);
-    }
-  }
-
-  Future<void> setTheme(ThemeMode mode) async {
-    if (state == mode) return;
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('app_theme', _themeModeToString(mode));
-    state = mode;
-  }
-
-  String _themeModeToString(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light: return 'light';
-      case ThemeMode.dark: return 'dark';
-      default: return 'system';
-    }
-  }
-
-  ThemeMode _stringToThemeMode(String value) {
-    switch (value) {
-      case 'light': return ThemeMode.light;
-      case 'dark': return ThemeMode.dark;
-      default: return ThemeMode.system;
-    }
-  }
-}
-
-// ============================================
-// AUTH PROVIDERS (আগের মতোই)
+// PROVIDERS
 // ============================================
 
 final authProvider = StateNotifierProvider<AuthController, bool>((ref) {
@@ -107,13 +59,11 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends ConsumerWidget {  // StatelessWidget থেকে ConsumerWidget এ পরিবর্তন
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {  // WidgetRef যোগ করা
-    final themeMode = ref.watch(themeModeProvider);  // Theme Mode লিসেন করা
-
+  Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: const Size(360, 800),
       minTextAdapt: true,
@@ -122,72 +72,14 @@ class MyApp extends ConsumerWidget {  // StatelessWidget থেকে ConsumerWi
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'Easy Service',
-          
-          // 🌞 Light Theme (আপডেট করা)
-          theme: _buildLightTheme(),
-          
-          // 🌙 Dark Theme (নতুন যোগ করা)
-          darkTheme: _buildDarkTheme(),
-          
-          // 🔥 Dynamic Theme Mode
-          themeMode: themeMode,
-          
+          theme: ThemeData(
+            useMaterial3: true,
+            colorSchemeSeed: const Color(0xFF29B6F6),
+            textTheme: GoogleFonts.poppinsTextTheme(),
+          ),
           routerConfig: appRouter,
         );
       },
-    );
-  }
-
-  // 🌞 Light Theme Configuration
-  ThemeData _buildLightTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorSchemeSeed: const Color(0xFF29B6F6),
-      scaffoldBackgroundColor: Colors.white,
-      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF29B6F6),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      cardTheme: CardTheme(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.white,
-        selectedItemColor: Color(0xFF29B6F6),
-        unselectedItemColor: Colors.grey,
-      ),
-    );
-  }
-
-  // 🌙 Dark Theme Configuration
-  ThemeData _buildDarkTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorSchemeSeed: const Color(0xFF29B6F6),
-      scaffoldBackgroundColor: const Color(0xFF121212),
-      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1E1E1E),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      cardTheme: CardTheme(
-        elevation: 2,
-        color: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF1E1E1E),
-        selectedItemColor: Color(0xFF29B6F6),
-        unselectedItemColor: Colors.grey,
-      ),
     );
   }
 }
@@ -241,7 +133,7 @@ class MainWrapper extends ConsumerWidget {
 
     final isEditProfile = location.contains('edit_profile');
     final isPaymentPage = location == '/payment';
-
+    
     // ডিটেইল ভিউ লজিক
     final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
     final detailTitle = isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
@@ -251,18 +143,14 @@ class MainWrapper extends ConsumerWidget {
         .fadeIn(duration: 400.ms)
         .moveY(begin: 10, end: 0);
 
-    // 🔥 Dynamic Background Color (Theme অনুযায়ী পরিবর্তন)
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? const Color(0xFF121212) : const Color(0xFF29B6F6);
-
-    // বডি কন্টেইনার (Theme অনুযায়ী রঙ পরিবর্তন)
+    // বডি কন্টেইনার (সব সময় রাউন্ডেড থাকবে যাতে ডিজাইন ফুটে ওঠে)
     Widget bodyContainer() {
       double bodyRadius = isMobile ? 32.r : 24;
       return Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,  // 🔥 Dynamic
+          color: Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(bodyRadius),
             topRight: Radius.circular(bodyRadius),
@@ -287,7 +175,8 @@ class MainWrapper extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: backgroundColor,  // 🔥 Dynamic Background
+        // আকাশী ব্যাকগ্রাউন্ড, যাতে টপ বার এবং বডির ফাঁকা অংশে এই কালারটি দেখা যায়
+        backgroundColor: const Color(0xFF29B6F6), 
         drawer: (isDetailView || isEditProfile)
             ? null
             : AppDrawer(
@@ -308,6 +197,7 @@ class MainWrapper extends ConsumerWidget {
               Expanded(
                 child: Column(
                   children: [
+                    // টপ বার সবসময় থাকবে (যদি না এডিট প্রোফাইল হয়)
                     if (!isEditProfile)
                       AppTopBar(
                         isDetailView: isDetailView,
@@ -315,6 +205,7 @@ class MainWrapper extends ConsumerWidget {
                         isMobile: isMobile,
                         isLoggedIn: isLoggedIn,
                       ),
+                    // বডি কন্টেইনার যা উপরের টপ বারের সাথে সুন্দরভাবে মিলবে
                     Expanded(child: bodyContainer()),
                   ],
                 ),
