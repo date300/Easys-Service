@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math'; // এটি যোগ করুন
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -61,32 +61,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 DYNAMIC THEME COLORS
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    // Light Mode: Blue Gradient | Dark Mode: Dark Blue/Purple Gradient
-    final gradientColors = isDark 
-        ? const [Color(0xFF0D47A1), Color(0xFF1A237E)]  // Dark blue gradient
-        : const [Color(0xFF2FB7F3), Color(0xFF1E88E5)]; // Light blue gradient
-    
-    final navBarColor = isDark ? const Color(0xFF0D47A1) : const Color(0xFF1E88E5);
-    final statusBarBrightness = isDark ? Brightness.light : Brightness.light; // Always light for splash
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
+      value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: statusBarBrightness,
-        systemNavigationBarColor: navBarColor,  // 🔥 DYNAMIC
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF1E88E5),
       ),
       child: Scaffold(
         body: Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: gradientColors,  // 🔥 DYNAMIC
+              colors: [
+                Color(0xFF2FB7F3),
+                Color(0xFF1E88E5),
+              ],
             ),
           ),
           child: Stack(
@@ -95,7 +87,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Logo Animation
+                    // লোগোর চারপাশে ঘূর্ণমান আঁকাবাঁকা বর্ডার
                     SizedBox(
                       width: 120.w,
                       height: 120.w,
@@ -106,7 +98,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             size: Size(120.w, 120.w),
                             painter: RotatingBorderPainter(
                               rotation: _rotationController.value,
-                              isDark: isDark,  // 🔥 PASS THEME
                             ),
                             child: Center(
                               child: Container(
@@ -149,7 +140,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
                     SizedBox(height: 30.h),
 
-                    // Loading Dots
+                    // ফেসবুক স্টাইল লোডিং ডটস
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(3, (index) {
@@ -214,32 +205,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 }
 
-// Rotating Border Painter with Dark Mode Support
+// ঘূর্ণমান আঁকাবাঁকা বর্ডার পেইন্টার
 class RotatingBorderPainter extends CustomPainter {
   final double rotation;
-  final bool isDark;  // 🔥 THEME PARAMETER
 
-  RotatingBorderPainter({
-    required this.rotation,
-    this.isDark = false,  // 🔥 DEFAULT LIGHT
-  });
+  RotatingBorderPainter({required this.rotation});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 5;
 
-    // 🔥 DYNAMIC COLORS
-    final borderColor = isDark 
-        ? Colors.white.withOpacity(0.6)  // Dark mode: slightly dimmer
-        : Colors.white.withOpacity(0.8);  // Light mode: brighter
-    
-    final dotColor = isDark
-        ? Colors.white.withOpacity(0.9)  // Dark mode: slightly dimmer
-        : Colors.white;                    // Light mode: pure white
-
     final paint = Paint()
-      ..color = borderColor  // 🔥 DYNAMIC
+      ..color = Colors.white.withOpacity(0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
@@ -273,9 +251,9 @@ class RotatingBorderPainter extends CustomPainter {
     path.close();
     canvas.drawPath(path, paint);
 
-    // Outer Dots
+    // ছোট ছোট ডটস
     final dotPaint = Paint()
-      ..color = dotColor  // 🔥 DYNAMIC
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < 4; i++) {
