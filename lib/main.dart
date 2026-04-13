@@ -14,10 +14,9 @@ import 'widgets/app_top_bar.dart';
 import 'widgets/app_drawer.dart';
 
 // ============================================
-// THEME PROVIDERS (নতুন যোগ করা)
+// THEME PROVIDERS
 // ============================================
 
-// Theme Mode Provider
 final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
   return ThemeModeController();
 });
@@ -55,14 +54,14 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
   ThemeMode _stringToThemeMode(String value) {
     switch (value) {
       case 'light': return ThemeMode.light;
-      case 'dark': return ThemeMode.dark;
+      case ThemeMode.dark: return ThemeMode.dark;
       default: return ThemeMode.system;
     }
   }
 }
 
 // ============================================
-// AUTH PROVIDERS (আগের মতোই)
+// AUTH PROVIDERS
 // ============================================
 
 final authProvider = StateNotifierProvider<AuthController, bool>((ref) {
@@ -107,12 +106,12 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends ConsumerWidget {  // StatelessWidget থেকে ConsumerWidget এ পরিবর্তন
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {  // WidgetRef যোগ করা
-    final themeMode = ref.watch(themeModeProvider);  // Theme Mode লিসেন করা
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
 
     return ScreenUtilInit(
       designSize: const Size(360, 800),
@@ -123,10 +122,10 @@ class MyApp extends ConsumerWidget {  // StatelessWidget থেকে ConsumerWi
           debugShowCheckedModeBanner: false,
           title: 'Easy Service',
           
-          // 🌞 Light Theme (আপডেট করা)
+          // 🌞 Light Theme
           theme: _buildLightTheme(),
           
-          // 🌙 Dark Theme (নতুন যোগ করা)
+          // 🌙 Dark Theme
           darkTheme: _buildDarkTheme(),
           
           // 🔥 Dynamic Theme Mode
@@ -152,7 +151,8 @@ class MyApp extends ConsumerWidget {  // StatelessWidget থেকে ConsumerWi
         elevation: 0,
         centerTitle: true,
       ),
-      cardTheme: CardTheme(
+      // 🔥 FIXED: CardTheme → CardThemeData
+      cardTheme: CardThemeData(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
       ),
@@ -178,7 +178,8 @@ class MyApp extends ConsumerWidget {  // StatelessWidget থেকে ConsumerWi
         elevation: 0,
         centerTitle: true,
       ),
-      cardTheme: CardTheme(
+      // 🔥 FIXED: CardTheme → CardThemeData
+      cardTheme: CardThemeData(
         elevation: 2,
         color: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
@@ -193,7 +194,7 @@ class MyApp extends ConsumerWidget {  // StatelessWidget থেকে ConsumerWi
 }
 
 // ============================================
-// MAIN WRAPPER (FIXED FOR ROUNDED CORNERS)
+// MAIN WRAPPER
 // ============================================
 
 class MainWrapper extends ConsumerWidget {
@@ -242,7 +243,6 @@ class MainWrapper extends ConsumerWidget {
     final isEditProfile = location.contains('edit_profile');
     final isPaymentPage = location == '/payment';
 
-    // ডিটেইল ভিউ লজিক
     final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
     final detailTitle = isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
 
@@ -251,18 +251,16 @@ class MainWrapper extends ConsumerWidget {
         .fadeIn(duration: 400.ms)
         .moveY(begin: 10, end: 0);
 
-    // 🔥 Dynamic Background Color (Theme অনুযায়ী পরিবর্তন)
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF121212) : const Color(0xFF29B6F6);
 
-    // বডি কন্টেইনার (Theme অনুযায়ী রঙ পরিবর্তন)
     Widget bodyContainer() {
       double bodyRadius = isMobile ? 32.r : 24;
       return Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,  // 🔥 Dynamic
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(bodyRadius),
             topRight: Radius.circular(bodyRadius),
@@ -287,7 +285,7 @@ class MainWrapper extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: backgroundColor,  // 🔥 Dynamic Background
+        backgroundColor: backgroundColor,
         drawer: (isDetailView || isEditProfile)
             ? null
             : AppDrawer(
