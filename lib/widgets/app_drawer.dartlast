@@ -1,9 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
-// Import your providers – adjust path as needed
+// Import your providers - adjust path as needed
 import '../main.dart';
 
 class AppDrawer extends ConsumerWidget {
@@ -34,10 +35,10 @@ class AppDrawer extends ConsumerWidget {
         backgroundColor: Colors.white,
         child: Column(
           children: [
-            // Header (Icon and Profile Info fully removed)
+            // Header
             Container(
               width: double.infinity,
-              height: MediaQuery.of(context).padding.top + 40, // Height adjusted
+              height: MediaQuery.of(context).padding.top + 40,
               decoration: const BoxDecoration(
                 color: skyBlue,
                 borderRadius: BorderRadius.only(
@@ -53,62 +54,148 @@ class AppDrawer extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  if (isLoggedIn) ...[
-                    _drawerItem(
-                      context,
-                      Icons.account_balance_wallet_rounded,
-                      "Wallet",
-                      onTap: () => Navigator.pop(context),
-                    ),
+                  // 1. Voucher Balance (শুধু লগইন করা ইউজারদের জন্য)
+                  if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.card_giftcard_rounded,
                       "Voucher Balance",
-                      onTap: () => Navigator.pop(context),
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.go('/voucher-balance');
+                      },
                     ),
+
+                  // 2. Royalty Salary (শুধু লগইন করা ইউজারদের জন্য)
+                  if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.workspace_premium_rounded,
                       "Royalty Salary",
-                      onTap: () => Navigator.pop(context),
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.go('/royalty-salary');
+                      },
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                      child: Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
-                    ),
-                  ],
+
+                  // 3. Leaderboard (সবার জন্য)
+                  _drawerItem(
+                    context,
+                    Icons.emoji_events_rounded,
+                    "Leaderboard",
+                    iconColor: Colors.amber,
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/leaderboard');
+                    },
+                  ),
+
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                    child: Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
+                  ),
+
+                  // 4. Support Center
                   _drawerItem(
                     context,
                     Icons.support_agent_rounded,
                     "Support Center",
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/support');
+                    },
                   ),
+
+                  // 5. Facebook
                   _drawerItem(
                     context,
                     Icons.facebook_rounded,
-                    "Facebook Group",
+                    "Facebook",
                     iconColor: Colors.blue,
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _launchURL('https://facebook.com/yourpage');
+                    },
                   ),
+
+                  // 6. YouTube
                   _drawerItem(
                     context,
                     Icons.smart_display_rounded,
-                    "YouTube Channel",
+                    "YouTube",
                     iconColor: Colors.red,
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _launchURL('https://youtube.com/yourchannel');
+                    },
                   ),
+
+                  // 7. Telegram
                   _drawerItem(
                     context,
                     Icons.telegram_rounded,
-                    "Telegram Group",
+                    "Telegram",
                     iconColor: Colors.blueAccent,
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _launchURL('https://t.me/yourgroup');
+                    },
+                  ),
+
+                  // 8. Website
+                  _drawerItem(
+                    context,
+                    Icons.language_rounded,
+                    "Website",
+                    iconColor: Colors.green,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _launchURL('https://yourwebsite.com');
+                    },
+                  ),
+
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                    child: Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
+                  ),
+
+                  // 9. Privacy Policy
+                  _drawerItem(
+                    context,
+                    Icons.privacy_tip_rounded,
+                    "Privacy Policy",
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/privacy-policy');
+                    },
+                  ),
+
+                  // 10. Terms & Conditions
+                  _drawerItem(
+                    context,
+                    Icons.description_rounded,
+                    "Terms & Conditions",
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/terms');
+                    },
+                  ),
+
+                  // 11. About Us
+                  _drawerItem(
+                    context,
+                    Icons.info_rounded,
+                    "About Us",
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/about');
+                    },
                   ),
                 ],
               ),
             ),
 
-            // Logout Button
+            // 12. Logout Button (শুধু লগইন করা ইউজারদের জন্য)
             if (isLoggedIn)
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 10, 15, 25),
@@ -161,5 +248,14 @@ class AppDrawer extends ConsumerWidget {
       onTap: onTap,
       splashColor: skyBlue.withOpacity(0.1),
     );
+  }
+
+  // URL লaunch করার জন্য হেল্পার মেথড
+  void _launchURL(String url) async {
+    // url_launcher প্যাকেজ ব্যবহার করুন
+    // import 'package:url_launcher/url_launcher.dart';
+    // if (await canLaunchUrl(Uri.parse(url))) {
+    //   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    // }
   }
 }

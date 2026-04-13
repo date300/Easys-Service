@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -29,24 +29,178 @@ class AppDrawer extends ConsumerWidget {
             ? 280
             : MediaQuery.of(context).size.width * 0.78;
 
+    // ইউজার ডেটা - আপনার প্রোভাইডার থেকে নিন
+    // এখন ডেমো ডেটা দেখানো হচ্ছে, পরে আসল ডেটা দিয়ে রিপ্লেস করুন
+    final userProfile = isLoggedIn
+        ? {
+            'fullName': 'মোঃ রহিম উদ্দিন',
+            'affiliateId': 'AFF123456',
+            'profileImage': null, // নেটওয়ার্ক ইমেজ URL বা null
+          }
+        : null;
+
     return SizedBox(
       width: drawerWidth,
       child: Drawer(
         backgroundColor: Colors.white,
         child: Column(
           children: [
-            // Header
+            // Header with Profile Info
             Container(
               width: double.infinity,
-              height: MediaQuery.of(context).padding.top + 40,
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 20,
+                bottom: 25,
+                left: 20,
+                right: 20,
+              ),
               decoration: const BoxDecoration(
                 color: skyBlue,
                 borderRadius: BorderRadius.only(
                   bottomRight: Radius.circular(30),
                 ),
               ),
+              child: isLoggedIn && userProfile != null
+                  ? Column(
+                      children: [
+                        // Profile Picture
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: userProfile['profileImage'] != null
+                                ? Image.network(
+                                    userProfile['profileImage']!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return _buildDefaultAvatar(userProfile['fullName']!);
+                                    },
+                                  )
+                                : _buildDefaultAvatar(userProfile['fullName']!),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        // Full Name
+                        Text(
+                          userProfile['fullName']!,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        
+                        // Affiliate ID with Copy Button
+                        GestureDetector(
+                          onTap: () => _copyAffiliateId(context, userProfile['affiliateId']!),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.copy_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'ID: ${userProfile['affiliateId']}',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : // Guest User Header
+                  Column(
+                      children: [
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                          child: const Icon(
+                            Icons.person_outline_rounded,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Welcome Guest',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.go('/login');
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Login / Register',
+                              style: GoogleFonts.poppins(
+                                color: skyBlue,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
-            const SizedBox(height: 10),
 
             // Menu Items
             Expanded(
@@ -220,6 +374,42 @@ class AppDrawer extends ConsumerWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ডিফল্ট অ্যাভাটার বিল্ড করুন
+  Widget _buildDefaultAvatar(String name) {
+    return Container(
+      color: skyBlue.withOpacity(0.1),
+      child: Center(
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : '?',
+          style: GoogleFonts.poppins(
+            color: skyBlue,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Affiliate ID কপি করুন
+  void _copyAffiliateId(BuildContext context, String affiliateId) {
+    Clipboard.setData(ClipboardData(text: affiliateId));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Affiliate ID কপি করা হয়েছে!',
+          style: GoogleFonts.poppins(),
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
     );
