@@ -14,11 +14,8 @@ class DriveScreen extends StatefulWidget {
 }
 
 class _DriveScreenState extends State<DriveScreen> {
-  // Design Tokens
-  static const Color kBackground = Color(0xFFF8FAFC);
-  static const Color kTextDark   = Color(0xFF0F172A);
-  static const Color kTextMid    = Color(0xFF475569);
-  static const Color kPrimary    = Color(0xFF29B6F6);
+  // Design Tokens - Only Primary Color is static
+  static const Color kPrimary = Color(0xFF29B6F6);
 
   // Operator Data
   final List<String> operators = ['gp', 'robi', 'airtel', 'bl', 'teletalk', 'skitto'];
@@ -59,7 +56,6 @@ class _DriveScreenState extends State<DriveScreen> {
     fetchDrives(selectedOperator);
   }
 
-  // 1. Fetch Drives API
   Future<void> fetchDrives(String operator) async {
     setState(() {
       isLoading = true;
@@ -109,19 +105,28 @@ class _DriveScreenState extends State<DriveScreen> {
     }).toList();
   }
 
-  // 2. Purchase Execution (No PIN)
   Future<void> _executePurchase(Map<String, dynamic> drive, String number) async {
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: kPrimary)),
+      builder: (context) => Center(
+        child: CircularProgressIndicator(
+          color: kPrimary,
+          backgroundColor: isDark ? const Color(0xFF333333) : null,
+        ),
+      ),
     );
 
     try {
       final payload = {
         "number": number,
         "amount": drive['price'],
-        "operator": selectedOperator.toLowerCase(), // Your backend handles case
+        "operator": selectedOperator.toLowerCase(),
       };
 
       final response = await http.post(
@@ -130,7 +135,7 @@ class _DriveScreenState extends State<DriveScreen> {
         body: jsonEncode(payload),
       ).timeout(const Duration(seconds: 20));
 
-      Navigator.pop(context); // Close Loading
+      Navigator.pop(context);
 
       final resData = jsonDecode(response.body);
       if (response.statusCode == 200 && resData['success'] == true) {
@@ -145,40 +150,106 @@ class _DriveScreenState extends State<DriveScreen> {
   }
 
   void _showStatusSnack(String msg, Color color) {
+    // 🔥 DYNAMIC SNACKBAR
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color, behavior: SnackBarBehavior.floating),
+      SnackBar(
+        content: Text(
+          msg,
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+      ),
     );
   }
 
-  // 3. Updated Bottom Sheet (Removed PIN)
   void _openPurchaseSheet(Map<String, dynamic> drive) {
     final TextEditingController numController = TextEditingController();
     final color = operatorColors[selectedOperator]!;
+    
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
+    final fieldBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.shade300;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      backgroundColor: sheetBg,  // 🔥 DYNAMIC
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 20.w, right: 20.w, top: 20.h),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20.w,
+          right: 20.w,
+          top: 20.h,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40.w, height: 4.h, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF333333) : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
             SizedBox(height: 15.h),
-            Text('Confirm Order', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16.sp)),
+            Text(
+              'Confirm Order',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
+                color: textColor,  // 🔥 DYNAMIC
+              ),
+            ),
             SizedBox(height: 5.h),
-            Text(drive['title'], style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
+            Text(
+              drive['title'],
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                color: textMid,  // 🔥 DYNAMIC
+              ),
+            ),
             SizedBox(height: 20.h),
             TextField(
               controller: numController,
               keyboardType: TextInputType.phone,
+              style: GoogleFonts.poppins(color: textColor),  // 🔥 DYNAMIC
               decoration: InputDecoration(
                 labelText: 'Mobile Number',
+                labelStyle: GoogleFonts.poppins(color: textMid),  // 🔥 DYNAMIC
                 hintText: '01XXXXXXXXX',
-                prefixIcon: const Icon(CupertinoIcons.phone),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                hintStyle: GoogleFonts.poppins(color: isDark ? Colors.grey.shade600 : Colors.grey),
+                prefixIcon: Icon(CupertinoIcons.phone, color: textMid),  // 🔥 DYNAMIC
+                filled: true,
+                fillColor: fieldBg,  // 🔥 DYNAMIC
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(color: borderColor),  // 🔥 DYNAMIC
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(color: kPrimary),
+                ),
               ),
             ),
             SizedBox(height: 20.h),
@@ -186,7 +257,12 @@ class _DriveScreenState extends State<DriveScreen> {
               width: double.infinity,
               height: 50.h,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: color, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r))),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
                 onPressed: () {
                   if (numController.text.length == 11) {
                     Navigator.pop(context);
@@ -195,7 +271,14 @@ class _DriveScreenState extends State<DriveScreen> {
                     _showStatusSnack("Please enter a valid 11-digit number", Colors.orange);
                   }
                 },
-                child: Text('Confirm Purchase ৳${drive['price']}', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14.sp)),
+                child: Text(
+                  'Confirm Purchase ৳${drive['price']}',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.sp,
+                  ),
+                ),
               ),
             ),
             SizedBox(height: 20.h),
@@ -207,43 +290,79 @@ class _DriveScreenState extends State<DriveScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
+    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
+    final appBarBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.04);
+    final chipBg = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF8FAFC);
+    final chipBorder = isDark ? const Color(0xFF333333) : Colors.grey.shade300;
+
     return Scaffold(
-      backgroundColor: kBackground,
+      backgroundColor: kBackground,  // 🔥 DYNAMIC
       appBar: AppBar(
-        title: Text('All Sim Offers', style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-        backgroundColor: Colors.white, elevation: 0.5,
+        title: Text(
+          'All Sim Offers',
+          style: GoogleFonts.poppins(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: kTextDark,  // 🔥 DYNAMIC
+          ),
+        ),
+        backgroundColor: appBarBg,  // 🔥 DYNAMIC
+        elevation: isDark ? 0 : 0.5,
         centerTitle: true,
+        iconTheme: IconThemeData(color: kTextDark),  // 🔥 DYNAMIC
       ),
       body: Column(
         children: [
-          _buildOperatorTabs(),
-          _buildCategoryChips(),
-          Expanded(child: _buildBody()),
+          _buildOperatorTabs(isDark, appBarBg, kTextDark),
+          _buildCategoryChips(isDark, chipBg, kTextMid, chipBorder),
+          Expanded(child: _buildBody(isDark, kBackground, kTextDark, kTextMid, cardBg, shadowColor)),
         ],
       ),
     );
   }
 
-  Widget _buildOperatorTabs() {
+  Widget _buildOperatorTabs(bool isDark, Color appBarBg, Color kTextDark) {
     return Container(
-      height: 65.h, color: Colors.white,
+      height: 65.h,
+      color: appBarBg,  // 🔥 DYNAMIC
       child: ListView.builder(
-        scrollDirection: Axis.horizontal, itemCount: operators.length,
+        scrollDirection: Axis.horizontal,
+        itemCount: operators.length,
         padding: EdgeInsets.symmetric(horizontal: 10.w),
         itemBuilder: (context, i) {
           final op = operators[i];
           final isSel = op == selectedOperator;
           return GestureDetector(
-            onTap: () { setState(() => selectedOperator = op); fetchDrives(op); },
+            onTap: () {
+              setState(() => selectedOperator = op);
+              fetchDrives(op);
+            },
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 6.w, vertical: 12.h),
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               decoration: BoxDecoration(
                 color: isSel ? operatorColors[op] : Colors.transparent,
                 borderRadius: BorderRadius.circular(25.r),
-                border: Border.all(color: isSel ? operatorColors[op]! : Colors.grey.shade300)
+                border: Border.all(
+                  color: isSel ? operatorColors[op]! : (isDark ? const Color(0xFF444444) : Colors.grey.shade300),
+                ),
               ),
-              child: Center(child: Text(operatorNames[op]!, style: GoogleFonts.poppins(color: isSel ? Colors.white : kTextDark, fontSize: 12.sp, fontWeight: isSel ? FontWeight.w600 : FontWeight.normal))),
+              child: Center(
+                child: Text(
+                  operatorNames[op]!,
+                  style: GoogleFonts.poppins(
+                    color: isSel ? Colors.white : kTextDark,  // 🔥 DYNAMIC
+                    fontSize: 12.sp,
+                    fontWeight: isSel ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ),
             ),
           );
         },
@@ -251,34 +370,76 @@ class _DriveScreenState extends State<DriveScreen> {
     );
   }
 
-  Widget _buildCategoryChips() {
+  Widget _buildCategoryChips(bool isDark, Color chipBg, Color kTextMid, Color chipBorder) {
     final cats = operatorCategories[selectedOperator]!;
     return Container(
-      height: 45.h, color: Colors.white,
+      height: 45.h,
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,  // 🔥 DYNAMIC
       child: ListView.builder(
-        scrollDirection: Axis.horizontal, itemCount: cats.length,
+        scrollDirection: Axis.horizontal,
+        itemCount: cats.length,
         itemBuilder: (context, i) => GestureDetector(
-          onTap: () { setState(() => selectedCategory = cats[i]); _filterDrives(); },
+          onTap: () {
+            setState(() => selectedCategory = cats[i]);
+            _filterDrives();
+          },
           child: Container(
             margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
             padding: EdgeInsets.symmetric(horizontal: 18.w),
             decoration: BoxDecoration(
-              color: selectedCategory == cats[i] ? operatorColors[selectedOperator]!.withOpacity(0.1) : kBackground,
+              color: selectedCategory == cats[i] 
+                  ? operatorColors[selectedOperator]!.withOpacity(0.1) 
+                  : chipBg,  // 🔥 DYNAMIC
               borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(color: selectedCategory == cats[i] ? operatorColors[selectedOperator]! : Colors.transparent)
+              border: Border.all(
+                color: selectedCategory == cats[i] 
+                    ? operatorColors[selectedOperator]! 
+                    : chipBorder,  // 🔥 DYNAMIC
+              ),
             ),
-            child: Center(child: Text(cats[i], style: GoogleFonts.poppins(fontSize: 11.sp, color: selectedCategory == cats[i] ? operatorColors[selectedOperator] : kTextMid))),
+            child: Center(
+              child: Text(
+                cats[i],
+                style: GoogleFonts.poppins(
+                  fontSize: 11.sp,
+                  color: selectedCategory == cats[i] 
+                      ? operatorColors[selectedOperator] 
+                      : kTextMid,  // 🔥 DYNAMIC
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBody() {
-    if (isLoading) return const Center(child: CircularProgressIndicator());
-    
+  Widget _buildBody(
+    bool isDark,
+    Color kBackground,
+    Color kTextDark,
+    Color kTextMid,
+    Color cardBg,
+    Color shadowColor,
+  ) {
+    if (isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: kPrimary,
+          backgroundColor: isDark ? const Color(0xFF333333) : null,
+        ),
+      );
+    }
+
     if (errorMessage != null) {
-      return Center(child: Text(errorMessage!, style: GoogleFonts.poppins(color: Colors.redAccent)));
+      return Center(
+        child: Text(
+          errorMessage!,
+          style: GoogleFonts.poppins(
+            color: isDark ? Colors.redAccent : Colors.red,
+          ),
+        ),
+      );
     }
 
     if (filteredDrives.isEmpty) {
@@ -289,11 +450,27 @@ class _DriveScreenState extends State<DriveScreen> {
             Lottie.network(
               'https://lottie.host/17e089d8-99ed-498c-850f-f1cbba20251c/MowR12iE75.json',
               height: 200.h,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.folder_open, size: 80, color: Colors.grey),
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.folder_open,
+                size: 80,
+                color: isDark ? Colors.grey.shade600 : Colors.grey,
+              ),
             ),
             SizedBox(height: 10.h),
-            Text('No Offers Found!', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: kTextMid)),
-            Text('Try checking another operator.', style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey)),
+            Text(
+              'No Offers Found!',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                color: kTextMid,  // 🔥 DYNAMIC
+              ),
+            ),
+            Text(
+              'Try checking another operator.',
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                color: isDark ? Colors.grey.shade500 : Colors.grey,
+              ),
+            ),
           ],
         ),
       );
@@ -308,29 +485,70 @@ class _DriveScreenState extends State<DriveScreen> {
           margin: EdgeInsets.only(bottom: 12.h),
           padding: EdgeInsets.all(15.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardBg,  // 🔥 DYNAMIC
             borderRadius: BorderRadius.circular(15.r),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]
+            boxShadow: [
+              BoxShadow(
+                color: shadowColor,  // 🔥 DYNAMIC
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: isDark ? Border.all(color: const Color(0xFF333333), width: 1) : null,  // 🔥 DYNAMIC
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(drive['title'], style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-              const Divider(),
+              Text(
+                drive['title'],
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.bold,
+                  color: kTextDark,  // 🔥 DYNAMIC
+                ),
+              ),
+              Divider(
+                color: isDark ? const Color(0xFF333333) : Colors.grey.shade300,  // 🔥 DYNAMIC
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("৳${drive['price']}", style: GoogleFonts.poppins(fontSize: 16.sp, color: kPrimary, fontWeight: FontWeight.bold)),
-                      Text("Validity: ${drive['duration']} Days", style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid)),
+                      Text(
+                        "৳${drive['price']}",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16.sp,
+                          color: kPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "Validity: ${drive['duration']} Days",
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.sp,
+                          color: kTextMid,  // 🔥 DYNAMIC
+                        ),
+                      ),
                     ],
                   ),
                   ElevatedButton(
                     onPressed: () => _openPurchaseSheet(drive),
-                    style: ElevatedButton.styleFrom(backgroundColor: operatorColors[selectedOperator], shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r))),
-                    child: Text('Buy Now', style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: operatorColors[selectedOperator],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Buy Now',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
