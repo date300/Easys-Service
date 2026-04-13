@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ import '../features/profile/profile_screen.dart';
 import '../features/auth/registration_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
+import '../modules/notifications/notification_screen.dart'; // ← নতুন ইমপোর্ট
 import '../main.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -31,10 +33,16 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const RegistrationScreen(),
     ),
 
-    // Login ← নতুন
+    // Login
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
+    ),
+
+    // 🔥 NOTIFICATION — ShellRoute-এর বাইরে (Full Screen)
+    GoRoute(
+      path: '/notifications',
+      builder: (context, state) => const NotificationScreen(),
     ),
 
     // ShellRoute — Bottom Nav + AppTopBar সহ
@@ -94,12 +102,16 @@ final GoRouter appRouter = GoRouter(
     final isSplash = loc == '/splash';
     final isRegister = loc == '/registration';
     final isLogin = loc == '/login';
+    final isNotification = loc == '/notifications'; // ← নতুন চেক
 
     // Splash এ থাকলে redirect নেই
     if (isSplash) return null;
 
+    // 🔥 NOTIFICATION: Login না থাকলে login এ পাঠাও
+    if (!isLoggedIn && isNotification) return '/login';
+
     // Login নেই + auth page এও নেই → login এ পাঠাও
-    if (!isLoggedIn && !isRegister && !isLogin) return '/login';
+    if (!isLoggedIn && !isRegister && !isLogin && !isNotification) return '/login';
 
     // Login আছে + auth page এ যাওয়ার চেষ্টা → home এ পাঠাও
     if (isLoggedIn && (isLogin || isRegister)) return '/home';
