@@ -354,14 +354,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // FIX: Backend থেকে full URL আসলে সরাসরি ব্যবহার করো
-  // না আসলে নিজে বানাও
-  String _getProfileImageUrl() {
-    if (_profilePicture == null || _profilePicture!.isEmpty) return "";
-    if (_profilePicture!.startsWith('http')) return _profilePicture!;
-    return "$staticBase/uploads/profile_pics/$_profilePicture";
-  }
-
+String _getProfileImageUrl() {
+  if (_profilePicture == null || _profilePicture!.isEmpty) return "";
+  if (_profilePicture!.startsWith('http')) return _profilePicture!;
+  return "$staticBase/uploads/profile_pics/$_profilePicture?v=$_imageKey";
+}
   @override
   Widget build(BuildContext context) {
     final isDesktop = _isDesktop(context);
