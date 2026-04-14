@@ -5,30 +5,30 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'edit_profile/edit_profile_screen.dart';
-import '../../main.dart'; // themeModeProvider এর জন্য
 
-class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে ConsumerWidget এ পরিবর্তন
+// Import your providers - adjust path as needed
+// Ensure this points to the file where themeModeProvider and userProfileProvider are defined
+import '../../main.dart'; 
+
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   static const Color skyBlue = Color(0xFF29B6F6);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {  // WidgetRef যোগ করা
-    // 🔥 Theme অনুযায়ী Dynamic Colors
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ? Theme DYNAMIC Colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF121212) : Colors.white;
     final headerColor = isDark ? const Color(0xFF1E1E1E) : skyBlue;
     final textColor = isDark ? Colors.white : Colors.black87;
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final avatarBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
 
-    final userProfile = {
-      'fullName': 'মোঃ রahim মিয়া',
-      'affiliateId': 'AFF123456',
-      'profileImage': null,
-    };
+    // API থেকে প্রোফাইল ডাটা রিড করা হচ্ছে (যেটা AppDrawer এর জন্য বানানো হয়েছিল)
+    final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
-      backgroundColor: backgroundColor,  // 🔥 Dynamic Background
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -36,104 +36,23 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
             Container(
               width: double.infinity,
               padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 20,
-                bottom: 25,
-                left: 20,
-                right: 20,
+                top: MediaQuery.of(context).padding.top + 20.h,
+                bottom: 25.h,
+                left: 20.w,
+                right: 20.w,
               ),
               decoration: BoxDecoration(
-                color: headerColor,  // 🔥 Dynamic Header Color
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+                color: headerColor,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30.r),
+                  bottomRight: Radius.circular(30.r),
                 ),
               ),
-              child: Column(
-                children: [
-                  // Profile Picture
-                  Container(
-                    width: 80.w,
-                    height: 80.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark ? const Color(0xFF2C2C2C) : Colors.white,  // 🔥 Dynamic
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF29B6F6) : Colors.white,
-                        width: 3,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: userProfile['profileImage'] != null
-                          ? Image.network(
-                              userProfile['profileImage']!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return _buildDefaultAvatar(userProfile['fullName']!, isDark);
-                              },
-                            )
-                          : _buildDefaultAvatar(userProfile['fullName']!, isDark),
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  
-                  // Full Name
-                  Text(
-                    userProfile['fullName']!,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 8.h),
-                  
-                  // Affiliate ID with Copy Button
-                  GestureDetector(
-                    onTap: () => _copyAffiliateId(context, userProfile['affiliateId']!),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.copy_rounded,
-                            color: Colors.white,
-                            size: 14.sp,
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            'ID: ${userProfile['affiliateId']}',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              // AsyncValue হ্যান্ডেল করা হচ্ছে রিয়েল ডাটা দেখানোর জন্য
+              child: profileAsync.when(
+                data: (user) => _buildProfileHeader(context, user, avatarBgColor, isDark),
+                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                error: (err, stack) => _buildGuestHeader(context, avatarBgColor, isDark),
               ),
             ),
 
@@ -145,7 +64,7 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
                 padding: EdgeInsets.symmetric(horizontal: 10.w),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  // 🔥 0. Theme Selector (নতুন যোগ করা)
+                  // ? 0. Theme Selector
                   _buildThemeSelectorCard(context, ref, isDark),
 
                   SizedBox(height: 10.h),
@@ -200,7 +119,7 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 15.w),
                     child: Divider(
-                      color: isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE),  // 🔥 Dynamic
+                      color: isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE),
                       thickness: 1.5.h,
                     ),
                   ),
@@ -214,7 +133,7 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
                     iconColor: Colors.orange,
                     textColor: Colors.orange,
                     onTap: () {
-                      _showLogoutDialog(context, isDark);
+                      _showLogoutDialog(context, ref, isDark);
                     },
                   ),
 
@@ -239,7 +158,163 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
     );
   }
 
-  // 🔥 নতুন Theme Selector Card
+  // ==========================================
+  // Header Widgets
+  // ==========================================
+
+  Widget _buildProfileHeader(BuildContext context, dynamic user, Color avatarBg, bool isDark) {
+    // userProfileProvider থেকে আসা ডাটা এক্সট্র্যাক্ট করা
+    final String name = user?.fullName ?? "No Name";
+    final String id = user?.referralCode ?? "N/A";
+    final String? img = user?.profilePicture;
+
+    return Column(
+      children: [
+        // Profile Picture
+        Container(
+          width: 80.w,
+          height: 80.w,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: avatarBg,
+            border: Border.all(
+              color: isDark ? const Color(0xFF29B6F6) : Colors.white,
+              width: 3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: img != null && img.isNotEmpty
+                ? Image.network(
+                    img,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildDefaultAvatar(name, isDark);
+                    },
+                  )
+                : _buildDefaultAvatar(name, isDark),
+          ),
+        ),
+        SizedBox(height: 12.h),
+
+        // Full Name
+        Text(
+          name,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: 8.h),
+
+        // Affiliate ID with Copy Button
+        GestureDetector(
+          onTap: () => _copyAffiliateId(context, id),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 6.h,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.copy_rounded,
+                  color: Colors.white,
+                  size: 14.sp,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  'ID: $id',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGuestHeader(BuildContext context, Color avatarBg, bool isDark) {
+    return Column(
+      children: [
+        Container(
+          width: 80.w,
+          height: 80.w,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: avatarBg,
+            border: Border.all(
+              color: isDark ? const Color(0xFF29B6F6) : Colors.white,
+              width: 3,
+            ),
+          ),
+          child: Icon(Icons.person, size: 40.sp, color: isDark ? const Color(0xFF29B6F6) : skyBlue),
+        ),
+        SizedBox(height: 12.h),
+        Text(
+          'Welcome Guest',
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        ElevatedButton(
+          onPressed: () => context.go('/login'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: skyBlue,
+          ),
+          child: const Text('Login / Register'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDefaultAvatar(String name, bool isDark) {
+    return Container(
+      color: isDark ? const Color(0xFF2C2C2C) : skyBlue.withOpacity(0.1),
+      child: Center(
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : '?',
+          style: GoogleFonts.poppins(
+            color: isDark ? const Color(0xFF29B6F6) : skyBlue,
+            fontSize: 32.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // Helper Widgets
+  // ==========================================
+
   Widget _buildThemeSelectorCard(BuildContext context, WidgetRef ref, bool isDark) {
     final themeMode = ref.watch(themeModeProvider);
     final primaryColor = isDark ? const Color(0xFF29B6F6) : skyBlue;
@@ -250,19 +325,14 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.r),
-        side: isDark 
-          ? const BorderSide(color: Color(0xFF333333), width: 1)
-          : BorderSide.none,
+        side: isDark
+            ? const BorderSide(color: Color(0xFF333333), width: 1)
+            : BorderSide.none,
       ),
       child: Column(
         children: [
-          // Header
           ListTile(
-            leading: Icon(
-              Icons.palette,
-              color: primaryColor,
-              size: 24.sp,
-            ),
+            leading: Icon(Icons.palette, color: primaryColor, size: 24.sp),
             title: Text(
               'Theme Mode',
               style: GoogleFonts.poppins(
@@ -279,50 +349,27 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
               ),
             ),
           ),
-          Divider(
-            height: 1,
-            color: isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE),
-          ),
-          
-          // Theme Options
+          Divider(height: 1, color: isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE)),
           _buildThemeTile(
-            context,
-            ref,
-            icon: Icons.light_mode,
-            title: 'Light Mode',
-            value: ThemeMode.light,
-            currentMode: themeMode,
-            isDark: isDark,
-            primaryColor: primaryColor,
+            context, ref,
+            icon: Icons.light_mode, title: 'Light Mode', value: ThemeMode.light,
+            currentMode: themeMode, isDark: isDark, primaryColor: primaryColor,
           ),
-          
           _buildThemeTile(
-            context,
-            ref,
-            icon: Icons.dark_mode,
-            title: 'Dark Mode',
-            value: ThemeMode.dark,
-            currentMode: themeMode,
-            isDark: isDark,
-            primaryColor: primaryColor,
+            context, ref,
+            icon: Icons.dark_mode, title: 'Dark Mode', value: ThemeMode.dark,
+            currentMode: themeMode, isDark: isDark, primaryColor: primaryColor,
           ),
-          
           _buildThemeTile(
-            context,
-            ref,
-            icon: Icons.settings_suggest,
-            title: 'System Default',
-            value: ThemeMode.system,
-            currentMode: themeMode,
-            isDark: isDark,
-            primaryColor: primaryColor,
+            context, ref,
+            icon: Icons.settings_suggest, title: 'System Default', value: ThemeMode.system,
+            currentMode: themeMode, isDark: isDark, primaryColor: primaryColor,
           ),
         ],
       ),
     );
   }
 
-  // Theme Selection Tile
   Widget _buildThemeTile(
     BuildContext context,
     WidgetRef ref, {
@@ -347,9 +394,7 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
         style: GoogleFonts.poppins(
           fontSize: 13.sp,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          color: isSelected 
-            ? primaryColor 
-            : (isDark ? Colors.white70 : Colors.black87),
+          color: isSelected ? primaryColor : (isDark ? Colors.white70 : Colors.black87),
         ),
       ),
       trailing: isSelected
@@ -363,30 +408,15 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
 
   String _getThemeLabel(ThemeMode mode) {
     switch (mode) {
-      case ThemeMode.light: return 'Light Mode Active';
-      case ThemeMode.dark: return 'Dark Mode Active';
-      default: return 'Following System';
+      case ThemeMode.light:
+        return 'Light Mode Active';
+      case ThemeMode.dark:
+        return 'Dark Mode Active';
+      default:
+        return 'Following System';
     }
   }
 
-  // Default Avatar with Dynamic Color
-  Widget _buildDefaultAvatar(String name, bool isDark) {
-    return Container(
-      color: isDark ? const Color(0xFF2C2C2C) : skyBlue.withOpacity(0.1),
-      child: Center(
-        child: Text(
-          name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: GoogleFonts.poppins(
-            color: isDark ? const Color(0xFF29B6F6) : skyBlue,
-            fontSize: 32.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Profile Item with Dark Mode Support
   Widget _buildProfileItem(
     BuildContext context,
     IconData icon,
@@ -402,16 +432,15 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.r),
-        side: isDark 
-          ? const BorderSide(color: Color(0xFF333333), width: 1)
-          : BorderSide.none,
+        side: isDark
+            ? const BorderSide(color: Color(0xFF333333), width: 1)
+            : BorderSide.none,
       ),
       child: ListTile(
         leading: Icon(
-          icon, 
-          color: iconColor ?? (isDark ? const Color(0xFF29B6F6) : skyBlue), 
-          size: 22.sp
-        ),
+            icon,
+            color: iconColor ?? (isDark ? const Color(0xFF29B6F6) : skyBlue),
+            size: 22.sp),
         title: Text(
           title,
           style: GoogleFonts.poppins(
@@ -431,15 +460,14 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
     );
   }
 
-  // Copy Affiliate ID
   void _copyAffiliateId(BuildContext context, String affiliateId) {
     Clipboard.setData(ClipboardData(text: affiliateId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Affiliate ID কপি করা হয়েছে!',
+          'Affiliate ID Copy করা হয়েছে!',
           style: GoogleFonts.poppins(fontSize: 12.sp),
         ),
         backgroundColor: isDark ? const Color(0xFF29B6F6) : Colors.green,
@@ -452,7 +480,7 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
     );
   }
 
-  // Language Dialog with Dark Mode
+  // Dialogs
   void _showLanguageDialog(BuildContext context, bool isDark) {
     showDialog(
       context: context,
@@ -470,7 +498,7 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
           children: [
             _languageOption(context, 'English', isDark),
             _languageOption(context, 'বাংলা', isDark),
-            _languageOption(context, 'العربية', isDark),
+            _languageOption(context, 'Español', isDark),
           ],
         ),
       ),
@@ -480,7 +508,7 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
   Widget _languageOption(BuildContext context, String language, bool isDark) {
     return ListTile(
       title: Text(
-        language, 
+        language,
         style: GoogleFonts.poppins(
           color: isDark ? Colors.white : Colors.black,
         ),
@@ -491,8 +519,7 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
     );
   }
 
-  // Logout Dialog with Dark Mode
-  void _showLogoutDialog(BuildContext context, bool isDark) {
+  void _showLogoutDialog(BuildContext context, WidgetRef ref, bool isDark) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -519,9 +546,15 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // Logout logic here
+              // Logout logic calling your auth provider
+              try {
+                // await ref.read(authProvider.notifier).logout();
+                if (context.mounted) context.go('/login');
+              } catch (e) {
+                debugPrint("Logout error: $e");
+              }
             },
             child: Text(
               'Logout',
@@ -536,7 +569,6 @@ class ProfileScreen extends ConsumerWidget {  // StatelessWidget থেকে Co
     );
   }
 
-  // Delete Account Dialog with Dark Mode
   void _showDeleteAccountDialog(BuildContext context, bool isDark) {
     showDialog(
       context: context,
