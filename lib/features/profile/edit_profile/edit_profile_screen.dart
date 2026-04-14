@@ -35,6 +35,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   DateTime? _lastNameChange;
   bool _canChangeName = true;
   String? _nameChangeMessage;
+  String _originalName = '';
 
   final ImagePicker _picker = ImagePicker();
 
@@ -69,20 +70,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     try {
       final token = await _getToken();
-      final response = await http.get(
-        Uri.parse("$baseUrl/user/profile"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-      );
+      final response = await http
+          .get(
+            Uri.parse("$baseUrl/user/profile"),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token",
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == 'success') {
         final user = data['user'];
         setState(() {
-          _nameController.text = user['full_name'] ?? '';
+          _originalName = user['full_name'] ?? '';
+          _nameController.text = _originalName;
           _mobileController.text = user['mobile'] ?? '';
           _emailController.text = user['email'] ?? '';
           _referralCodeController.text = user['referral_code'] ?? '';
@@ -123,7 +127,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     if (difference.inDays < 15) {
       _canChangeName = false;
-      _nameChangeMessage = "You can change your name again in $daysRemaining days";
+      _nameChangeMessage =
+          "You can change your name again in $daysRemaining days";
     } else {
       _canChangeName = true;
       _nameChangeMessage = null;
@@ -204,7 +209,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        // 🔥 DYNAMIC THEME COLORS
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
         final textColor = isDark ? Colors.white : Colors.black;
@@ -212,25 +216,27 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         return AlertDialog(
           backgroundColor: dialogBg,
           title: Text(
-            "Delete Profile Picture", 
+            "Delete Profile Picture",
             style: GoogleFonts.poppins(color: textColor),
           ),
           content: Text(
             "Are you sure you want to delete your profile picture?",
-            style: GoogleFonts.poppins(color: isDark ? Colors.white70 : Colors.black87),
+            style: GoogleFonts.poppins(
+                color: isDark ? Colors.white70 : Colors.black87),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(
-                "Cancel", 
-                style: GoogleFonts.poppins(color: isDark ? Colors.grey : Colors.grey.shade600),
+                "Cancel",
+                style: GoogleFonts.poppins(
+                    color: isDark ? Colors.grey : Colors.grey.shade600),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(
-                "Delete", 
+                "Delete",
                 style: GoogleFonts.poppins(color: Colors.red),
               ),
             ),
@@ -271,7 +277,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _saveProfile() async {
     if (!_canChangeName) {
-      _showSnack(_nameChangeMessage ?? "You cannot change name now", Colors.orange);
+      _showSnack(
+          _nameChangeMessage ?? "You cannot change name now", Colors.orange);
       return;
     }
 
@@ -281,17 +288,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return;
     }
 
+    // কোনো পরিবর্তন না হলে save করার দরকার নেই
+    if (newName == _originalName) {
+      _showSnack("No changes made", Colors.orange);
+      return;
+    }
+
     setState(() => _isSaving = true);
     try {
       final token = await _getToken();
-      final response = await http.put(
-        Uri.parse("$baseUrl/user/change-full-name"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({"full_name": newName}),
-      );
+      final response = await http
+          .put(
+            Uri.parse("$baseUrl/user/change-full-name"),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token",
+            },
+            body: jsonEncode({"full_name": newName}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body);
 
@@ -311,19 +326,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
-    
-    // 🔥 DYNAMIC SNACKBAR
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          msg, 
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-          ),
-        ), 
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : color,
+          msg,
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        // FIX: সবসময় semantic color ব্যবহার করো, dark mode এও
+        backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10.r),
@@ -332,8 +342,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
+  // FIX: Backend থেকে full URL আসলে আবার URL বানানো হবে না
   String _getProfileImageUrl() {
     if (_profilePicture == null || _profilePicture!.isEmpty) return "";
+    if (_profilePicture!.startsWith('http')) return _profilePicture!;
     return "$staticBase/uploads/profile_pics/$_profilePicture";
   }
 
@@ -343,21 +355,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final isTablet = _isTablet(context);
     final maxW = isDesktop ? 520.0 : isTablet ? 540.0 : double.infinity;
 
-    // 🔥 DYNAMIC THEME COLORS
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF121212) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.grey.shade400 : Colors.black45;
     final hintColor = isDark ? Colors.grey.shade500 : Colors.black38;
-    final fieldBgReadOnly = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFEEEEEE);
-    final fieldBgEditable = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF3F4F6);
+    final fieldBgReadOnly =
+        isDark ? const Color(0xFF2C2C2C) : const Color(0xFFEEEEEE);
+    final fieldBgEditable =
+        isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF3F4F6);
     final avatarBg = isDark ? const Color(0xFF2C2C2C) : Colors.grey[200];
     final avatarIconColor = isDark ? Colors.grey.shade400 : Colors.grey;
 
     return Container(
-      color: backgroundColor,  // 🔥 DYNAMIC
+      color: backgroundColor,
       child: _isLoading
-          ? Center(child: CircularProgressIndicator(color: skyBlue))
+          ? const Center(child: CircularProgressIndicator(color: skyBlue))
           : _errorMsg != null
               ? _buildError(isDark)
               : SingleChildScrollView(
@@ -368,7 +381,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxW),
-                      child: _buildForm(context, isDark, textColor, subTextColor, hintColor, fieldBgReadOnly, fieldBgEditable, avatarBg, avatarIconColor),
+                      child: _buildForm(
+                          context,
+                          isDark,
+                          textColor,
+                          subTextColor,
+                          hintColor,
+                          fieldBgReadOnly,
+                          fieldBgEditable,
+                          avatarBg,
+                          avatarIconColor),
                     ),
                   ),
                 ),
@@ -383,7 +405,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           const Icon(Icons.error_outline, color: Colors.red, size: 50),
           const SizedBox(height: 12),
           Text(
-            _errorMsg!, 
+            _errorMsg!,
             style: GoogleFonts.poppins(
               color: isDark ? Colors.white : Colors.red,
             ),
@@ -393,7 +415,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             onPressed: _fetchProfile,
             style: ElevatedButton.styleFrom(backgroundColor: skyBlue),
             child: Text(
-              "Retry", 
+              "Retry",
               style: GoogleFonts.poppins(color: Colors.white),
             ),
           ),
@@ -414,6 +436,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     Color avatarIconColor,
   ) {
     final isDesktop = _isDesktop(ctx);
+    final double avatarSize = isDesktop ? 120 : 100.w;
+    final double iconSize = isDesktop ? 60 : 50.w;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,38 +448,59 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             children: [
               Stack(
                 children: [
+                  // FIX: DecorationImage এর বদলে ClipOval + Image.network ব্যবহার করা হয়েছে
+                  // যাতে error হলে fallback icon দেখায়
                   Container(
-                    width: isDesktop ? 120 : 100.w,
-                    height: isDesktop ? 120 : 100.w,
+                    width: avatarSize,
+                    height: avatarSize,
                     decoration: BoxDecoration(
-                      color: avatarBg,  // 🔥 DYNAMIC
+                      color: avatarBg,
                       shape: BoxShape.circle,
                       border: Border.all(color: skyBlue, width: 3),
-                      image: _profilePicture != null
-                          ? DecorationImage(
-                              image: NetworkImage(_getProfileImageUrl()),
-                              fit: BoxFit.cover,
-                              onError: (_, __) {},
-                            )
-                          : null,
                     ),
-                    child: _profilePicture == null
-                        ? Icon(
-                            Icons.person,
-                            size: isDesktop ? 60 : 50.w,
-                            color: avatarIconColor,  // 🔥 DYNAMIC
-                          )
-                        : null,
+                    child: ClipOval(
+                      child: _profilePicture != null
+                          ? Image.network(
+                              _getProfileImageUrl(),
+                              width: avatarSize,
+                              height: avatarSize,
+                              fit: BoxFit.cover,
+                              // FIX: image load fail হলে fallback icon দেখাবে
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.person,
+                                size: iconSize,
+                                color: avatarIconColor,
+                              ),
+                              loadingBuilder: (_, child, progress) {
+                                if (progress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    color: skyBlue,
+                                    value: progress.expectedTotalBytes != null
+                                        ? progress.cumulativeBytesLoaded /
+                                            progress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
+                              },
+                            )
+                          : Icon(
+                              Icons.person,
+                              size: iconSize,
+                              color: avatarIconColor,
+                            ),
+                    ),
                   ),
                   if (_isUploadingImage)
                     Positioned.fill(
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.black54,
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
+                          child:
+                              CircularProgressIndicator(color: Colors.white),
                         ),
                       ),
                     ),
@@ -472,7 +517,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ),
                         child: const Icon(
                           Icons.camera_alt,
-                          color: Colors.white, 
+                          color: Colors.white,
                           size: 20,
                         ),
                       ),
@@ -486,13 +531,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   onPressed: _isUploadingImage ? null : _deleteProfilePicture,
                   icon: const Icon(
                     Icons.delete_outline,
-                    color: Colors.red, 
+                    color: Colors.red,
                     size: 18,
                   ),
                   label: Text(
                     "Remove Photo",
                     style: GoogleFonts.poppins(
-                      color: Colors.red, 
+                      color: Colors.red,
                       fontSize: 12,
                     ),
                   ),
@@ -533,7 +578,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   child: Text(
                     _nameChangeMessage!,
                     style: GoogleFonts.poppins(
-                      color: Colors.orange, 
+                      color: Colors.orange,
                       fontSize: 12,
                     ),
                   ),
@@ -657,15 +702,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           width: double.infinity,
           height: isDesktop ? 52 : 52.h,
           child: _isSaving
-              ? const Center(child: CircularProgressIndicator(color: skyBlue))
+              ? const Center(
+                  child: CircularProgressIndicator(color: skyBlue))
               : ElevatedButton(
                   onPressed: _canChangeName ? _saveProfile : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: skyBlue,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: isDark ? const Color(0xFF333333) : Colors.grey[300],
+                    disabledBackgroundColor: isDark
+                        ? const Color(0xFF333333)
+                        : Colors.grey[300],
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(isDesktop ? 14 : 14.r),
+                      borderRadius:
+                          BorderRadius.circular(isDesktop ? 14 : 14.r),
                     ),
                     elevation: 0,
                   ),
@@ -684,14 +733,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   void _showImageOptions() {
-    // 🔥 DYNAMIC THEME COLORS
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: sheetBg,  // 🔥 DYNAMIC
+      backgroundColor: sheetBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
@@ -703,17 +751,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             Text(
               "Profile Picture",
               style: GoogleFonts.poppins(
-                fontSize: 18, 
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: textColor,  // 🔥 DYNAMIC
+                color: textColor,
               ),
             ),
             SizedBox(height: 20.h),
             ListTile(
               leading: const Icon(Icons.photo_library, color: skyBlue),
               title: Text(
-                "Choose from Gallery", 
-                style: GoogleFonts.poppins(color: textColor),  // 🔥 DYNAMIC
+                "Choose from Gallery",
+                style: GoogleFonts.poppins(color: textColor),
               ),
               onTap: () {
                 Navigator.pop(ctx);
@@ -734,12 +782,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ListTile(
               leading: Icon(
-                Icons.cancel, 
+                Icons.cancel,
                 color: isDark ? Colors.grey : Colors.grey.shade600,
               ),
               title: Text(
-                "Cancel", 
-                style: GoogleFonts.poppins(color: isDark ? Colors.grey : Colors.grey.shade600),
+                "Cancel",
+                style: GoogleFonts.poppins(
+                    color: isDark ? Colors.grey : Colors.grey.shade600),
               ),
               onTap: () => Navigator.pop(ctx),
             ),
@@ -756,7 +805,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             fontSize: _fs(ctx, 13, 13, 14),
-            color: textColor,  // 🔥 DYNAMIC
+            color: textColor,
           ),
         ),
       );
@@ -783,16 +832,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       readOnly: readOnly,
       style: GoogleFonts.poppins(
         fontSize: _fs(ctx, 13, 13, 14),
-        color: readOnly ? subTextColor : textColor,  // 🔥 DYNAMIC
+        color: readOnly ? subTextColor : textColor,
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.poppins(
-          color: hintColor,  // 🔥 DYNAMIC
+          color: hintColor,
           fontSize: _fs(ctx, 13, 13, 14),
         ),
         filled: true,
-        fillColor: readOnly ? fieldBgReadOnly : fieldBgEditable,  // 🔥 DYNAMIC
+        fillColor: readOnly ? fieldBgReadOnly : fieldBgEditable,
         contentPadding: EdgeInsets.symmetric(
           horizontal: isDesktop ? 16 : 16.w,
           vertical: isDesktop ? 15 : 14.h,
@@ -804,7 +853,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         suffixIcon: readOnly
             ? Icon(
                 Icons.lock_outline_rounded,
-                color: subTextColor,  // 🔥 DYNAMIC
+                color: subTextColor,
                 size: 18,
               )
             : null,
