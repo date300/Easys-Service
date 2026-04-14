@@ -37,9 +37,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _nameChangeMessage;
   String _originalName = '';
 
-  // FIX: Cache busting এর জন্য timestamp রাখা হচ্ছে
-  int _imageKey = 0;
-
   final ImagePicker _picker = ImagePicker();
 
   bool _isDesktop(BuildContext ctx) => MediaQuery.of(ctx).size.width >= 1100;
@@ -97,9 +94,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _idVerified = user['id_verified'] == 1 || user['id_verified'] == true;
           _profilePicture = user['profile_picture'];
 
-          // FIX: নতুন প্রোফাইল লোড হলে imageKey update করো যাতে cache bust হয়
-          _imageKey = DateTime.now().millisecondsSinceEpoch;
-
           if (user['last_name_change'] != null) {
             _lastNameChange = DateTime.parse(user['last_name_change']);
           } else {
@@ -107,9 +101,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           }
           _checkNameChangeEligibility();
         });
-
-        // Debug: URL লগ করো
-        debugPrint("Profile picture URL: ${_getProfileImageUrl()}");
       } else {
         setState(() {
           _errorMsg = data['message'] ?? 'Failed to load profile';
@@ -202,7 +193,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (streamedResponse.statusCode == 200 && data['status'] == 'success') {
         _showSnack("Profile picture updated successfully", Colors.green);
-        // FIX: আপলোড সফল হলে profile আবার fetch করো, imageKey update হবে
         await _fetchProfile();
       } else {
         _showSnack(data['message'] ?? "Failed to upload image", Colors.red);
@@ -273,11 +263,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (response.statusCode == 200 && data['status'] == 'success') {
         _showSnack("Profile picture deleted successfully", Colors.green);
-        // FIX: delete হলে _profilePicture null করো এবং imageKey reset করো
-        setState(() {
-          _profilePicture = null;
-          _imageKey = 0;
-        });
+        setState(() => _profilePicture = null);
       } else {
         _showSnack(data['message'] ?? "Failed to delete image", Colors.red);
       }
@@ -302,6 +288,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return;
     }
 
+    // কোনো পরিবর্তন না হলে save করার দরকার নেই
     if (newName == _originalName) {
       _showSnack("No changes made", Colors.orange);
       return;
@@ -345,6 +332,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           msg,
           style: GoogleFonts.poppins(color: Colors.white),
         ),
+        // FIX: সবসময় semantic color ব্যবহার করো, dark mode এও
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -354,8 +342,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // FIX: Backend থেকে full URL আসলে সরাসরি ব্যবহার করো
-  // না আসলে নিজে বানাও
+  // FIX: Backend থেকে full URL আসলে আবার URL বানানো হবে না
   String _getProfileImageUrl() {
     if (_profilePicture == null || _profilePicture!.isEmpty) return "";
     if (_profilePicture!.startsWith('http')) return _profilePicture!;
@@ -461,6 +448,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             children: [
               Stack(
                 children: [
+                  // FIX: DecorationImage এর বদলে ClipOval + Image.network ব্যবহার করা হয়েছে
+                  // যাতে error হলে fallback icon দেখায়
                   Container(
                     width: avatarSize,
                     height: avatarSize,
@@ -472,27 +461,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     child: ClipOval(
                       child: _profilePicture != null
                           ? Image.network(
-                              // FIX: _imageKey দিয়ে ValueKey ব্যবহার করো
-                              // এতে প্রতিবার নতুন ছবি আপলোডের পর cache bust হয়
-                              // এবং Flutter নতুন করে ছবি load করে
                               _getProfileImageUrl(),
-                              key: ValueKey(_imageKey),
                               width: avatarSize,
                               height: avatarSize,
                               fit: BoxFit.cover,
-                              // FIX: headers দিয়ে cache disable করো
-                              headers: const {
-                                'Cache-Control': 'no-cache',
-                                'Pragma': 'no-cache',
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                debugPrint("Image load error: $error");
-                                return Icon(
-                                  Icons.person,
-                                  size: iconSize,
-                                  color: avatarIconColor,
-                                );
-                              },
+                              // FIX: image load fail হলে fallback icon দেখাবে
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.person,
+                                size: iconSize,
+                                color: avatarIconColor,
+                              ),
                               loadingBuilder: (_, child, progress) {
                                 if (progress == null) return child;
                                 return Center(
