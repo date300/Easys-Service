@@ -357,7 +357,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 String _getProfileImageUrl() {
   if (_profilePicture == null || _profilePicture!.isEmpty) return "";
   if (_profilePicture!.startsWith('http')) return _profilePicture!;
-  return "$staticBase/uploads/profile_pics/$_profilePicture?v=$_imageKey";
+  return "$staticBase/public/uploads/profile_pics/$_profilePicture?v=$_imageKey";
 }
   @override
   Widget build(BuildContext context) {
