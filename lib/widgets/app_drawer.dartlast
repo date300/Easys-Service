@@ -29,20 +29,28 @@ class AppDrawer extends ConsumerWidget {
             ? 280
             : MediaQuery.of(context).size.width * 0.78;
 
-    // ইউজার ডেটা - আপনার প্রোভাইডার থেকে নিন
-    // এখন ডেমো ডেটা দেখানো হচ্ছে, পরে আসল ডেটা দিয়ে রিপ্লেস করুন
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final drawerBackground = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final dividerColor = isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE);
+    final avatarBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final menuItemBg = isDark ? const Color(0xFF252525) : Colors.transparent;
+    final splashColor = isDark ? skyBlue.withOpacity(0.15) : skyBlue.withOpacity(0.1);
+
     final userProfile = isLoggedIn
         ? {
-            'fullName': 'মোঃ রহিম উদ্দিন',
+            'fullName': 'মোঃ রahim মিয়া',
             'affiliateId': 'AFF123456',
-            'profileImage': null, // নেটওয়ার্ক ইমেজ URL বা null
+            'profileImage': null,
           }
         : null;
 
     return SizedBox(
       width: drawerWidth,
       child: Drawer(
-        backgroundColor: Colors.white,
+        backgroundColor: drawerBackground,  // 🔥 DYNAMIC
         child: Column(
           children: [
             // Header with Profile Info
@@ -55,7 +63,7 @@ class AppDrawer extends ConsumerWidget {
                 right: 20,
               ),
               decoration: const BoxDecoration(
-                color: skyBlue,
+                color: skyBlue,  // Header always skyBlue
                 borderRadius: BorderRadius.only(
                   bottomRight: Radius.circular(30),
                 ),
@@ -69,7 +77,7 @@ class AppDrawer extends ConsumerWidget {
                           height: 80,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white,
+                            color: avatarBgColor,  // 🔥 DYNAMIC
                             border: Border.all(
                               color: Colors.white,
                               width: 3,
@@ -88,10 +96,10 @@ class AppDrawer extends ConsumerWidget {
                                     userProfile['profileImage']!,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      return _buildDefaultAvatar(userProfile['fullName']!);
+                                      return _buildDefaultAvatar(userProfile['fullName']!, isDark);
                                     },
                                   )
-                                : _buildDefaultAvatar(userProfile['fullName']!),
+                                : _buildDefaultAvatar(userProfile['fullName']!, isDark),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -112,7 +120,7 @@ class AppDrawer extends ConsumerWidget {
                         
                         // Affiliate ID with Copy Button
                         GestureDetector(
-                          onTap: () => _copyAffiliateId(context, userProfile['affiliateId']!),
+                          onTap: () => _copyAffiliateId(context, userProfile['affiliateId']!, isDark),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -208,45 +216,54 @@ class AppDrawer extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  // 1. Voucher Balance (শুধু লগইন করা ইউজারদের জন্য)
+                  // 1. Voucher Balance
                   if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.card_giftcard_rounded,
                       "Voucher Balance",
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.go('/voucher-balance');
                       },
                     ),
 
-                  // 2. Royalty Salary (শুধু লগইন করা ইউজারদের জন্য)
+                  // 2. Royalty Salary
                   if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.workspace_premium_rounded,
                       "Royalty Salary",
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
                         context.go('/royalty-salary');
                       },
                     ),
 
-                  // 3. Leaderboard (সবার জন্য)
+                  // 3. Leaderboard
                   _drawerItem(
                     context,
                     Icons.emoji_events_rounded,
                     "Leaderboard",
                     iconColor: Colors.amber,
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/leaderboard');
                     },
                   ),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                    child: Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                    child: Divider(color: dividerColor, thickness: 1.5),  // 🔥 DYNAMIC
                   ),
 
                   // 4. Support Center
@@ -254,6 +271,9 @@ class AppDrawer extends ConsumerWidget {
                     context,
                     Icons.support_agent_rounded,
                     "Support Center",
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/support');
@@ -266,6 +286,9 @@ class AppDrawer extends ConsumerWidget {
                     Icons.facebook_rounded,
                     "Facebook",
                     iconColor: Colors.blue,
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       _launchURL('https://facebook.com/yourpage');
@@ -278,6 +301,9 @@ class AppDrawer extends ConsumerWidget {
                     Icons.smart_display_rounded,
                     "YouTube",
                     iconColor: Colors.red,
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       _launchURL('https://youtube.com/yourchannel');
@@ -290,6 +316,9 @@ class AppDrawer extends ConsumerWidget {
                     Icons.telegram_rounded,
                     "Telegram",
                     iconColor: Colors.blueAccent,
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       _launchURL('https://t.me/yourgroup');
@@ -302,15 +331,18 @@ class AppDrawer extends ConsumerWidget {
                     Icons.language_rounded,
                     "Website",
                     iconColor: Colors.green,
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       _launchURL('https://yourwebsite.com');
                     },
                   ),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                    child: Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                    child: Divider(color: dividerColor, thickness: 1.5),  // 🔥 DYNAMIC
                   ),
 
                   // 9. Privacy Policy
@@ -318,6 +350,9 @@ class AppDrawer extends ConsumerWidget {
                     context,
                     Icons.privacy_tip_rounded,
                     "Privacy Policy",
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/privacy-policy');
@@ -329,6 +364,9 @@ class AppDrawer extends ConsumerWidget {
                     context,
                     Icons.description_rounded,
                     "Terms & Conditions",
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/terms');
@@ -340,6 +378,9 @@ class AppDrawer extends ConsumerWidget {
                     context,
                     Icons.info_rounded,
                     "About Us",
+                    textColor: textColor,
+                    subTextColor: subTextColor,
+                    splashColor: splashColor,
                     onTap: () {
                       Navigator.pop(context);
                       context.go('/about');
@@ -349,7 +390,7 @@ class AppDrawer extends ConsumerWidget {
               ),
             ),
 
-            // 12. Logout Button (শুধু লগইন করা ইউজারদের জন্য)
+            // 12. Logout Button
             if (isLoggedIn)
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 10, 15, 25),
@@ -379,15 +420,15 @@ class AppDrawer extends ConsumerWidget {
     );
   }
 
-  // ডিফল্ট অ্যাভাটার বিল্ড করুন
-  Widget _buildDefaultAvatar(String name) {
+  // Default Avatar with Dynamic Color
+  Widget _buildDefaultAvatar(String name, bool isDark) {
     return Container(
-      color: skyBlue.withOpacity(0.1),
+      color: isDark ? const Color(0xFF2C2C2C) : skyBlue.withOpacity(0.1),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
           style: GoogleFonts.poppins(
-            color: skyBlue,
+            color: isDark ? skyBlue : skyBlue,
             fontSize: 32,
             fontWeight: FontWeight.bold,
           ),
@@ -396,8 +437,8 @@ class AppDrawer extends ConsumerWidget {
     );
   }
 
-  // Affiliate ID কপি করুন
-  void _copyAffiliateId(BuildContext context, String affiliateId) {
+  // Copy Affiliate ID with Dynamic Snackbar
+  void _copyAffiliateId(BuildContext context, String affiliateId, bool isDark) {
     Clipboard.setData(ClipboardData(text: affiliateId));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -405,7 +446,7 @@ class AppDrawer extends ConsumerWidget {
           'Affiliate ID কপি করা হয়েছে!',
           style: GoogleFonts.poppins(),
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: isDark ? const Color(0xFF29B6F6) : Colors.green,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -415,11 +456,15 @@ class AppDrawer extends ConsumerWidget {
     );
   }
 
+  // Drawer Item with Dynamic Colors
   Widget _drawerItem(
     BuildContext context,
     IconData icon,
     String title, {
     Color? iconColor,
+    required Color textColor,
+    required Color subTextColor,
+    required Color splashColor,
     required VoidCallback onTap,
   }) {
     return ListTile(
@@ -430,22 +475,21 @@ class AppDrawer extends ConsumerWidget {
         style: GoogleFonts.poppins(
           fontSize: 13,
           fontWeight: FontWeight.w500,
-          color: Colors.black87,
+          color: textColor,  // 🔥 DYNAMIC
         ),
       ),
-      trailing: Icon(Icons.arrow_forward_ios_rounded,
-          size: 13, color: Colors.grey.shade400),
+      trailing: Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 13, 
+        color: subTextColor,  // 🔥 DYNAMIC
+      ),
       onTap: onTap,
-      splashColor: skyBlue.withOpacity(0.1),
+      splashColor: splashColor,  // 🔥 DYNAMIC
     );
   }
 
-  // URL লaunch করার জন্য হেল্পার মেথড
+  // URL Launch
   void _launchURL(String url) async {
-    // url_launcher প্যাকেজ ব্যবহার করুন
-    // import 'package:url_launcher/url_launcher.dart';
-    // if (await canLaunchUrl(Uri.parse(url))) {
-    //   await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    // }
+    // url_launcher implement করুন
   }
 }
