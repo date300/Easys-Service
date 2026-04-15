@@ -7,7 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/guards/verification_guard.dart'; 
-// ????? ??? provider ???? main.dart ???? ?? ????????? ???? ???? ????
 import '../../main.dart'; 
 
 class Service {
@@ -44,16 +43,13 @@ final servicesProvider = Provider<List<Service>>((ref) {
   ];
 });
 
-// See More অপশনটি কন্ট্রোল করার জন্য Provider
+// See More functionality Provider
 final isExpandedProvider = StateProvider<bool>((ref) => false);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   static const Color kPrimary = Color(0xFF29B6F6); 
-  static const Color kBackground = Color(0xFFF8FAFC); 
-  static const Color kTextDark = Color(0xFF0F172A);
-  static const Color kTextMid = Color(0xFF475569);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -63,8 +59,18 @@ class HomeScreen extends ConsumerWidget {
     final isDesktop = screenWidth >= 1024;
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
+    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
+    final cardBackground = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.04);
+    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
+    final lockBgColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
+
     return Container(
-      color: kBackground,
+      color: kBackground,  // 🔥 DYNAMIC
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
@@ -80,9 +86,20 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader(context, isDesktop),
+                      _buildSectionHeader(context, isDesktop, kTextDark, kTextMid),
                       SizedBox(height: isDesktop ? 28 : 20.h),
-                      _buildCategoriesGrid(context, ref, services, isDesktop: isDesktop, screenWidth: screenWidth),
+                      _buildCategoriesGrid(
+                        context, 
+                        ref, 
+                        services, 
+                        isDesktop: isDesktop, 
+                        screenWidth: screenWidth,
+                        cardBackground: cardBackground,
+                        shadowColor: shadowColor,
+                        borderColor: borderColor,
+                        lockBgColor: lockBgColor,
+                        kTextDark: kTextDark,
+                      ),
                       SizedBox(height: 40.h),
                     ],
                   ),
@@ -95,31 +112,58 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, bool isDesktop) {
+  Widget _buildSectionHeader(BuildContext context, bool isDesktop, Color kTextDark, Color kTextMid) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Our Services', style: GoogleFonts.poppins(fontSize: isDesktop ? 24 : 18.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-            Text('Everything you need in one place', style: GoogleFonts.poppins(fontSize: isDesktop ? 13 : 11.sp, color: kTextMid)),
+            Text(
+              'Our Services', 
+              style: GoogleFonts.poppins(
+                fontSize: isDesktop ? 24 : 18.sp, 
+                fontWeight: FontWeight.bold, 
+                color: kTextDark,  // 🔥 DYNAMIC
+              ),
+            ),
+            Text(
+              'Everything you need in one place', 
+              style: GoogleFonts.poppins(
+                fontSize: isDesktop ? 13 : 11.sp, 
+                color: kTextMid,  // 🔥 DYNAMIC
+              ),
+            ),
           ],
         ),
-        Text('See All', style: GoogleFonts.poppins(fontSize: isDesktop ? 13 : 12.sp, color: kPrimary, fontWeight: FontWeight.w600)),
+        Text(
+          'See All', 
+          style: GoogleFonts.poppins(
+            fontSize: isDesktop ? 13 : 12.sp, 
+            color: kPrimary, 
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     ).animate().fadeIn(duration: 500.ms).slideX();
   }
 
-  Widget _buildCategoriesGrid(BuildContext context, WidgetRef ref, List<Service> services, {required bool isDesktop, required double screenWidth}) {
+  Widget _buildCategoriesGrid(
+    BuildContext context, 
+    WidgetRef ref, 
+    List<Service> services, {
+    required bool isDesktop, 
+    required double screenWidth,
+    required Color cardBackground,
+    required Color shadowColor,
+    required Color borderColor,
+    required Color lockBgColor,
+    required Color kTextDark,
+  }) {
     int crossAxisCount = screenWidth >= 1200 ? 8 : (screenWidth >= 900 ? 6 : (screenWidth >= 600 ? 5 : 4));
     
-    // Check if user clicked 'See More'
     final isExpanded = ref.watch(isExpandedProvider);
-    
-    // Calculate items for 2 rows
     final int initialItemsCount = crossAxisCount * 2;
-    
     final displayedServices = isExpanded ? services : services.take(initialItemsCount).toList();
 
     return Column(
@@ -135,23 +179,37 @@ class HomeScreen extends ConsumerWidget {
           ),
           itemCount: displayedServices.length,
           itemBuilder: (context, index) {
-            return _ServiceCard(service: displayedServices[index], isDesktop: isDesktop)
-                .animate()
+            return _ServiceCard(
+              service: displayedServices[index], 
+              isDesktop: isDesktop,
+              cardBackground: cardBackground,
+              shadowColor: shadowColor,
+              borderColor: borderColor,
+              lockBgColor: lockBgColor,
+              kTextDark: kTextDark,
+            ).animate()
                 .fade(duration: 400.ms, delay: (index * 40).ms)
                 .scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack);
           },
         ),
         
-        // Show 'See More' button if there are more items than initial count
         if (services.length > initialItemsCount)
           Padding(
             padding: EdgeInsets.only(top: 16.h),
             child: TextButton.icon(
               onPressed: () => ref.read(isExpandedProvider.notifier).state = !isExpanded,
-              icon: Icon(isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, size: 16.sp, color: kPrimary),
+              icon: Icon(
+                isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, 
+                size: 16.sp, 
+                color: kPrimary,
+              ),
               label: Text(
                 isExpanded ? 'Show Less' : 'See More Services',
-                style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w600, color: kPrimary),
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp, 
+                  fontWeight: FontWeight.w600, 
+                  color: kPrimary,
+                ),
               ),
             ),
           ),
@@ -163,8 +221,21 @@ class HomeScreen extends ConsumerWidget {
 class _ServiceCard extends ConsumerWidget {
   final Service service;
   final bool isDesktop;
+  final Color cardBackground;
+  final Color shadowColor;
+  final Color borderColor;
+  final Color lockBgColor;
+  final Color kTextDark;
 
-  const _ServiceCard({required this.service, this.isDesktop = false});
+  const _ServiceCard({
+    required this.service, 
+    this.isDesktop = false,
+    required this.cardBackground,
+    required this.shadowColor,
+    required this.borderColor,
+    required this.lockBgColor,
+    required this.kTextDark,
+  });
 
   void _navigateToDetail(BuildContext context, WidgetRef ref) {
     ref.read(isDetailViewProvider.notifier).state = true;
@@ -173,7 +244,8 @@ class _ServiceCard extends ConsumerWidget {
   }
 
   void _onTap(BuildContext context, WidgetRef ref) {
-    // Under construction check
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (service.name == 'Loan' || service.name == 'Campaign') {
       return; 
     }
@@ -181,9 +253,12 @@ class _ServiceCard extends ConsumerWidget {
     if (service.route == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${service.name} coming Soon!', style: GoogleFonts.poppins(fontSize: 13.sp)),
+          content: Text(
+            '${service.name} coming Soon!', 
+            style: GoogleFonts.poppins(fontSize: 13.sp),
+          ),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF0F172A),
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF0F172A),  // 🔥 DYNAMIC
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
           duration: const Duration(seconds: 2),
         ),
@@ -207,6 +282,7 @@ class _ServiceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isUnderConstruction = service.name == 'Loan' || service.name == 'Campaign';
     final bool hasRoute = service.route != null && !isUnderConstruction;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () => _onTap(context, ref),
@@ -221,11 +297,15 @@ class _ServiceCard extends ConsumerWidget {
                 height: isDesktop ? 65.w : 52.w,
                 width: isDesktop ? 65.w : 52.w,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardBackground,  // 🔥 DYNAMIC
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
+                  border: Border.all(color: borderColor, width: 1),  // 🔥 DYNAMIC
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                    BoxShadow(
+                      color: shadowColor,  // 🔥 DYNAMIC
+                      blurRadius: 10, 
+                      offset: const Offset(0, 4),
+                    ),
                   ],
                 ),
                 child: Center(
@@ -243,14 +323,14 @@ class _ServiceCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: lockBgColor,  // 🔥 DYNAMIC
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
+                      border: Border.all(color: cardBackground, width: 1.5),  // 🔥 DYNAMIC
                     ),
                     child: Icon(
                       isUnderConstruction ? Icons.construction : CupertinoIcons.lock_fill, 
                       size: 10.sp, 
-                      color: Colors.grey.shade500
+                      color: Colors.grey.shade500,
                     ),
                   ),
                 ),
@@ -267,7 +347,7 @@ class _ServiceCard extends ConsumerWidget {
                   style: GoogleFonts.poppins(
                     fontSize: isDesktop ? 12.sp : 10.sp,
                     fontWeight: hasRoute ? FontWeight.w500 : FontWeight.w400,
-                    color: hasRoute ? HomeScreen.kTextDark : Colors.grey.shade500,
+                    color: hasRoute ? kTextDark : Colors.grey.shade500,  // 🔥 DYNAMIC
                     height: 1.2,
                   ),
                   textAlign: TextAlign.center,

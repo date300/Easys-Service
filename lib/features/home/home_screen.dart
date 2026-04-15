@@ -9,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/guards/verification_guard.dart'; 
 import '../../main.dart'; 
 
+// ==================== MODELS ====================
+
 class Service {
   final String name;
   final IconData icon;
@@ -27,6 +29,24 @@ class Service {
   });
 }
 
+class Product {
+  final String id;
+  final String name;
+  final double price;
+  final String imageUrl;
+  final String? discountPrice;
+
+  const Product({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.imageUrl,
+    this.discountPrice,
+  });
+}
+
+// ==================== PROVIDERS ====================
+
 final servicesProvider = Provider<List<Service>>((ref) {
   return const [
     Service(name: 'Recharge', icon: CupertinoIcons.device_phone_portrait, color: Color(0xFF6366F1), secondaryColor: Color(0xFF818CF8), route: '/recharge', requiresVerification: false),
@@ -43,8 +63,22 @@ final servicesProvider = Provider<List<Service>>((ref) {
   ];
 });
 
-// See More functionality Provider
 final isExpandedProvider = StateProvider<bool>((ref) => false);
+
+final featuredProductsProvider = Provider<List<Product>>((ref) {
+  return const [
+    Product(id: '1', name: 'Wireless Earbuds Pro', price: 2499.00, imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400'),
+    Product(id: '2', name: 'Smart Watch Series 7', price: 8999.00, imageUrl: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400'),
+    Product(id: '3', name: 'Portable Power Bank', price: 1899.00, imageUrl: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400'),
+    Product(id: '4', name: 'Bluetooth Speaker', price: 3299.00, imageUrl: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400'),
+    Product(id: '5', name: 'Phone Case Premium', price: 799.00, imageUrl: 'https://images.unsplash.com/photo-1603313011101-320f26a4f6f6?w=400'),
+    Product(id: '6', name: 'USB-C Cable 2M', price: 499.00, imageUrl: 'https://images.unsplash.com/photo-1625153669422-6b3c9a3b7c9f?w=400'),
+    Product(id: '7', name: 'Wireless Charger Pad', price: 1599.00, imageUrl: 'https://images.unsplash.com/photo-1586816879360-004f5b0c51e3?w=400'),
+    Product(id: '8', name: 'Car Phone Mount', price: 699.00, imageUrl: 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=400'),
+  ];
+});
+
+// ==================== HOME SCREEN ====================
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -54,12 +88,13 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final services = ref.watch(servicesProvider);
+    final products = ref.watch(featuredProductsProvider);
     final screenWidth = MediaQuery.of(context).size.width;
 
     final isDesktop = screenWidth >= 1024;
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
 
-    // 🔥 DYNAMIC THEME COLORS
+    // ? DYNAMIC THEME COLORS
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -70,7 +105,7 @@ class HomeScreen extends ConsumerWidget {
     final lockBgColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
 
     return Container(
-      color: kBackground,  // 🔥 DYNAMIC
+      color: kBackground,
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: isDesktop ? 1200 : double.infinity),
@@ -86,7 +121,16 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader(context, isDesktop, kTextDark, kTextMid),
+                      // ==================== SERVICES SECTION ====================
+                      _buildSectionHeader(
+                        context, 
+                        isDesktop, 
+                        kTextDark, 
+                        kTextMid,
+                        title: 'Our Services',
+                        subtitle: 'Everything you need in one place',
+                        showViewAll: true,
+                      ),
                       SizedBox(height: isDesktop ? 28 : 20.h),
                       _buildCategoriesGrid(
                         context, 
@@ -100,6 +144,30 @@ class HomeScreen extends ConsumerWidget {
                         lockBgColor: lockBgColor,
                         kTextDark: kTextDark,
                       ),
+                      
+                      SizedBox(height: isDesktop ? 48 : 32.h),
+                      
+                      // ==================== PRODUCTS SECTION ====================
+                      _buildSectionHeader(
+                        context, 
+                        isDesktop, 
+                        kTextDark, 
+                        kTextMid,
+                        title: 'Featured Products',
+                        subtitle: 'Trending items for you',
+                        showViewAll: true,
+                      ),
+                      SizedBox(height: isDesktop ? 24 : 16.h),
+                      _buildHorizontalProductList(
+                        context,
+                        products,
+                        isDesktop: isDesktop,
+                        cardBackground: cardBackground,
+                        shadowColor: shadowColor,
+                        kTextDark: kTextDark,
+                        kTextMid: kTextMid,
+                      ),
+                      
                       SizedBox(height: 40.h),
                     ],
                   ),
@@ -112,42 +180,73 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, bool isDesktop, Color kTextDark, Color kTextMid) {
+  // ==================== SECTION HEADER ====================
+  Widget _buildSectionHeader(
+    BuildContext context, 
+    bool isDesktop, 
+    Color kTextDark, 
+    Color kTextMid, {
+    required String title,
+    required String subtitle,
+    bool showViewAll = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Our Services', 
+              title, 
               style: GoogleFonts.poppins(
                 fontSize: isDesktop ? 24 : 18.sp, 
                 fontWeight: FontWeight.bold, 
-                color: kTextDark,  // 🔥 DYNAMIC
+                color: kTextDark,
               ),
             ),
             Text(
-              'Everything you need in one place', 
+              subtitle, 
               style: GoogleFonts.poppins(
                 fontSize: isDesktop ? 13 : 11.sp, 
-                color: kTextMid,  // 🔥 DYNAMIC
+                color: kTextMid,
               ),
             ),
           ],
         ),
-        Text(
-          'See All', 
-          style: GoogleFonts.poppins(
-            fontSize: isDesktop ? 13 : 12.sp, 
-            color: kPrimary, 
-            fontWeight: FontWeight.w600,
+        if (showViewAll)
+          TextButton(
+            onPressed: () {},
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'View All', 
+                  style: GoogleFonts.poppins(
+                    fontSize: isDesktop ? 13 : 12.sp, 
+                    color: kPrimary, 
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(width: 4.w),
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 14.sp,
+                  color: kPrimary,
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     ).animate().fadeIn(duration: 500.ms).slideX();
   }
 
+  // ==================== SERVICES GRID ====================
   Widget _buildCategoriesGrid(
     BuildContext context, 
     WidgetRef ref, 
@@ -216,8 +315,47 @@ class HomeScreen extends ConsumerWidget {
       ],
     );
   }
+
+  // ==================== HORIZONTAL PRODUCT LIST ====================
+  Widget _buildHorizontalProductList(
+    BuildContext context,
+    List<Product> products, {
+    required bool isDesktop,
+    required Color cardBackground,
+    required Color shadowColor,
+    required Color kTextDark,
+    required Color kTextMid,
+  }) {
+    return SizedBox(
+      height: isDesktop ? 220.h : 200.h,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.only(
+          left: isDesktop ? 0 : 10.w, 
+          right: 20.w,
+          top: 8.h,
+          bottom: 8.h,
+        ),
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          return _ProductCard(
+            product: products[index],
+            isDesktop: isDesktop,
+            cardBackground: cardBackground,
+            shadowColor: shadowColor,
+            kTextDark: kTextDark,
+            kTextMid: kTextMid,
+          ).animate()
+            .fade(duration: 400.ms, delay: (index * 60).ms)
+            .slideX(begin: 20, curve: Curves.easeOut);
+        },
+      ),
+    );
+  }
 }
 
+// ==================== SERVICE CARD ====================
 class _ServiceCard extends ConsumerWidget {
   final Service service;
   final bool isDesktop;
@@ -258,7 +396,7 @@ class _ServiceCard extends ConsumerWidget {
             style: GoogleFonts.poppins(fontSize: 13.sp),
           ),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF0F172A),  // 🔥 DYNAMIC
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF0F172A),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
           duration: const Duration(seconds: 2),
         ),
@@ -282,7 +420,6 @@ class _ServiceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isUnderConstruction = service.name == 'Loan' || service.name == 'Campaign';
     final bool hasRoute = service.route != null && !isUnderConstruction;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () => _onTap(context, ref),
@@ -297,12 +434,12 @@ class _ServiceCard extends ConsumerWidget {
                 height: isDesktop ? 65.w : 52.w,
                 width: isDesktop ? 65.w : 52.w,
                 decoration: BoxDecoration(
-                  color: cardBackground,  // 🔥 DYNAMIC
+                  color: cardBackground,
                   shape: BoxShape.circle,
-                  border: Border.all(color: borderColor, width: 1),  // 🔥 DYNAMIC
+                  border: Border.all(color: borderColor, width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: shadowColor,  // 🔥 DYNAMIC
+                      color: shadowColor,
                       blurRadius: 10, 
                       offset: const Offset(0, 4),
                     ),
@@ -323,9 +460,9 @@ class _ServiceCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: lockBgColor,  // 🔥 DYNAMIC
+                      color: lockBgColor,
                       shape: BoxShape.circle,
-                      border: Border.all(color: cardBackground, width: 1.5),  // 🔥 DYNAMIC
+                      border: Border.all(color: cardBackground, width: 1.5),
                     ),
                     child: Icon(
                       isUnderConstruction ? Icons.construction : CupertinoIcons.lock_fill, 
@@ -347,7 +484,7 @@ class _ServiceCard extends ConsumerWidget {
                   style: GoogleFonts.poppins(
                     fontSize: isDesktop ? 12.sp : 10.sp,
                     fontWeight: hasRoute ? FontWeight.w500 : FontWeight.w400,
-                    color: hasRoute ? kTextDark : Colors.grey.shade500,  // 🔥 DYNAMIC
+                    color: hasRoute ? kTextDark : Colors.grey.shade500,
                     height: 1.2,
                   ),
                   textAlign: TextAlign.center,
@@ -362,6 +499,122 @@ class _ServiceCard extends ConsumerWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ==================== PRODUCT CARD ====================
+class _ProductCard extends StatelessWidget {
+  final Product product;
+  final bool isDesktop;
+  final Color cardBackground;
+  final Color shadowColor;
+  final Color kTextDark;
+  final Color kTextMid;
+
+  const _ProductCard({
+    required this.product,
+    required this.isDesktop,
+    required this.cardBackground,
+    required this.shadowColor,
+    required this.kTextDark,
+    required this.kTextMid,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cardWidth = isDesktop ? 140.w : 130.w;
+    final cardHeight = isDesktop ? 200.h : 180.h;
+    final imageSize = isDesktop ? 120.w : 110.w;
+
+    return GestureDetector(
+      onTap: () {
+        debugPrint('Tapped: ${product.name}');
+      },
+      child: Container(
+        width: cardWidth,
+        height: cardHeight,
+        margin: EdgeInsets.only(right: 10.w),
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Image (Square 1:1)
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+              child: Container(
+                width: cardWidth,
+                height: imageSize,
+                color: Colors.grey.shade100,
+                child: Image.network(
+                  product.imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CupertinoActivityIndicator(radius: 12.r),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey.shade200,
+                      child: Icon(
+                        CupertinoIcons.photo,
+                        size: 32.sp,
+                        color: Colors.grey.shade400,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            // Product Info
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(10.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Product Name (1 line, overflow hidden)
+                    Text(
+                      product.name,
+                      style: GoogleFonts.poppins(
+                        fontSize: isDesktop ? 12.sp : 11.sp,
+                        fontWeight: FontWeight.w500,
+                        color: kTextDark,
+                        height: 1.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    // Price with ৳ symbol
+                    Text(
+                      '৳${product.price.toStringAsFixed(0)}',
+                      style: GoogleFonts.poppins(
+                        fontSize: isDesktop ? 14.sp : 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF29B6F6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
