@@ -33,29 +33,33 @@ class Product {
   final String id;
   final String name;
   final double price;
+  final String imageUrl;
   final String? discountPrice;
 
   const Product({
     required this.id,
     required this.name,
     required this.price,
+    required this.imageUrl,
     this.discountPrice,
   });
 }
 
 class BannerItem {
   final String id;
+  final String imageUrl;
   final String? title;
   final String? subtitle;
-  final Color bgColor;
-  final IconData icon;
+  final Color? bgColor;
+  final String? route;
 
   const BannerItem({
     required this.id,
+    required this.imageUrl,
     this.title,
     this.subtitle,
-    required this.bgColor,
-    required this.icon,
+    this.bgColor,
+    this.route,
   });
 }
 
@@ -81,22 +85,22 @@ final isExpandedProvider = StateProvider<bool>((ref) => false);
 
 final featuredProductsProvider = Provider<List<Product>>((ref) {
   return const [
-    Product(id: '1', name: 'Earbuds Pro', price: 2499.00),
-    Product(id: '2', name: 'Smart Watch', price: 8999.00),
-    Product(id: '3', name: 'Power Bank', price: 1899.00),
-    Product(id: '4', name: 'Speaker', price: 3299.00),
-    Product(id: '5', name: 'Phone Case', price: 799.00),
-    Product(id: '6', name: 'USB-C Cable', price: 499.00),
-    Product(id: '7', name: 'Charger Pad', price: 1599.00),
-    Product(id: '8', name: 'Car Mount', price: 699.00),
+    Product(id: '1', name: 'Earbuds Pro', price: 2499.00, imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400'),
+    Product(id: '2', name: 'Smart Watch', price: 8999.00, imageUrl: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400'),
+    Product(id: '3', name: 'Power Bank', price: 1899.00, imageUrl: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400'),
+    Product(id: '4', name: 'Speaker', price: 3299.00, imageUrl: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400'),
+    Product(id: '5', name: 'Phone Case', price: 799.00, imageUrl: 'https://images.unsplash.com/photo-1603313011101-320f26a4f6f6?w=400'),
+    Product(id: '6', name: 'USB-C Cable', price: 499.00, imageUrl: 'https://images.unsplash.com/photo-1625153669422-6b3c9a3b7c9f?w=400'),
+    Product(id: '7', name: 'Charger Pad', price: 1599.00, imageUrl: 'https://images.unsplash.com/photo-1586816879360-004f5b0c51e3?w=400'),
+    Product(id: '8', name: 'Car Mount', price: 699.00, imageUrl: 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=400'),
   ];
 });
 
 final bannerProvider = Provider<List<BannerItem>>((ref) {
   return const [
-    BannerItem(id: '1', title: 'Mega Sale', subtitle: 'Up to 50% off', bgColor: Color(0xFF6366F1), icon: CupertinoIcons.tag_fill),
-    BannerItem(id: '2', title: 'New Arrivals', subtitle: 'Latest gadgets', bgColor: Color(0xFFEA580C), icon: CupertinoIcons.bolt_fill),
-    BannerItem(id: '3', title: 'Free Delivery', subtitle: 'On orders over ৳500', bgColor: Color(0xFF16A34A), icon: CupertinoIcons.cart_fill),
+    BannerItem(id: '1', imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800', title: 'Mega Sale', subtitle: 'Up to 50% off', bgColor: Color(0xFF6366F1)),
+    BannerItem(id: '2', imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800', title: 'New Arrivals', subtitle: 'Latest gadgets', bgColor: Color(0xFFEA580C)),
+    BannerItem(id: '3', imageUrl: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800', title: 'Free Delivery', subtitle: 'On orders over ৳500', bgColor: Color(0xFF16A34A)),
   ];
 });
 
@@ -183,7 +187,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Banner Slider - NO IMAGE, ONLY COLOR + ICON
+                      // Banner Slider - Smaller
                       _buildBannerSlider(context, banners, currentBannerIndex, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall),
                       SizedBox(height: isDesktop ? 24.h : 16.h),
                       
@@ -211,9 +215,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ==================== BANNER SLIDER - NO IMAGE, ONLY COLOR + ICON ====================
+  // ==================== BANNER SLIDER - COMPACT ====================
   Widget _buildBannerSlider(BuildContext context, List<BannerItem> banners, int currentIndex, {required bool isDesktop, required bool isTablet, required bool isSmall}) {
-    final bannerHeight = isDesktop ? 140.h : isTablet ? 110.h : isSmall ? 80.h : 90.h;
+    final bannerHeight = isDesktop ? 180.h : isTablet ? 140.h : isSmall ? 100.h : 120.h;
 
     return Container(
       height: bannerHeight,
@@ -230,82 +234,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 final banner = banners[index];
                 return GestureDetector(
                   onTap: () => debugPrint('Banner: ${banner.title}'),
-                  child: Container(
-                    color: banner.bgColor,
-                    child: Stack(
-                      children: [
-                        // Background decorative circles
-                        Positioned(
-                          top: -30.h,
-                          right: -20.w,
-                          child: Container(
-                            width: 120.w,
-                            height: 120.w,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(banner.imageUrl, fit: BoxFit.cover, loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Container(color: banner.bgColor, child: Center(child: CupertinoActivityIndicator(radius: 12.r))), errorBuilder: (context, error, stackTrace) => Container(color: banner.bgColor, child: Icon(CupertinoIcons.photo, size: 32.sp, color: Colors.white))),
+                      Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.5)]))),
+                      Positioned(
+                        bottom: isSmall ? 8.h : 12.h,
+                        left: isSmall ? 10.w : 14.w,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (banner.title != null) Text(banner.title!, style: GoogleFonts.poppins(fontSize: isSmall ? 14.sp : isTablet ? 16.sp : 18.sp, fontWeight: FontWeight.bold, color: Colors.white)),
+                            if (banner.subtitle != null) Text(banner.subtitle!, style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : isTablet ? 11.sp : 12.sp, color: Colors.white.withOpacity(0.9))),
+                          ],
                         ),
-                        Positioned(
-                          bottom: -40.h,
-                          left: -20.w,
-                          child: Container(
-                            width: 100.w,
-                            height: 100.w,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.08),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                        // Large Icon
-                        Positioned(
-                          right: isSmall ? 16.w : 24.w,
-                          top: isSmall ? 12.h : 16.h,
-                          child: Icon(
-                            banner.icon,
-                            size: isSmall ? 48.sp : isTablet ? 60.sp : 72.sp,
-                            color: Colors.white.withOpacity(0.3),
-                          ),
-                        ),
-                        // Text Content
-                        Positioned(
-                          bottom: isSmall ? 12.h : 16.h,
-                          left: isSmall ? 12.w : 16.w,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (banner.title != null)
-                                Text(
-                                  banner.title!,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: isSmall ? 16.sp : isTablet ? 18.sp : 20.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              if (banner.subtitle != null)
-                                Text(
-                                  banner.subtitle!,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: isSmall ? 11.sp : isTablet ? 12.sp : 13.sp,
-                                    color: Colors.white.withOpacity(0.9),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               },
             ),
             // Dots
             Positioned(
-              bottom: isSmall ? 8.h : 10.h,
-              right: isSmall ? 12.w : 16.w,
+              bottom: isSmall ? 6.h : 8.h,
+              right: isSmall ? 10.w : 14.w,
               child: Row(
                 children: List.generate(banners.length, (index) => AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
@@ -397,10 +350,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ==================== PRODUCT LIST - NO IMAGE, ONLY COLOR + ICON ====================
+  // ==================== PRODUCT LIST - COMPACT ====================
   Widget _buildHorizontalProductList(BuildContext context, List<Product> products, {required bool isDesktop, required bool isTablet, required bool isSmall, required Color cardBackground, required Color shadowColor, required Color kTextDark, required Color kTextMid}) {
     return SizedBox(
-      height: isSmall ? 130.h : isTablet ? 150.h : 160.h,
+      height: isSmall ? 150.h : isTablet ? 170.h : 180.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -516,7 +469,7 @@ class _ServiceCard extends ConsumerWidget {
   }
 }
 
-// ==================== PRODUCT CARD - NO IMAGE, ONLY COLOR + ICON ====================
+// ==================== PRODUCT CARD - COMPACT ====================
 class _ProductCard extends StatelessWidget {
   final Product product;
   final bool isDesktop;
@@ -530,8 +483,9 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardWidth = isSmall ? 95.w : isDesktop ? 120.w : 105.w;
-    final cardHeight = isSmall ? 120.h : isDesktop ? 150.h : 140.h;
+    final cardWidth = isSmall ? 100.w : isDesktop ? 130.w : 115.w;
+    final cardHeight = isSmall ? 140.h : isDesktop ? 170.h : 160.h;
+    final imageSize = isSmall ? 85.w : isDesktop ? 110.w : 95.w;
 
     return GestureDetector(
       onTap: () => debugPrint('Product: ${product.name}'),
@@ -543,27 +497,16 @@ class _ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon Area (instead of image)
-            Expanded(
-              flex: 2,
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(10.r)),
               child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: HomeScreen.kPrimary.withOpacity(0.1),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(10.r)),
-                ),
-                child: Center(
-                  child: Icon(
-                    CupertinoIcons.cube_box_fill,
-                    size: isSmall ? 28.sp : isDesktop ? 36.sp : 32.sp,
-                    color: HomeScreen.kPrimary.withOpacity(0.6),
-                  ),
-                ),
+                width: cardWidth,
+                height: imageSize,
+                color: Colors.grey.shade100,
+                child: Image.network(product.imageUrl, fit: BoxFit.cover, loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Center(child: CupertinoActivityIndicator(radius: isSmall ? 10.r : 12.r)), errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey.shade200, child: Icon(CupertinoIcons.photo, size: isSmall ? 24.sp : 28.sp, color: Colors.grey.shade400))),
               ),
             ),
-            // Product Info
             Expanded(
-              flex: 1,
               child: Padding(
                 padding: EdgeInsets.all(isSmall ? 6.w : 8.w),
                 child: Column(
