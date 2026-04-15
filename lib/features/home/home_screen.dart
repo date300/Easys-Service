@@ -45,6 +45,24 @@ class Product {
   });
 }
 
+class BannerItem {
+  final String id;
+  final String imageUrl;
+  final String? title;
+  final String? subtitle;
+  final Color? bgColor;
+  final String? route;
+
+  const BannerItem({
+    required this.id,
+    required this.imageUrl,
+    this.title,
+    this.subtitle,
+    this.bgColor,
+    this.route,
+  });
+}
+
 // ==================== PROVIDERS ====================
 
 final servicesProvider = Provider<List<Service>>((ref) {
@@ -78,17 +96,86 @@ final featuredProductsProvider = Provider<List<Product>>((ref) {
   ];
 });
 
+final bannerProvider = Provider<List<BannerItem>>((ref) {
+  return const [
+    BannerItem(
+      id: '1',
+      imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800',
+      title: 'Mega Sale',
+      subtitle: 'Up to 50% off',
+      bgColor: Color(0xFF6366F1),
+    ),
+    BannerItem(
+      id: '2',
+      imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800',
+      title: 'New Arrivals',
+      subtitle: 'Latest gadgets',
+      bgColor: Color(0xFFEA580C),
+    ),
+    BannerItem(
+      id: '3',
+      imageUrl: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800',
+      title: 'Free Delivery',
+      subtitle: 'On orders over ৳500',
+      bgColor: Color(0xFF16A34A),
+    ),
+  ];
+});
+
+final currentBannerIndexProvider = StateProvider<int>((ref) => 0);
+
 // ==================== HOME SCREEN ====================
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
-  static const Color kPrimary = Color(0xFF29B6F6); 
+  static const Color kPrimary = Color(0xFF29B6F6);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late PageController _bannerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _bannerController = PageController();
+    _startAutoSlide();
+  }
+
+  @override
+  void dispose() {
+    _bannerController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoSlide() {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      final banners = ref.read(bannerProvider);
+      final currentIndex = ref.read(currentBannerIndexProvider);
+      final nextIndex = (currentIndex + 1) % banners.length;
+      
+      if (_bannerController.hasClients) {
+        _bannerController.animateToPage(
+          nextIndex,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+      ref.read(currentBannerIndexProvider.notifier).state = nextIndex;
+      _startAutoSlide();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final services = ref.watch(servicesProvider);
     final products = ref.watch(featuredProductsProvider);
+    final banners = ref.watch(bannerProvider);
+    final currentBannerIndex = ref.watch(currentBannerIndexProvider);
     final screenWidth = MediaQuery.of(context).size.width;
 
     final isDesktop = screenWidth >= 1024;
@@ -121,6 +208,16 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ==================== BANNER SLIDER ====================
+                      _buildBannerSlider(
+                        context,
+                        banners,
+                        currentBannerIndex,
+                        isDesktop: isDesktop,
+                        isTablet: isTablet,
+                      ),
+                      SizedBox(height: isDesktop ? 40 : 32.h),
+                      
                       // ==================== SERVICES SECTION ====================
                       _buildSectionHeader(
                         context, 
@@ -180,6 +277,150 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  // ==================== BANNER SLIDER ====================
+  Widget _buildBannerSlider(
+    BuildContext context,
+    List<BannerItem> banners,
+    int currentIndex, {
+    required bool isDesktop,
+    required bool isTablet,
+  }) {
+    final bannerHeight = isDesktop ? 280.h : (isTablet ? 220.h : 180.h);
+
+    return Column(
+      children: [
+        Container(
+          height: bannerHeight,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16.r),
+            child: Stack(
+              children: [
+                // PageView for banners
+                PageView.builder(
+                  controller: _bannerController,
+                  onPageChanged: (index) {
+                    ref.read(currentBannerIndexProvider.notifier).state = index;
+                  },
+                  itemCount: banners.length,
+                  itemBuilder: (context, index) {
+                    final banner = banners[index];
+                    return GestureDetector(
+                      onTap: () {
+                        debugPrint('Banner tapped: ${banner.title}');
+                      },
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          // Banner Image
+                          Image.network(
+                            banner.imageUrl,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: banner.bgColor ?? Colors.grey.shade300,
+                                child: Center(
+                                  child: CupertinoActivityIndicator(radius: 16.r),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: banner.bgColor ?? Colors.grey.shade300,
+                                child: Icon(
+                                  CupertinoIcons.photo,
+                                  size: 48.sp,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
+                          ),
+                          // Gradient Overlay
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.6),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Banner Text
+                          if (banner.title != null || banner.subtitle != null)
+                            Positioned(
+                              bottom: 20.h,
+                              left: 20.w,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (banner.title != null)
+                                    Text(
+                                      banner.title!,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: isDesktop ? 24.sp : 20.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  if (banner.subtitle != null)
+                                    Text(
+                                      banner.subtitle!,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: isDesktop ? 14.sp : 12.sp,
+                                        color: Colors.white.withOpacity(0.9),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                // Page Indicator Dots
+                Positioned(
+                  bottom: 12.h,
+                  right: 20.w,
+                  child: Row(
+                    children: List.generate(
+                      banners.length,
+                      (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: EdgeInsets.symmetric(horizontal: 4.w),
+                        width: currentIndex == index ? 20.w : 8.w,
+                        height: 8.h,
+                        decoration: BoxDecoration(
+                          color: currentIndex == index
+                              ? Colors.white
+                              : Colors.white.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ).animate().fadeIn(duration: 600.ms).slideY(begin: -20, curve: Curves.easeOut),
+      ],
+    );
+  }
+
   // ==================== SECTION HEADER ====================
   Widget _buildSectionHeader(
     BuildContext context, 
@@ -229,7 +470,7 @@ class HomeScreen extends ConsumerWidget {
                   'View All', 
                   style: GoogleFonts.poppins(
                     fontSize: isDesktop ? 13 : 12.sp, 
-                    color: kPrimary, 
+                    color: HomeScreen.kPrimary, 
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -237,7 +478,7 @@ class HomeScreen extends ConsumerWidget {
                 Icon(
                   CupertinoIcons.chevron_right,
                   size: 14.sp,
-                  color: kPrimary,
+                  color: HomeScreen.kPrimary,
                 ),
               ],
             ),
@@ -300,14 +541,14 @@ class HomeScreen extends ConsumerWidget {
               icon: Icon(
                 isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, 
                 size: 16.sp, 
-                color: kPrimary,
+                color: HomeScreen.kPrimary,
               ),
               label: Text(
                 isExpanded ? 'Show Less' : 'See More Services',
                 style: GoogleFonts.poppins(
                   fontSize: 13.sp, 
                   fontWeight: FontWeight.w600, 
-                  color: kPrimary,
+                  color: HomeScreen.kPrimary,
                 ),
               ),
             ),
