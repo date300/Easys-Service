@@ -48,12 +48,14 @@ class BannerItem {
   final String? title;
   final String? subtitle;
   final Color bgColor;
+  final IconData icon;
 
   const BannerItem({
     required this.id,
     this.title,
     this.subtitle,
     required this.bgColor,
+    required this.icon,
   });
 }
 
@@ -92,9 +94,9 @@ final featuredProductsProvider = Provider<List<Product>>((ref) {
 
 final bannerProvider = Provider<List<BannerItem>>((ref) {
   return const [
-    BannerItem(id: '1', title: 'Mega Sale', subtitle: 'Up to 50% off', bgColor: Color(0xFF6366F1)),
-    BannerItem(id: '2', title: 'New Arrivals', subtitle: 'Latest gadgets', bgColor: Color(0xFFEA580C)),
-    BannerItem(id: '3', title: 'Free Delivery', subtitle: 'On orders over ৳500', bgColor: Color(0xFF16A34A)),
+    BannerItem(id: '1', title: 'Mega Sale', subtitle: 'Up to 50% off', bgColor: Color(0xFF6366F1), icon: CupertinoIcons.tag_fill),
+    BannerItem(id: '2', title: 'New Arrivals', subtitle: 'Latest gadgets', bgColor: Color(0xFFEA580C), icon: CupertinoIcons.bolt_fill),
+    BannerItem(id: '3', title: 'Free Delivery', subtitle: 'On orders over ৳500', bgColor: Color(0xFF16A34A), icon: CupertinoIcons.cart_fill),
   ];
 });
 
@@ -181,7 +183,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Banner Slider - No Image, Only Color
+                      // Banner Slider - NO IMAGE, ONLY COLOR + ICON
                       _buildBannerSlider(context, banners, currentBannerIndex, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall),
                       SizedBox(height: isDesktop ? 24.h : 16.h),
                       
@@ -209,7 +211,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ==================== BANNER SLIDER - NO IMAGE, ONLY COLOR ====================
+  // ==================== BANNER SLIDER - NO IMAGE, ONLY COLOR + ICON ====================
   Widget _buildBannerSlider(BuildContext context, List<BannerItem> banners, int currentIndex, {required bool isDesktop, required bool isTablet, required bool isSmall}) {
     final bannerHeight = isDesktop ? 140.h : isTablet ? 110.h : isSmall ? 80.h : 90.h;
 
@@ -232,13 +234,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: banner.bgColor,
                     child: Stack(
                       children: [
-                        // Decorative circles
+                        // Background decorative circles
                         Positioned(
-                          top: -20.h,
+                          top: -30.h,
                           right: -20.w,
                           child: Container(
-                            width: 100.w,
-                            height: 100.w,
+                            width: 120.w,
+                            height: 120.w,
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
                               shape: BoxShape.circle,
@@ -246,15 +248,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                         Positioned(
-                          bottom: -30.h,
-                          left: -10.w,
+                          bottom: -40.h,
+                          left: -20.w,
                           child: Container(
-                            width: 80.w,
-                            height: 80.w,
+                            width: 100.w,
+                            height: 100.w,
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.08),
                               shape: BoxShape.circle,
                             ),
+                          ),
+                        ),
+                        // Large Icon
+                        Positioned(
+                          right: isSmall ? 16.w : 24.w,
+                          top: isSmall ? 12.h : 16.h,
+                          child: Icon(
+                            banner.icon,
+                            size: isSmall ? 48.sp : isTablet ? 60.sp : 72.sp,
+                            color: Colors.white.withOpacity(0.3),
                           ),
                         ),
                         // Text Content
@@ -385,7 +397,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ==================== PRODUCT LIST - NO IMAGE, ONLY ICON ====================
+  // ==================== PRODUCT LIST - NO IMAGE, ONLY COLOR + ICON ====================
   Widget _buildHorizontalProductList(BuildContext context, List<Product> products, {required bool isDesktop, required bool isTablet, required bool isSmall, required Color cardBackground, required Color shadowColor, required Color kTextDark, required Color kTextMid}) {
     return SizedBox(
       height: isSmall ? 130.h : isTablet ? 150.h : 160.h,
@@ -504,7 +516,7 @@ class _ServiceCard extends ConsumerWidget {
   }
 }
 
-// ==================== PRODUCT CARD - NO IMAGE, ONLY ICON ====================
+// ==================== PRODUCT CARD - NO IMAGE, ONLY COLOR + ICON ====================
 class _ProductCard extends StatelessWidget {
   final Product product;
   final bool isDesktop;
@@ -520,7 +532,6 @@ class _ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardWidth = isSmall ? 95.w : isDesktop ? 120.w : 105.w;
     final cardHeight = isSmall ? 120.h : isDesktop ? 150.h : 140.h;
-    final iconSize = isSmall ? 32.sp : isDesktop ? 40.sp : 36.sp;
 
     return GestureDetector(
       onTap: () => debugPrint('Product: ${product.name}'),
@@ -530,7 +541,7 @@ class _ProductCard extends StatelessWidget {
         margin: EdgeInsets.only(right: isSmall ? 6.w : 8.w),
         decoration: BoxDecoration(color: cardBackground, borderRadius: BorderRadius.circular(10.r), boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2), spreadRadius: 0)]),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Icon Area (instead of image)
             Expanded(
@@ -543,8 +554,8 @@ class _ProductCard extends StatelessWidget {
                 ),
                 child: Center(
                   child: Icon(
-                    CupertinoIcons.cube_box,
-                    size: iconSize,
+                    CupertinoIcons.cube_box_fill,
+                    size: isSmall ? 28.sp : isDesktop ? 36.sp : 32.sp,
                     color: HomeScreen.kPrimary.withOpacity(0.6),
                   ),
                 ),
@@ -571,4 +582,3 @@ class _ProductCard extends StatelessWidget {
     );
   }
 }
-
