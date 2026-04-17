@@ -1,3 +1,4 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,7 +141,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final banners = ref.read(bannerProvider);
       final currentIndex = ref.read(currentBannerIndexProvider);
       final nextIndex = (currentIndex + 1) % banners.length;
-
+      
       if (_bannerController.hasClients) {
         _bannerController.animateToPage(nextIndex, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
       }
@@ -161,6 +162,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
     final isSmall = screenWidth < 360;
 
+    // Dynamic Theme Colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -170,6 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
     final lockBgColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
 
+    // Responsive padding
     final hPadding = isDesktop ? 32.w : isTablet ? 20.w : isSmall ? 12.w : 16.w;
     final vPadding = isDesktop ? 24.h : isTablet ? 20.h : 16.h;
 
@@ -189,17 +192,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       _buildBannerSlider(context, banners, currentBannerIndex, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall),
                       SizedBox(height: isDesktop ? 24.h : 16.h),
-
+                      
                       _buildSectionHeader(context, isDesktop, isSmall, kTextDark, kTextMid, title: 'Services', subtitle: 'All you need', showViewAll: true),
                       SizedBox(height: isDesktop ? 20.h : 12.h),
                       _buildCategoriesGrid(context, ref, services, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall, screenWidth: screenWidth, cardBackground: cardBackground, shadowColor: shadowColor, borderColor: borderColor, lockBgColor: lockBgColor, kTextDark: kTextDark),
-
+                      
                       SizedBox(height: isDesktop ? 32.h : 20.h),
-
+                      
                       _buildSectionHeader(context, isDesktop, isSmall, kTextDark, kTextMid, title: 'Products', subtitle: 'Trending now', showViewAll: true),
                       SizedBox(height: isDesktop ? 16.h : 10.h),
                       _buildHorizontalProductList(context, products, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall, cardBackground: cardBackground, shadowColor: shadowColor, kTextDark: kTextDark, kTextMid: kTextMid),
-
+                      
                       SizedBox(height: 20.h),
                     ],
                   ),
@@ -212,16 +215,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ==================== BANNER SLIDER ====================
+  // ==================== BANNER SLIDER - COMPACT ====================
   Widget _buildBannerSlider(BuildContext context, List<BannerItem> banners, int currentIndex, {required bool isDesktop, required bool isTablet, required bool isSmall}) {
     final bannerHeight = isDesktop ? 180.h : isTablet ? 140.h : isSmall ? 100.h : 120.h;
 
     return Container(
       height: bannerHeight,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 3))],
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12.r), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 3))]),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
         child: Stack(
@@ -237,17 +237,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        banner.imageUrl,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Container(color: banner.bgColor, child: Center(child: CupertinoActivityIndicator(radius: 12.r))),
-                        errorBuilder: (context, error, stackTrace) => Container(color: banner.bgColor, child: Icon(CupertinoIcons.photo, size: 32.sp, color: Colors.white)),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.5)]),
-                        ),
-                      ),
+                      Image.network(banner.imageUrl, fit: BoxFit.cover, loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Container(color: banner.bgColor, child: Center(child: CupertinoActivityIndicator(radius: 12.r))), errorBuilder: (context, error, stackTrace) => Container(color: banner.bgColor, child: Icon(CupertinoIcons.photo, size: 32.sp, color: Colors.white))),
+                      Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.5)]))),
                       Positioned(
                         bottom: isSmall ? 8.h : 12.h,
                         left: isSmall ? 10.w : 14.w,
@@ -273,10 +264,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   margin: EdgeInsets.symmetric(horizontal: 3.w),
                   width: currentIndex == index ? 16.w : 6.w,
                   height: isSmall ? 5.h : 6.h,
-                  decoration: BoxDecoration(
-                    color: currentIndex == index ? Colors.white : Colors.white.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(3.r),
-                  ),
+                  decoration: BoxDecoration(color: currentIndex == index ? Colors.white : Colors.white.withOpacity(0.5), borderRadius: BorderRadius.circular(3.r)),
                 )),
               ),
             ),
@@ -286,7 +274,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).animate().fadeIn(duration: 500.ms);
   }
 
-  // ==================== SECTION HEADER ====================
+  // ==================== SECTION HEADER - COMPACT ====================
   Widget _buildSectionHeader(BuildContext context, bool isDesktop, bool isSmall, Color kTextDark, Color kTextMid, {required String title, required String subtitle, bool showViewAll = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -316,7 +304,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).animate().fadeIn(duration: 400.ms);
   }
 
-  // ==================== SERVICES GRID ====================
+  // ==================== SERVICES GRID - COMPACT ====================
   Widget _buildCategoriesGrid(BuildContext context, WidgetRef ref, List<Service> services, {required bool isDesktop, required bool isTablet, required bool isSmall, required double screenWidth, required Color cardBackground, required Color shadowColor, required Color borderColor, required Color lockBgColor, required Color kTextDark}) {
     int crossAxisCount = isSmall ? 4 : (screenWidth >= 1200 ? 8 : (screenWidth >= 900 ? 6 : (screenWidth >= 600 ? 5 : 4)));
     final isExpanded = ref.watch(isExpandedProvider);
@@ -361,7 +349,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ==================== PRODUCT LIST ====================
+  // ==================== PRODUCT LIST - COMPACT ====================
   Widget _buildHorizontalProductList(BuildContext context, List<Product> products, {required bool isDesktop, required bool isTablet, required bool isSmall, required Color cardBackground, required Color shadowColor, required Color kTextDark, required Color kTextMid}) {
     return SizedBox(
       height: isSmall ? 150.h : isTablet ? 170.h : 180.h,
@@ -386,7 +374,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-// ==================== SERVICE CARD ====================
+// ==================== SERVICE CARD - COMPACT ====================
 class _ServiceCard extends ConsumerWidget {
   final Service service;
   final bool isDesktop;
@@ -397,16 +385,7 @@ class _ServiceCard extends ConsumerWidget {
   final Color lockBgColor;
   final Color kTextDark;
 
-  const _ServiceCard({
-    required this.service,
-    this.isDesktop = false,
-    this.isSmall = false,
-    required this.cardBackground,
-    required this.shadowColor,
-    required this.borderColor,
-    required this.lockBgColor,
-    required this.kTextDark,
-  });
+  const _ServiceCard({required this.service, this.isDesktop = false, this.isSmall = false, required this.cardBackground, required this.shadowColor, required this.borderColor, required this.lockBgColor, required this.kTextDark});
 
   void _navigateToDetail(BuildContext context, WidgetRef ref) {
     ref.read(isDetailViewProvider.notifier).state = true;
@@ -419,7 +398,7 @@ class _ServiceCard extends ConsumerWidget {
     if (service.name == 'Loan' || service.name == 'Campaign') return;
     if (service.route == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${service.name} coming soon!', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp)),
+        content: Text('${service.name} soon!', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp)),
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF0F172A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
@@ -428,7 +407,7 @@ class _ServiceCard extends ConsumerWidget {
       return;
     }
     if (service.requiresVerification) {
-      VerificationGuard.check(context, ref, onVerified: () => _navigateToDetail(context, ref));
+      VerificationGuard.check(context, amount: 199.00, purpose: 'Verification Fee', onVerified: () => _navigateToDetail(context, ref));
     } else {
       _navigateToDetail(context, ref);
     }
@@ -436,42 +415,60 @@ class _ServiceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isUnderConstruction = service.name == 'Loan' || service.name == 'Campaign';
+    final hasRoute = service.route != null && !isUnderConstruction;
+    final iconSize = isSmall ? 20.sp : isDesktop ? 26.sp : 22.sp;
+    final containerSize = isSmall ? 42.w : isDesktop ? 58.w : 48.w;
+
     return GestureDetector(
       onTap: () => _onTap(context, ref),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardBackground,
-          borderRadius: BorderRadius.circular(isSmall ? 8.r : 12.r),
-          border: Border.all(color: borderColor, width: 1),
-          boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(isSmall ? 8.w : 10.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [service.color.withOpacity(0.15), service.secondaryColor.withOpacity(0.08)]),
-                shape: BoxShape.circle,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                height: containerSize,
+                width: containerSize,
+                decoration: BoxDecoration(color: cardBackground, shape: BoxShape.circle, border: Border.all(color: borderColor, width: 0.5), boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))]),
+                child: Center(child: Icon(service.icon, color: hasRoute ? service.color : Colors.grey.shade400, size: iconSize)),
               ),
-              child: Icon(service.icon, color: service.color, size: isSmall ? 18.sp : isDesktop ? 24.sp : 20.sp),
-            ),
-            SizedBox(height: isSmall ? 4.h : 6.h),
-            Text(
-              service.name,
-              style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp, fontWeight: FontWeight.w600, color: kTextDark),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+              if (!hasRoute || isUnderConstruction)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    padding: EdgeInsets.all(isSmall ? 3 : 4),
+                    decoration: BoxDecoration(color: lockBgColor, shape: BoxShape.circle, border: Border.all(color: cardBackground, width: 1)),
+                    child: Icon(isUnderConstruction ? Icons.construction : CupertinoIcons.lock_fill, size: isSmall ? 8.sp : 9.sp, color: Colors.grey.shade500),
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: isSmall ? 4.h : 6.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  isUnderConstruction ? 'Soon' : service.name,
+                  style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp, fontWeight: hasRoute ? FontWeight.w500 : FontWeight.w400, color: hasRoute ? kTextDark : Colors.grey.shade500, height: 1.1),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-// ==================== PRODUCT CARD ====================
+// ==================== PRODUCT CARD - COMPACT ====================
 class _ProductCard extends StatelessWidget {
   final Product product;
   final bool isDesktop;
@@ -481,54 +478,48 @@ class _ProductCard extends StatelessWidget {
   final Color kTextDark;
   final Color kTextMid;
 
-  const _ProductCard({
-    required this.product,
-    this.isDesktop = false,
-    this.isSmall = false,
-    required this.cardBackground,
-    required this.shadowColor,
-    required this.kTextDark,
-    required this.kTextMid,
-  });
+  const _ProductCard({required this.product, required this.isDesktop, this.isSmall = false, required this.cardBackground, required this.shadowColor, required this.kTextDark, required this.kTextMid});
 
   @override
   Widget build(BuildContext context) {
-    final cardWidth = isSmall ? 110.w : isDesktop ? 140.w : 120.w;
+    final cardWidth = isSmall ? 100.w : isDesktop ? 130.w : 115.w;
+    final cardHeight = isSmall ? 140.h : isDesktop ? 170.h : 160.h;
+    final imageSize = isSmall ? 85.w : isDesktop ? 110.w : 95.w;
 
-    return Container(
-      width: cardWidth,
-      margin: EdgeInsets.only(right: isSmall ? 8.w : 10.w),
-      decoration: BoxDecoration(
-        color: cardBackground,
-        borderRadius: BorderRadius.circular(10.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(10.r)),
-            child: Image.network(
-              product.imageUrl,
-              height: isSmall ? 80.h : isDesktop ? 100.h : 90.h,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Container(height: isSmall ? 80.h : 90.h, color: Colors.grey.shade200, child: const Center(child: CupertinoActivityIndicator())),
-              errorBuilder: (context, error, stackTrace) => Container(height: isSmall ? 80.h : 90.h, color: Colors.grey.shade200, child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400)),
+    return GestureDetector(
+      onTap: () => debugPrint('Product: ${product.name}'),
+      child: Container(
+        width: cardWidth,
+        height: cardHeight,
+        margin: EdgeInsets.only(right: isSmall ? 6.w : 8.w),
+        decoration: BoxDecoration(color: cardBackground, borderRadius: BorderRadius.circular(10.r), boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2), spreadRadius: 0)]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(10.r)),
+              child: Container(
+                width: cardWidth,
+                height: imageSize,
+                color: Colors.grey.shade100,
+                child: Image.network(product.imageUrl, fit: BoxFit.cover, loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Center(child: CupertinoActivityIndicator(radius: isSmall ? 10.r : 12.r)), errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey.shade200, child: Icon(CupertinoIcons.photo, size: isSmall ? 24.sp : 28.sp, color: Colors.grey.shade400))),
+              ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(isSmall ? 6.w : 8.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(product.name, style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, fontWeight: FontWeight.w600, color: kTextDark), maxLines: 1, overflow: TextOverflow.ellipsis),
-                SizedBox(height: 2.h),
-                Text('৳${product.price.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, fontWeight: FontWeight.bold, color: HomeScreen.kPrimary)),
-              ],
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(isSmall ? 6.w : 8.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(product.name, style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, fontWeight: FontWeight.w500, color: kTextDark, height: 1.2), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text('৳${product.price.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
