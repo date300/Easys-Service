@@ -74,7 +74,7 @@ final servicesProvider = Provider<List<Service>>((ref) {
     Service(name: 'Used Item', icon: CupertinoIcons.arrow_2_circlepath, color: Color(0xFF78716C), secondaryColor: Color(0xFFD6D3D1), route: null, requiresVerification: false),
     Service(name: 'Microjob', icon: CupertinoIcons.doc_text, color: Color(0xFF0D9488), secondaryColor: Color(0xFF2DD4BF), route: '/microjobs', requiresVerification: true),
     Service(name: 'Education', icon: CupertinoIcons.book, color: Color(0xFFD97706), secondaryColor: Color(0xFFFBBF24), route: null, requiresVerification: false),
-    Service(name: 'To-let', icon: CupertinoIcons.house, color: Color(0xFF9333EA), secondaryColor: Color(0xFFC084FC), route: null, requiresVerification: false),
+    Service(name: 'To-let', icon: Icons.real_estate_agent, color: Color(0xFF9333EA), secondaryColor: Color(0xFFC084FC), route: null, requiresVerification: false),
     Service(name: 'Easy Bus', icon: CupertinoIcons.bus, color: Color(0xFF2563EB), secondaryColor: Color(0xFF60A5FA), route: null, requiresVerification: false),
     Service(name: 'Courier', icon: CupertinoIcons.cube_box, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: null, requiresVerification: false),
     Service(name: 'Agro', icon: CupertinoIcons.leaf_arrow_circlepath, color: Color(0xFF15803D), secondaryColor: Color(0xFF86EFAC), route: null, requiresVerification: false),
