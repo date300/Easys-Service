@@ -69,15 +69,17 @@ final servicesProvider = Provider<List<Service>>((ref) {
   return const [
     Service(name: 'Recharge', icon: CupertinoIcons.device_phone_portrait, color: Color(0xFF6366F1), secondaryColor: Color(0xFF818CF8), route: '/recharge', requiresVerification: false),
     Service(name: 'Drive Offer', icon: CupertinoIcons.gift, color: Color(0xFF0284C7), secondaryColor: Color(0xFF38BDF8), route: '/drive', requiresVerification: false),
+    Service(name: 'Bonus', icon: CupertinoIcons.star_circle, color: Color(0xFFF59E0B), secondaryColor: Color(0xFFFCD34D), route: null, requiresVerification: false),
     Service(name: 'Reselling', icon: CupertinoIcons.bag, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: '/reselling', requiresVerification: true),
+    Service(name: 'Used Item', icon: CupertinoIcons.arrow_2_circlepath, color: Color(0xFF78716C), secondaryColor: Color(0xFFD6D3D1), route: null, requiresVerification: false),
     Service(name: 'Microjob', icon: CupertinoIcons.doc_text, color: Color(0xFF0D9488), secondaryColor: Color(0xFF2DD4BF), route: '/microjobs', requiresVerification: true),
-    Service(name: 'Loan', icon: CupertinoIcons.money_dollar_circle, color: Color(0xFF16A34A), secondaryColor: Color(0xFF4ADE80), route: null),
+    Service(name: 'Education', icon: CupertinoIcons.book, color: Color(0xFFD97706), secondaryColor: Color(0xFFFBBF24), route: null, requiresVerification: false),
+    Service(name: 'To-let', icon: Icons.real_estate_agent, color: Color(0xFF9333EA), secondaryColor: Color(0xFFC084FC), route: null, requiresVerification: false),
+    Service(name: 'Easy Bus', icon: CupertinoIcons.bus, color: Color(0xFF2563EB), secondaryColor: Color(0xFF60A5FA), route: null, requiresVerification: false),
+    Service(name: 'Courier', icon: CupertinoIcons.cube_box, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: null, requiresVerification: false),
+    Service(name: 'Agro', icon: CupertinoIcons.leaf_arrow_circlepath, color: Color(0xFF15803D), secondaryColor: Color(0xFF86EFAC), route: null, requiresVerification: false),
+    Service(name: 'Loan', icon: CupertinoIcons.money_dollar_circle, color: Color(0xFF16A34A), secondaryColor: Color(0xFF4ADE80), route: null, requiresVerification: false),
     Service(name: 'Campaign', icon: Icons.campaign, color: Color(0xFF7C3AED), secondaryColor: Color(0xFFA78BFA), route: '/campaigns', requiresVerification: true),
-    Service(name: 'Education', icon: CupertinoIcons.book, color: Color(0xFFD97706), secondaryColor: Color(0xFFFBBF24), route: null),
-    Service(name: 'Easy Bus', icon: CupertinoIcons.bus, color: Color(0xFF2563EB), secondaryColor: Color(0xFF60A5FA), route: null),
-    Service(name: 'Courier', icon: CupertinoIcons.cube_box, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: null),
-    Service(name: 'Agro', icon: CupertinoIcons.leaf_arrow_circlepath, color: Color(0xFF15803D), secondaryColor: Color(0xFF86EFAC), route: null),
-    Service(name: 'Used Item', icon: CupertinoIcons.arrow_2_circlepath, color: Color(0xFF78716C), secondaryColor: Color(0xFFD6D3D1), route: null),
   ];
 });
 
@@ -159,7 +161,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
     final isSmall = screenWidth < 360;
 
-    // Dynamic Theme Colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -169,7 +170,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
     final lockBgColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
 
-    // Responsive padding
     final hPadding = isDesktop ? 32.w : isTablet ? 20.w : isSmall ? 12.w : 16.w;
     final vPadding = isDesktop ? 24.h : isTablet ? 20.h : 16.h;
 
@@ -187,18 +187,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Banner Slider - Smaller
                       _buildBannerSlider(context, banners, currentBannerIndex, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall),
                       SizedBox(height: isDesktop ? 24.h : 16.h),
                       
-                      // Services Section
                       _buildSectionHeader(context, isDesktop, isSmall, kTextDark, kTextMid, title: 'Services', subtitle: 'All you need', showViewAll: true),
                       SizedBox(height: isDesktop ? 20.h : 12.h),
                       _buildCategoriesGrid(context, ref, services, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall, screenWidth: screenWidth, cardBackground: cardBackground, shadowColor: shadowColor, borderColor: borderColor, lockBgColor: lockBgColor, kTextDark: kTextDark),
                       
                       SizedBox(height: isDesktop ? 32.h : 20.h),
                       
-                      // Products Section
                       _buildSectionHeader(context, isDesktop, isSmall, kTextDark, kTextMid, title: 'Products', subtitle: 'Trending now', showViewAll: true),
                       SizedBox(height: isDesktop ? 16.h : 10.h),
                       _buildHorizontalProductList(context, products, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall, cardBackground: cardBackground, shadowColor: shadowColor, kTextDark: kTextDark, kTextMid: kTextMid),
@@ -215,7 +212,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ==================== BANNER SLIDER - COMPACT ====================
   Widget _buildBannerSlider(BuildContext context, List<BannerItem> banners, int currentIndex, {required bool isDesktop, required bool isTablet, required bool isSmall}) {
     final bannerHeight = isDesktop ? 180.h : isTablet ? 140.h : isSmall ? 100.h : 120.h;
 
@@ -255,7 +251,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 );
               },
             ),
-            // Dots
             Positioned(
               bottom: isSmall ? 6.h : 8.h,
               right: isSmall ? 10.w : 14.w,
@@ -275,7 +270,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).animate().fadeIn(duration: 500.ms);
   }
 
-  // ==================== SECTION HEADER - COMPACT ====================
   Widget _buildSectionHeader(BuildContext context, bool isDesktop, bool isSmall, Color kTextDark, Color kTextMid, {required String title, required String subtitle, bool showViewAll = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -305,11 +299,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).animate().fadeIn(duration: 400.ms);
   }
 
-  // ==================== SERVICES GRID - COMPACT ====================
   Widget _buildCategoriesGrid(BuildContext context, WidgetRef ref, List<Service> services, {required bool isDesktop, required bool isTablet, required bool isSmall, required double screenWidth, required Color cardBackground, required Color shadowColor, required Color borderColor, required Color lockBgColor, required Color kTextDark}) {
     int crossAxisCount = isSmall ? 4 : (screenWidth >= 1200 ? 8 : (screenWidth >= 900 ? 6 : (screenWidth >= 600 ? 5 : 4)));
     final isExpanded = ref.watch(isExpandedProvider);
-    final initialItemsCount = crossAxisCount * (isSmall ? 2 : 2);
+    final initialItemsCount = crossAxisCount * 2;
     final displayedServices = isExpanded ? services : services.take(initialItemsCount).toList();
 
     return Column(
@@ -350,7 +343,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ==================== PRODUCT LIST - COMPACT ====================
   Widget _buildHorizontalProductList(BuildContext context, List<Product> products, {required bool isDesktop, required bool isTablet, required bool isSmall, required Color cardBackground, required Color shadowColor, required Color kTextDark, required Color kTextMid}) {
     return SizedBox(
       height: isSmall ? 150.h : isTablet ? 170.h : 180.h,
@@ -375,7 +367,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-// ==================== SERVICE CARD - COMPACT ====================
+// ==================== SERVICE CARD ====================
 class _ServiceCard extends ConsumerWidget {
   final Service service;
   final bool isDesktop;
@@ -396,10 +388,9 @@ class _ServiceCard extends ConsumerWidget {
 
   void _onTap(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (service.name == 'Loan' || service.name == 'Campaign') return;
     if (service.route == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${service.name} soon!', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp)),
+        content: Text('${service.name} coming soon!', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp)),
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF0F172A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
@@ -416,8 +407,6 @@ class _ServiceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isUnderConstruction = service.name == 'Loan' || service.name == 'Campaign';
-    final hasRoute = service.route != null && !isUnderConstruction;
     final iconSize = isSmall ? 20.sp : isDesktop ? 26.sp : 22.sp;
     final containerSize = isSmall ? 42.w : isDesktop ? 58.w : 48.w;
 
@@ -427,26 +416,16 @@ class _ServiceCard extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                height: containerSize,
-                width: containerSize,
-                decoration: BoxDecoration(color: cardBackground, shape: BoxShape.circle, border: Border.all(color: borderColor, width: 0.5), boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))]),
-                child: Center(child: Icon(service.icon, color: hasRoute ? service.color : Colors.grey.shade400, size: iconSize)),
-              ),
-              if (!hasRoute || isUnderConstruction)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    padding: EdgeInsets.all(isSmall ? 3 : 4),
-                    decoration: BoxDecoration(color: lockBgColor, shape: BoxShape.circle, border: Border.all(color: cardBackground, width: 1)),
-                    child: Icon(isUnderConstruction ? Icons.construction : CupertinoIcons.lock_fill, size: isSmall ? 8.sp : 9.sp, color: Colors.grey.shade500),
-                  ),
-                ),
-            ],
+          Container(
+            height: containerSize,
+            width: containerSize,
+            decoration: BoxDecoration(
+              color: cardBackground,
+              shape: BoxShape.circle,
+              border: Border.all(color: borderColor, width: 0.5),
+              boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))],
+            ),
+            child: Center(child: Icon(service.icon, color: service.color, size: iconSize)),
           ),
           SizedBox(height: isSmall ? 4.h : 6.h),
           Row(
@@ -454,8 +433,13 @@ class _ServiceCard extends ConsumerWidget {
             children: [
               Flexible(
                 child: Text(
-                  isUnderConstruction ? 'Soon' : service.name,
-                  style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp, fontWeight: hasRoute ? FontWeight.w500 : FontWeight.w400, color: hasRoute ? kTextDark : Colors.grey.shade500, height: 1.1),
+                  service.name,
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp,
+                    fontWeight: FontWeight.w500,
+                    color: kTextDark,
+                    height: 1.1,
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -469,7 +453,7 @@ class _ServiceCard extends ConsumerWidget {
   }
 }
 
-// ==================== PRODUCT CARD - COMPACT ====================
+// ==================== PRODUCT CARD ====================
 class _ProductCard extends StatelessWidget {
   final Product product;
   final bool isDesktop;

@@ -18,6 +18,7 @@ class Service {
   final Color secondaryColor;
   final String? route;
   final bool requiresVerification;
+  final bool isComingSoon; // NEW
 
   const Service({
     required this.name,
@@ -26,6 +27,7 @@ class Service {
     required this.secondaryColor,
     this.route,
     this.requiresVerification = true,
+    this.isComingSoon = false, // NEW
   });
 }
 
@@ -78,8 +80,10 @@ final servicesProvider = Provider<List<Service>>((ref) {
     Service(name: 'Easy Bus', icon: CupertinoIcons.bus, color: Color(0xFF2563EB), secondaryColor: Color(0xFF60A5FA), route: null, requiresVerification: false),
     Service(name: 'Courier', icon: CupertinoIcons.cube_box, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: null, requiresVerification: false),
     Service(name: 'Agro', icon: CupertinoIcons.leaf_arrow_circlepath, color: Color(0xFF15803D), secondaryColor: Color(0xFF86EFAC), route: null, requiresVerification: false),
-    Service(name: 'Loan', icon: CupertinoIcons.money_dollar_circle, color: Color(0xFF16A34A), secondaryColor: Color(0xFF4ADE80), route: null, requiresVerification: false),
-    Service(name: 'Campaign', icon: Icons.campaign, color: Color(0xFF7C3AED), secondaryColor: Color(0xFFA78BFA), route: '/campaigns', requiresVerification: true),
+    // UPDATED: Loan — hammer icon, isComingSoon = true
+    Service(name: 'Loan', icon: Icons.hardware, color: Color(0xFF16A34A), secondaryColor: Color(0xFF4ADE80), route: null, requiresVerification: false, isComingSoon: true),
+    // UPDATED: Campaign — hammer icon, isComingSoon = true
+    Service(name: 'Campaign', icon: Icons.hardware, color: Color(0xFF7C3AED), secondaryColor: Color(0xFFA78BFA), route: '/campaigns', requiresVerification: true, isComingSoon: true),
   ];
 });
 
@@ -102,7 +106,7 @@ final bannerProvider = Provider<List<BannerItem>>((ref) {
   return const [
     BannerItem(id: '1', imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800', title: 'Mega Sale', subtitle: 'Up to 50% off', bgColor: Color(0xFF6366F1)),
     BannerItem(id: '2', imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800', title: 'New Arrivals', subtitle: 'Latest gadgets', bgColor: Color(0xFFEA580C)),
-    BannerItem(id: '3', imageUrl: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800', title: 'Free Delivery', subtitle: 'On orders over ৳500', bgColor: Color(0xFF16A34A)),
+    BannerItem(id: '3', imageUrl: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800', title: 'Free Delivery', subtitle: 'On orders over ?500', bgColor: Color(0xFF16A34A)),
   ];
 });
 
@@ -410,6 +414,9 @@ class _ServiceCard extends ConsumerWidget {
     final iconSize = isSmall ? 20.sp : isDesktop ? 26.sp : 22.sp;
     final containerSize = isSmall ? 42.w : isDesktop ? 58.w : 48.w;
 
+    // ── COMING SOON label style ──
+    final comingSoonFontSize = isSmall ? 7.5.sp : isDesktop ? 10.sp : 8.5.sp;
+
     return GestureDetector(
       onTap: () => _onTap(context, ref),
       behavior: HitTestBehavior.opaque,
@@ -433,15 +440,16 @@ class _ServiceCard extends ConsumerWidget {
             children: [
               Flexible(
                 child: Text(
-                  service.name,
+                  // ── KEY CHANGE: show "Coming Soon" instead of service.name ──
+                  service.isComingSoon ? 'Coming\nSoon' : service.name,
                   style: GoogleFonts.poppins(
-                    fontSize: isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp,
+                    fontSize: service.isComingSoon ? comingSoonFontSize : (isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp),
                     fontWeight: FontWeight.w500,
-                    color: kTextDark,
+                    color: service.isComingSoon ? Colors.grey : kTextDark,
                     height: 1.1,
                   ),
                   textAlign: TextAlign.center,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -498,7 +506,7 @@ class _ProductCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(product.name, style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, fontWeight: FontWeight.w500, color: kTextDark, height: 1.2), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text('৳${product.price.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
+                    Text('?${product.price.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
                   ],
                 ),
               ),
