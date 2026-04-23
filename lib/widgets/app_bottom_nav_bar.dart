@@ -18,7 +18,7 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 Dynamic Theme Colors
+    // Dynamic Theme Colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05);
@@ -26,7 +26,6 @@ class AppBottomNavBar extends StatelessWidget {
     final unselectedTextColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
 
     return Container(
-      // 🔥 Dynamic Background
       decoration: BoxDecoration(
         color: backgroundColor,
         boxShadow: [
@@ -47,8 +46,8 @@ class AppBottomNavBar extends StatelessWidget {
               _buildNavItem(0, CupertinoIcons.house, CupertinoIcons.house_fill, 'Home', isDark, unselectedIconColor, unselectedTextColor),
               _buildNavItem(1, CupertinoIcons.bag, CupertinoIcons.bag_fill, 'Reselling', isDark, unselectedIconColor, unselectedTextColor),
               _buildNavItem(2, CupertinoIcons.doc_text, CupertinoIcons.doc_text_fill, 'Jobs', isDark, unselectedIconColor, unselectedTextColor),
-              _buildNavItem(3, Icons.campaign_outlined, Icons.campaign, 'Campaign', isDark, unselectedIconColor, unselectedTextColor),
-              _buildNavItem(4, CupertinoIcons.person, CupertinoIcons.person_fill, 'Profile', isDark, unselectedIconColor, unselectedTextColor),
+              // Profile এর ইনডেক্স এখন ৩ করা হয়েছে
+              _buildNavItem(3, CupertinoIcons.person, CupertinoIcons.person_fill, 'Profile', isDark, unselectedIconColor, unselectedTextColor),
             ],
           ),
         ),
@@ -66,7 +65,6 @@ class AppBottomNavBar extends StatelessWidget {
     Color unselectedTextColor,
   ) {
     final isSelected = index == currentIndex;
-    // 🔥 Dynamic selected background
     final selectedBgColor = isDark ? skyBlue.withOpacity(0.15) : skyBlue.withOpacity(0.1);
 
     return GestureDetector(
@@ -75,7 +73,6 @@ class AppBottomNavBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Icon Container
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
@@ -93,7 +90,6 @@ class AppBottomNavBar extends StatelessWidget {
           
           SizedBox(height: 2.h),
           
-          // Label
           Text(
             label,
             style: GoogleFonts.poppins(
@@ -103,7 +99,6 @@ class AppBottomNavBar extends StatelessWidget {
             ),
           ),
           
-          // Active Indicator
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             margin: EdgeInsets.only(top: 2.h),

@@ -18,13 +18,20 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 Dynamic Theme Colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05);
+    final unselectedIconColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
+    final unselectedTextColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
+
     return Container(
-      // নিচের বারের শ্যাডো এবং ডিজাইন
+      // 🔥 Dynamic Background
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: shadowColor,
             blurRadius: 15,
             offset: const Offset(0, -4),
           ),
@@ -37,12 +44,11 @@ class AppBottomNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, CupertinoIcons.house, CupertinoIcons.house_fill, 'Home'),
-              _buildNavItem(1, CupertinoIcons.bag, CupertinoIcons.bag_fill, 'Reselling'),
-              _buildNavItem(2, CupertinoIcons.doc_text, CupertinoIcons.doc_text_fill, 'Jobs'),
-              // Campaign এর জন্য Icons.campaign ব্যবহার করা হয়েছে যা বিল্ড এরর দিবে না
-              _buildNavItem(3, Icons.campaign_outlined, Icons.campaign, 'Campaign'),
-              _buildNavItem(4, CupertinoIcons.person, CupertinoIcons.person_fill, 'Profile'),
+              _buildNavItem(0, CupertinoIcons.house, CupertinoIcons.house_fill, 'Home', isDark, unselectedIconColor, unselectedTextColor),
+              _buildNavItem(1, CupertinoIcons.bag, CupertinoIcons.bag_fill, 'Reselling', isDark, unselectedIconColor, unselectedTextColor),
+              _buildNavItem(2, CupertinoIcons.doc_text, CupertinoIcons.doc_text_fill, 'Jobs', isDark, unselectedIconColor, unselectedTextColor),
+              _buildNavItem(3, Icons.campaign_outlined, Icons.campaign, 'Campaign', isDark, unselectedIconColor, unselectedTextColor),
+              _buildNavItem(4, CupertinoIcons.person, CupertinoIcons.person_fill, 'Profile', isDark, unselectedIconColor, unselectedTextColor),
             ],
           ),
         ),
@@ -50,8 +56,18 @@ class AppBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(int index, IconData inactiveIcon, IconData activeIcon, String label) {
+  Widget _buildNavItem(
+    int index, 
+    IconData inactiveIcon, 
+    IconData activeIcon, 
+    String label,
+    bool isDark,
+    Color unselectedIconColor,
+    Color unselectedTextColor,
+  ) {
     final isSelected = index == currentIndex;
+    // 🔥 Dynamic selected background
+    final selectedBgColor = isDark ? skyBlue.withOpacity(0.15) : skyBlue.withOpacity(0.1);
 
     return GestureDetector(
       onTap: () => onTap(index),
@@ -59,35 +75,35 @@ class AppBottomNavBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // আইকন অ্যানিমেশন
+          // Icon Container
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
             padding: EdgeInsets.all(isSelected ? 5.w : 2.w),
             decoration: BoxDecoration(
-              color: isSelected ? skyBlue.withOpacity(0.1) : Colors.transparent,
+              color: isSelected ? selectedBgColor : Colors.transparent,
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Icon(
               isSelected ? activeIcon : inactiveIcon,
-              color: isSelected ? skyBlue : Colors.grey.shade400,
+              color: isSelected ? skyBlue : unselectedIconColor,
               size: 22.sp,
             ),
           ),
           
           SizedBox(height: 2.h),
           
-          // লেবেল বা নাম
+          // Label
           Text(
             label,
             style: GoogleFonts.poppins(
-              color: isSelected ? skyBlue : Colors.grey.shade500,
+              color: isSelected ? skyBlue : unselectedTextColor,
               fontSize: 9.sp,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
           
-          // নিচের ছোট ইন্ডিকেটর লাইন
+          // Active Indicator
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             margin: EdgeInsets.only(top: 2.h),
