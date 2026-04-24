@@ -18,22 +18,22 @@ import '../main.dart';
 
 // ==================== HELPERS ====================
 
-/// রুট থেকে বের হওয়ার সময় Provider রিসেট করে দেয়
-Future<bool> _resetDetailProviders(BuildContext context) async {
+/// ⭐ FIXED: দুইটা প্যারামিটার নিতে হবে — BuildContext + GoRouterState
+Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
   final container = ProviderScope.containerOf(context);
   container.read(isDetailViewProvider.notifier).state = false;
   container.read(detailViewTitleProvider.notifier).state = '';
-  return true; // true দিলে pop allow হবে
+  return true;
 }
 
-/// Detail Route বানানোর হেল্পার — onExit auto-থাকবে
+/// Detail Route বানানোর হেল্পার
 GoRoute _detailRoute({
   required String path,
   required Widget Function(BuildContext, GoRouterState) builder,
 }) {
   return GoRoute(
     path: path,
-    onExit: _resetDetailProviders, // ⭐ এটাই মূল কাজ
+    onExit: _resetDetailProviders, // এখন সিগনেচার মিলে গেছে
     builder: builder,
   );
 }
@@ -44,41 +44,30 @@ final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
 
   routes: [
-    // Splash
     GoRoute(
       path: '/splash',
       builder: (context, state) => const SplashScreen(),
     ),
-
-    // Registration
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
-
-    // Login
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
-
-    // Notification (Full Screen)
     GoRoute(
       path: '/notifications',
       builder: (context, state) => const NotificationScreen(),
     ),
 
-    // ShellRoute — Bottom Nav + AppTopBar
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
-        // Home (এটা detail না, তাই সরাসরি GoRoute)
         GoRoute(
           path: '/home',
           builder: (context, state) => const HomeScreen(),
         ),
-
-        // ⭐ Detail Routes — _detailRoute() দিয়ে বানানো
         _detailRoute(
           path: '/drive',
           builder: (context, state) => const DriveScreen(),
@@ -99,14 +88,10 @@ final GoRouter appRouter = GoRouter(
           path: '/recharge',
           builder: (context, state) => const RechargeScreen(),
         ),
-
-        // Profile — যদি এটাও detail হয় তাহলে _detailRoute() করুন
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
-
-        // Payment
         GoRoute(
           path: '/payment',
           builder: (context, state) {
@@ -122,7 +107,6 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 
-  // Redirect logic (আগের মতোই)
   redirect: (context, state) async {
     final ref = ProviderScope.containerOf(context);
     await ref.read(authLoadingProvider.future);
