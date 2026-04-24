@@ -92,27 +92,90 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
 
 // ==================== CATEGORY CONFIG ====================
 
-class CategoryConfig {
+class CategoryStyle {
   final String label;
   final IconData icon;
-  CategoryConfig({required this.label, required this.icon});
+  final List<Color> gradientColors;
+  final Color glowColor;
+
+  CategoryStyle({
+    required this.label,
+    required this.icon,
+    required this.gradientColors,
+    required this.glowColor,
+  });
 }
 
-final Map<String, CategoryConfig> _categoryIcons = {
-  'All': CategoryConfig(label: 'All', icon: Icons.apps_rounded),
-  'Electronics': CategoryConfig(label: 'Electronics', icon: Icons.devices_rounded),
-  'Watches': CategoryConfig(label: 'Watches', icon: Icons.watch_rounded),
-  'Audio': CategoryConfig(label: 'Audio', icon: Icons.headphones_rounded),
-  'Fashion': CategoryConfig(label: 'Fashion', icon: Icons.checkroom_rounded),
-  'Home': CategoryConfig(label: 'Home', icon: Icons.home_rounded),
-  'Sports': CategoryConfig(label: 'Sports', icon: Icons.sports_basketball_rounded),
-  'Beauty': CategoryConfig(label: 'Beauty', icon: Icons.brush_rounded),
-  'Books': CategoryConfig(label: 'Books', icon: Icons.menu_book_rounded),
-  'Toys': CategoryConfig(label: 'Toys', icon: Icons.toys_rounded),
+final Map<String, CategoryStyle> _categoryStyles = {
+  'All': CategoryStyle(
+    label: 'All',
+    icon: Icons.apps_rounded,
+    gradientColors: [const Color(0xFF0EA5E9), const Color(0xFF06B6D4)],
+    glowColor: const Color(0xFF0EA5E9),
+  ),
+  'Electronics': CategoryStyle(
+    label: 'Electronics',
+    icon: Icons.devices_rounded,
+    gradientColors: [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
+    glowColor: const Color(0xFF6366F1),
+  ),
+  'Watches': CategoryStyle(
+    label: 'Watches',
+    icon: Icons.watch_rounded,
+    gradientColors: [const Color(0xFFF59E0B), const Color(0xFFF97316)],
+    glowColor: const Color(0xFFF59E0B),
+  ),
+  'Audio': CategoryStyle(
+    label: 'Audio',
+    icon: Icons.headphones_rounded,
+    gradientColors: [const Color(0xFFEC4899), const Color(0xFFF43F5E)],
+    glowColor: const Color(0xFFEC4899),
+  ),
+  'Fashion': CategoryStyle(
+    label: 'Fashion',
+    icon: Icons.checkroom_rounded,
+    gradientColors: [const Color(0xFF10B981), const Color(0xFF14B8A6)],
+    glowColor: const Color(0xFF10B981),
+  ),
+  'Home': CategoryStyle(
+    label: 'Home',
+    icon: Icons.home_rounded,
+    gradientColors: [const Color(0xFF3B82F6), const Color(0xFF0EA5E9)],
+    glowColor: const Color(0xFF3B82F6),
+  ),
+  'Sports': CategoryStyle(
+    label: 'Sports',
+    icon: Icons.sports_basketball_rounded,
+    gradientColors: [const Color(0xFFEF4444), const Color(0xFFF97316)],
+    glowColor: const Color(0xFFEF4444),
+  ),
+  'Beauty': CategoryStyle(
+    label: 'Beauty',
+    icon: Icons.brush_rounded,
+    gradientColors: [const Color(0xFFD946EF), const Color(0xFFA855F7)],
+    glowColor: const Color(0xFFD946EF),
+  ),
+  'Books': CategoryStyle(
+    label: 'Books',
+    icon: Icons.menu_book_rounded,
+    gradientColors: [const Color(0xFF8B5CF6), const Color(0xFF6366F1)],
+    glowColor: const Color(0xFF8B5CF6),
+  ),
+  'Toys': CategoryStyle(
+    label: 'Toys',
+    icon: Icons.toys_rounded,
+    gradientColors: [const Color(0xFF06B6D4), const Color(0xFF22D3EE)],
+    glowColor: const Color(0xFF06B6D4),
+  ),
 };
 
-IconData _getCategoryIcon(String category) {
-  return _categoryIcons[category]?.icon ?? Icons.local_offer_rounded;
+CategoryStyle _getCategoryStyle(String category) {
+  return _categoryStyles[category] ?? CategoryStyle(
+    label: category,
+    icon: Icons.local_offer_rounded,
+    gradientColors: [const Color(0xFF0EA5E9), const Color(0xFF38BDF8)],
+    glowColor: const Color(0xFF0EA5E9),
+  );
 }
 
 // ==================== COLOR TOKENS ====================
@@ -402,21 +465,21 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  // ==================== CATEGORY FILTER (IMPROVED) ====================
+  // ==================== LUXURY CATEGORY FILTER ====================
   Widget _buildCategoryFilter(List<ProductModel> allProducts) {
     final categories = ref.read(productListProvider.notifier).categories;
 
     return SizedBox(
-      height: 72.h,
+      height: 110.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.fromLTRB(18.w, 10.h, 18.w, 4.h),
+        padding: EdgeInsets.fromLTRB(18.w, 12.h, 18.w, 8.h),
         itemCount: categories.length,
-        separatorBuilder: (_, __) => SizedBox(width: 10.w),
+        separatorBuilder: (_, __) => SizedBox(width: 12.w),
         itemBuilder: (_, i) {
           final cat = categories[i];
           final selected = _selectedCategory == cat;
-          final icon = _getCategoryIcon(cat);
+          final style = _getCategoryStyle(cat);
 
           return GestureDetector(
             onTap: () {
@@ -424,79 +487,103 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
               setState(() => _selectedCategory = cat);
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOutBack,
+              width: 78.w,
+              padding: EdgeInsets.symmetric(vertical: 10.h),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary(context) : AppColors.card(context),
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(
-                  color: selected
-                      ? Colors.transparent
-                      : AppColors.border(context),
-                  width: selected ? 0 : 1,
-                ),
+                gradient: selected
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: style.gradientColors,
+                      )
+                    : null,
+                color: selected ? null : AppColors.card(context),
+                borderRadius: BorderRadius.circular(18.r),
+                border: selected
+                    ? null
+                    : Border.all(
+                        color: AppColors.border(context).withOpacity(0.8),
+                        width: 1,
+                      ),
                 boxShadow: selected
                     ? [
                         BoxShadow(
-                          color: AppColors.primary(context).withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                          color: style.glowColor.withOpacity(0.45),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                          spreadRadius: 1,
+                        ),
+                        BoxShadow(
+                          color: style.glowColor.withOpacity(0.2),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                          spreadRadius: -5,
                         ),
                       ]
                     : [
                         BoxShadow(
-                          color: AppColors.shadow(context).withOpacity(0.5),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                          color: AppColors.shadow(context).withOpacity(0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
                         ),
                       ],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(6.w),
+                    padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
                       color: selected
-                          ? Colors.white.withOpacity(0.2)
-                          : AppColors.primary(context).withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10.r),
+                          ? Colors.white.withOpacity(0.22)
+                          : style.gradientColors[0].withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      boxShadow: selected
+                          ? [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.15),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Icon(
-                      icon,
+                      style.icon,
                       color: selected
                           ? Colors.white
-                          : AppColors.primary(context),
-                      size: 16.sp,
+                          : style.gradientColors[0],
+                      size: 22.sp,
                     ),
                   ),
-                  SizedBox(width: 8.w),
+                  SizedBox(height: 6.h),
                   Text(
                     cat,
                     style: GoogleFonts.outfit(
-                      fontSize: 12.sp,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 10.sp,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                       color: selected
                           ? Colors.white
                           : AppColors.textSecondary(context),
                     ),
                   ),
                   if (cat != 'All') ...[
-                    SizedBox(width: 6.w),
+                    SizedBox(height: 2.h),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
                       decoration: BoxDecoration(
                         color: selected
                             ? Colors.white.withOpacity(0.2)
                             : AppColors.bg(context),
-                        borderRadius: BorderRadius.circular(6.r),
+                        borderRadius: BorderRadius.circular(5.r),
                       ),
                       child: Text(
                         '${allProducts.where((p) => p.category == cat).length}',
                         style: GoogleFonts.outfit(
-                          fontSize: 9.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 8.sp,
+                          fontWeight: FontWeight.w800,
                           color: selected
                               ? Colors.white
                               : AppColors.textMuted(context),
@@ -892,7 +979,7 @@ class _ProductCardState extends State<_ProductCard> {
                               borderRadius: BorderRadius.circular(5.r),
                             ),
                             child: Text(
-                              '\$${widget.product.wholesalePrice.toInt()}',
+                              '\u09F3${widget.product.wholesalePrice.toInt()}',
                               style: GoogleFonts.outfit(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w700,
@@ -903,7 +990,7 @@ class _ProductCardState extends State<_ProductCard> {
                           SizedBox(width: 4.w),
                           Flexible(
                             child: Text(
-                              '+\$${widget.product.maxMargin.toInt()} max',
+                              '+\u09F3${widget.product.maxMargin.toInt()} max',
                               style: GoogleFonts.outfit(
                                 fontSize: 9.5.sp,
                                 color: AppColors.success(context),
@@ -1041,7 +1128,7 @@ class _ActiveResellCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '\$${product.myPrice.toInt()}',
+                      '\u09F3${product.myPrice.toInt()}',
                       style: GoogleFonts.outfit(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w700,
@@ -1060,7 +1147,7 @@ class _ActiveResellCard extends StatelessWidget {
                         color: AppColors.success(context).withOpacity(0.25)),
                   ),
                   child: Text(
-                    'Profit \$${product.myMargin.toInt()}',
+                    'Profit \u09F3${product.myMargin.toInt()}',
                     style: GoogleFonts.outfit(
                       fontSize: 9.5.sp,
                       color: AppColors.success(context),
@@ -1162,7 +1249,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                         ),
                       ),
                       Text(
-                        'Wholesale: \$${widget.product.wholesalePrice.toInt()}',
+                        'Wholesale: \u09F3${widget.product.wholesalePrice.toInt()}',
                         style: GoogleFonts.outfit(
                           fontSize: 11.sp,
                           color: AppColors.textSecondary(context),
@@ -1193,14 +1280,14 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '\$0',
+                  '\u09F30',
                   style: GoogleFonts.outfit(
                     fontSize: 11.sp,
                     color: AppColors.textMuted(context),
                   ),
                 ),
                 Text(
-                  '\$${maxMargin.toInt()}',
+                  '\u09F3${maxMargin.toInt()}',
                   style: GoogleFonts.outfit(
                     fontSize: 11.sp,
                     color: AppColors.textMuted(context),
@@ -1241,7 +1328,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          '\$${_margin.toInt()}',
+                          '\u09F3${_margin.toInt()}',
                           style: GoogleFonts.outfit(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w800,
@@ -1273,7 +1360,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          '\$${sellPrice.toInt()}',
+                          '\u09F3${sellPrice.toInt()}',
                           style: GoogleFonts.outfit(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w800,
@@ -1520,31 +1607,44 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                 itemBuilder: (_, i) {
                   final cat = _availableCategories[i];
                   final selected = _selectedCategory == cat;
+                  final style = _getCategoryStyle(cat);
                   return GestureDetector(
                     onTap: () => setState(() => _selectedCategory = cat),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                       decoration: BoxDecoration(
-                        color: selected
-                            ? AppColors.primary(context)
-                            : AppColors.bg(context),
+                        gradient: selected
+                            ? LinearGradient(
+                                colors: style.gradientColors,
+                              )
+                            : null,
+                        color: selected ? null : AppColors.bg(context),
                         borderRadius: BorderRadius.circular(10.r),
                         border: Border.all(
                           color: selected
                               ? Colors.transparent
                               : AppColors.border(context),
                         ),
+                        boxShadow: selected
+                            ? [
+                                BoxShadow(
+                                  color: style.glowColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            _getCategoryIcon(cat),
+                            style.icon,
                             size: 14.sp,
                             color: selected
                                 ? Colors.white
-                                : AppColors.textSecondary(context),
+                                : style.gradientColors[0],
                           ),
                           SizedBox(width: 6.w),
                           Text(
