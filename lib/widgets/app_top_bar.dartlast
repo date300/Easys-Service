@@ -15,6 +15,7 @@ class AppTopBar extends ConsumerWidget {
   final bool isLoggedIn;
 
   static const Color skyBlue = Color(0xFF29B6F6);
+  static const Color darkHeader = Color(0xFF1E1E1E);
 
   const AppTopBar({
     super.key,
@@ -27,6 +28,12 @@ class AppTopBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final double radius = isMobile ? 32.r : 28;
+    
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final overlayColor = isDark 
+        ? darkHeader.withOpacity(0.85)  // Dark mode: darker overlay
+        : skyBlue.withOpacity(0.55);      // Light mode: skyBlue overlay
 
     return ClipRRect(
       borderRadius: BorderRadius.only(
@@ -46,13 +53,13 @@ class AppTopBar extends ConsumerWidget {
               ),
             ),
 
-            // Blur Overlay
+            // Blur Overlay - DYNAMIC COLOR
             Positioned.fill(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: skyBlue.withOpacity(0.55),
+                    color: overlayColor,  // 🔥 DYNAMIC
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(radius),
                       bottomRight: Radius.circular(radius),
@@ -69,7 +76,7 @@ class AppTopBar extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(horizontal: 10.w),
                 child: Row(
                   children: [
-                    _buildLeadingIcon(context, ref),
+                    _buildLeadingIcon(context, ref, isDark),
 
                     Expanded(
                       child: Center(
@@ -78,7 +85,7 @@ class AppTopBar extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
-                            color: Colors.white,
+                            color: Colors.white,  // Always white for contrast
                             fontWeight: FontWeight.bold,
                             fontSize: isMobile ? 18.sp : 20,
                             letterSpacing: 0.5,
@@ -88,7 +95,7 @@ class AppTopBar extends ConsumerWidget {
                     ),
 
                     // Notification Action
-                    _buildTrailingAction(context),
+                    _buildTrailingAction(context, isDark),
                   ],
                 ),
               ),
@@ -99,13 +106,13 @@ class AppTopBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildLeadingIcon(BuildContext context, WidgetRef ref) {
+  Widget _buildLeadingIcon(BuildContext context, WidgetRef ref, bool isDark) {
     if (isDetailView) {
       return IconButton(
-        icon: const Icon(
+        icon: Icon(
           Icons.arrow_back_rounded, 
           color: Colors.white, 
-          size: 26
+          size: 26.sp,  // 🔥 Added .sp for responsive
         ),
         onPressed: () {
           ref.read(isDetailViewProvider.notifier).state = false;
@@ -122,28 +129,28 @@ class AppTopBar extends ConsumerWidget {
 
     return Builder(
       builder: (ctx) => IconButton(
-        icon: const Icon(Icons.menu_open_rounded, color: Colors.white, size: 28),
+        icon: Icon(
+          Icons.menu_open_rounded, 
+          color: Colors.white, 
+          size: 28.sp,  // 🔥 Added .sp for responsive
+        ),
         onPressed: () => Scaffold.of(ctx).openDrawer(),
       ),
     );
   }
 
-  // 🔥 UPDATED: Notification Icon with Navigation
-  Widget _buildTrailingAction(BuildContext context) {
+  // Notification Icon with Navigation - DYNAMIC
+  Widget _buildTrailingAction(BuildContext context, bool isDark) {
     if (!isDetailView && isLoggedIn) {
       return IconButton(
         onPressed: () {
-          // Full screen notification module এ নিয়ে যাবে
           context.push('/notifications');
         },
         icon: Badge(
-          // Optional: Unread count badge যোগ করতে পারেন
-          // label: Text('3'),
-          // isLabelVisible: true,
-          child: const Icon(
+          child: Icon(
             Icons.notifications_outlined, 
             color: Colors.white, 
-            size: 26
+            size: 26.sp,  // 🔥 Added .sp for responsive
           ),
         ),
       );
