@@ -387,7 +387,7 @@ class _ServiceCard extends ConsumerWidget {
   void _navigateToDetail(BuildContext context, WidgetRef ref) {
     ref.read(isDetailViewProvider.notifier).state = true;
     ref.read(detailViewTitleProvider.notifier).state = service.name;
-    context.go(service.route!);
+    context.push(service.route!);
   }
 
   void _onTap(BuildContext context, WidgetRef ref) {

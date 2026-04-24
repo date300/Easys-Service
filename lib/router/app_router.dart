@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,8 +13,32 @@ import '../features/profile/profile_screen.dart';
 import '../features/auth/registration_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
-import '../modules/notifications/notification_screen.dart'; // ← নতুন ইমপোর্ট
+import '../modules/notifications/notification_screen.dart';
 import '../main.dart';
+
+// ==================== HELPERS ====================
+
+/// রুট থেকে বের হওয়ার সময় Provider রিসেট করে দেয়
+Future<bool> _resetDetailProviders(BuildContext context) async {
+  final container = ProviderScope.containerOf(context);
+  container.read(isDetailViewProvider.notifier).state = false;
+  container.read(detailViewTitleProvider.notifier).state = '';
+  return true; // true দিলে pop allow হবে
+}
+
+/// Detail Route বানানোর হেল্পার — onExit auto-থাকবে
+GoRoute _detailRoute({
+  required String path,
+  required Widget Function(BuildContext, GoRouterState) builder,
+}) {
+  return GoRoute(
+    path: path,
+    onExit: _resetDetailProviders, // ⭐ এটাই মূল কাজ
+    builder: builder,
+  );
+}
+
+// ==================== ROUTER ====================
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
@@ -39,44 +62,51 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const LoginScreen(),
     ),
 
-    // 🔥 NOTIFICATION — ShellRoute-এর বাইরে (Full Screen)
+    // Notification (Full Screen)
     GoRoute(
       path: '/notifications',
       builder: (context, state) => const NotificationScreen(),
     ),
 
-    // ShellRoute — Bottom Nav + AppTopBar সহ
+    // ShellRoute — Bottom Nav + AppTopBar
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
+        // Home (এটা detail না, তাই সরাসরি GoRoute)
         GoRoute(
           path: '/home',
           builder: (context, state) => const HomeScreen(),
         ),
-        GoRoute(
+
+        // ⭐ Detail Routes — _detailRoute() দিয়ে বানানো
+        _detailRoute(
           path: '/drive',
           builder: (context, state) => const DriveScreen(),
         ),
-        GoRoute(
+        _detailRoute(
           path: '/reselling',
           builder: (context, state) => const ResellingScreen(),
         ),
-        GoRoute(
+        _detailRoute(
           path: '/microjobs',
           builder: (context, state) => const MicrojobsScreen(),
         ),
-        GoRoute(
+        _detailRoute(
           path: '/campaigns',
           builder: (context, state) => const CampaignsScreen(),
         ),
+        _detailRoute(
+          path: '/recharge',
+          builder: (context, state) => const RechargeScreen(),
+        ),
+
+        // Profile — যদি এটাও detail হয় তাহলে _detailRoute() করুন
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
-        GoRoute(
-          path: '/recharge',
-          builder: (context, state) => const RechargeScreen(),
-        ),
+
+        // Payment
         GoRoute(
           path: '/payment',
           builder: (context, state) {
@@ -92,7 +122,7 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 
-  // Redirect logic
+  // Redirect logic (আগের মতোই)
   redirect: (context, state) async {
     final ref = ProviderScope.containerOf(context);
     await ref.read(authLoadingProvider.future);
@@ -102,18 +132,11 @@ final GoRouter appRouter = GoRouter(
     final isSplash = loc == '/splash';
     final isRegister = loc == '/registration';
     final isLogin = loc == '/login';
-    final isNotification = loc == '/notifications'; // ← নতুন চেক
+    final isNotification = loc == '/notifications';
 
-    // Splash এ থাকলে redirect নেই
     if (isSplash) return null;
-
-    // 🔥 NOTIFICATION: Login না থাকলে login এ পাঠাও
     if (!isLoggedIn && isNotification) return '/login';
-
-    // Login নেই + auth page এও নেই → login এ পাঠাও
     if (!isLoggedIn && !isRegister && !isLogin && !isNotification) return '/login';
-
-    // Login আছে + auth page এ যাওয়ার চেষ্টা → home এ পাঠাও
     if (isLoggedIn && (isLogin || isRegister)) return '/home';
 
     return null;
