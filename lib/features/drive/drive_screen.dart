@@ -14,10 +14,8 @@ class DriveScreen extends StatefulWidget {
 }
 
 class _DriveScreenState extends State<DriveScreen> {
-  // Design Tokens - Only Primary Color is static
   static const Color kPrimary = Color(0xFF29B6F6);
 
-  // Operator Data
   final List<String> operators = ['gp', 'robi', 'airtel', 'bl', 'teletalk', 'skitto'];
 
   final Map<String, String> operatorNames = {
@@ -106,10 +104,7 @@ class _DriveScreenState extends State<DriveScreen> {
   }
 
   Future<void> _executePurchase(Map<String, dynamic> drive, String number) async {
-    // 🔥 DYNAMIC THEME COLORS
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black;
 
     showDialog(
       context: context,
@@ -150,7 +145,6 @@ class _DriveScreenState extends State<DriveScreen> {
   }
 
   void _showStatusSnack(String msg, Color color) {
-    // 🔥 DYNAMIC SNACKBAR
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     ScaffoldMessenger.of(context).showSnackBar(
@@ -172,7 +166,6 @@ class _DriveScreenState extends State<DriveScreen> {
     final TextEditingController numController = TextEditingController();
     final color = operatorColors[selectedOperator]!;
     
-    // 🔥 DYNAMIC THEME COLORS
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -183,7 +176,7 @@ class _DriveScreenState extends State<DriveScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: sheetBg,  // 🔥 DYNAMIC
+      backgroundColor: sheetBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -214,7 +207,7 @@ class _DriveScreenState extends State<DriveScreen> {
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
                 fontSize: 16.sp,
-                color: textColor,  // 🔥 DYNAMIC
+                color: textColor,
               ),
             ),
             SizedBox(height: 5.h),
@@ -222,25 +215,25 @@ class _DriveScreenState extends State<DriveScreen> {
               drive['title'],
               style: GoogleFonts.poppins(
                 fontSize: 12.sp,
-                color: textMid,  // 🔥 DYNAMIC
+                color: textMid,
               ),
             ),
             SizedBox(height: 20.h),
             TextField(
               controller: numController,
               keyboardType: TextInputType.phone,
-              style: GoogleFonts.poppins(color: textColor),  // 🔥 DYNAMIC
+              style: GoogleFonts.poppins(color: textColor),
               decoration: InputDecoration(
                 labelText: 'Mobile Number',
-                labelStyle: GoogleFonts.poppins(color: textMid),  // 🔥 DYNAMIC
+                labelStyle: GoogleFonts.poppins(color: textMid),
                 hintText: '01XXXXXXXXX',
                 hintStyle: GoogleFonts.poppins(color: isDark ? Colors.grey.shade600 : Colors.grey),
-                prefixIcon: Icon(CupertinoIcons.phone, color: textMid),  // 🔥 DYNAMIC
+                prefixIcon: Icon(CupertinoIcons.phone, color: textMid),
                 filled: true,
-                fillColor: fieldBg,  // 🔥 DYNAMIC
+                fillColor: fieldBg,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(color: borderColor),  // 🔥 DYNAMIC
+                  borderSide: BorderSide(color: borderColor),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.r),
@@ -290,7 +283,6 @@ class _DriveScreenState extends State<DriveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 DYNAMIC THEME COLORS
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -302,21 +294,9 @@ class _DriveScreenState extends State<DriveScreen> {
     final chipBorder = isDark ? const Color(0xFF333333) : Colors.grey.shade300;
 
     return Scaffold(
-      backgroundColor: kBackground,  // 🔥 DYNAMIC
-      appBar: AppBar(
-        title: Text(
-          'All Sim Offers',
-          style: GoogleFonts.poppins(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: kTextDark,  // 🔥 DYNAMIC
-          ),
-        ),
-        backgroundColor: appBarBg,  // 🔥 DYNAMIC
-        elevation: isDark ? 0 : 0.5,
-        centerTitle: true,
-        iconTheme: IconThemeData(color: kTextDark),  // 🔥 DYNAMIC
-      ),
+      backgroundColor: kBackground,
+      // ❌ appBar: AppBar(...) বাদ দেওয়া হলো
+      // MainWrapper এর AppTopBar ই যথেষ্ট
       body: Column(
         children: [
           _buildOperatorTabs(isDark, appBarBg, kTextDark),
@@ -330,7 +310,7 @@ class _DriveScreenState extends State<DriveScreen> {
   Widget _buildOperatorTabs(bool isDark, Color appBarBg, Color kTextDark) {
     return Container(
       height: 65.h,
-      color: appBarBg,  // 🔥 DYNAMIC
+      color: appBarBg,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: operators.length,
@@ -357,7 +337,7 @@ class _DriveScreenState extends State<DriveScreen> {
                 child: Text(
                   operatorNames[op]!,
                   style: GoogleFonts.poppins(
-                    color: isSel ? Colors.white : kTextDark,  // 🔥 DYNAMIC
+                    color: isSel ? Colors.white : kTextDark,
                     fontSize: 12.sp,
                     fontWeight: isSel ? FontWeight.w600 : FontWeight.normal,
                   ),
@@ -374,7 +354,7 @@ class _DriveScreenState extends State<DriveScreen> {
     final cats = operatorCategories[selectedOperator]!;
     return Container(
       height: 45.h,
-      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,  // 🔥 DYNAMIC
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: cats.length,
@@ -389,12 +369,12 @@ class _DriveScreenState extends State<DriveScreen> {
             decoration: BoxDecoration(
               color: selectedCategory == cats[i] 
                   ? operatorColors[selectedOperator]!.withOpacity(0.1) 
-                  : chipBg,  // 🔥 DYNAMIC
+                  : chipBg,
               borderRadius: BorderRadius.circular(20.r),
               border: Border.all(
                 color: selectedCategory == cats[i] 
                     ? operatorColors[selectedOperator]! 
-                    : chipBorder,  // 🔥 DYNAMIC
+                    : chipBorder,
               ),
             ),
             child: Center(
@@ -404,7 +384,7 @@ class _DriveScreenState extends State<DriveScreen> {
                   fontSize: 11.sp,
                   color: selectedCategory == cats[i] 
                       ? operatorColors[selectedOperator] 
-                      : kTextMid,  // 🔥 DYNAMIC
+                      : kTextMid,
                 ),
               ),
             ),
@@ -461,7 +441,7 @@ class _DriveScreenState extends State<DriveScreen> {
               'No Offers Found!',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.bold,
-                color: kTextMid,  // 🔥 DYNAMIC
+                color: kTextMid,
               ),
             ),
             Text(
@@ -485,16 +465,16 @@ class _DriveScreenState extends State<DriveScreen> {
           margin: EdgeInsets.only(bottom: 12.h),
           padding: EdgeInsets.all(15.w),
           decoration: BoxDecoration(
-            color: cardBg,  // 🔥 DYNAMIC
+            color: cardBg,
             borderRadius: BorderRadius.circular(15.r),
             boxShadow: [
               BoxShadow(
-                color: shadowColor,  // 🔥 DYNAMIC
+                color: shadowColor,
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
-            border: isDark ? Border.all(color: const Color(0xFF333333), width: 1) : null,  // 🔥 DYNAMIC
+            border: isDark ? Border.all(color: const Color(0xFF333333), width: 1) : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,11 +484,11 @@ class _DriveScreenState extends State<DriveScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.bold,
-                  color: kTextDark,  // 🔥 DYNAMIC
+                  color: kTextDark,
                 ),
               ),
               Divider(
-                color: isDark ? const Color(0xFF333333) : Colors.grey.shade300,  // 🔥 DYNAMIC
+                color: isDark ? const Color(0xFF333333) : Colors.grey.shade300,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -528,7 +508,7 @@ class _DriveScreenState extends State<DriveScreen> {
                         "Validity: ${drive['duration']} Days",
                         style: GoogleFonts.poppins(
                           fontSize: 10.sp,
-                          color: kTextMid,  // 🔥 DYNAMIC
+                          color: kTextMid,
                         ),
                       ),
                     ],
