@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 // ==================== RIVERPOD PROVIDERS ====================
-
-final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 
 final productListProvider = StateNotifierProvider<ProductListNotifier, List<ProductModel>>((ref) {
   return ProductListNotifier();
@@ -28,7 +27,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ),
     ProductModel(
       id: '2',
-      title: 'Smart Watch S2000 pro max',
+      title: 'Smart Watch S2000',
       subtitle: '⌚️Latest Series',
       image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400',
       wholesalePrice: 950,
@@ -106,186 +105,40 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
 
 class CategoryStyle {
   final String label;
-  final String? banglaLabel;
   final IconData icon;
-  final String? imageUrl;
-  final List<Color> gradientColors;
-  final Color glowColor;
+  final Color color;
 
   CategoryStyle({
     required this.label,
-    this.banglaLabel,
     required this.icon,
-    this.imageUrl,
-    required this.gradientColors,
-    required this.glowColor,
+    required this.color,
   });
 }
 
 final Map<String, CategoryStyle> _categoryStyles = {
-  'All': CategoryStyle(
-    label: 'All',
-    banglaLabel: 'সব',
-    icon: Icons.apps_rounded,
-    gradientColors: [const Color(0xFF0EA5E9), const Color(0xFF06B6D4)],
-    glowColor: const Color(0xFF0EA5E9),
-  ),
-  'Smart Watch': CategoryStyle(
-    label: 'Smart Watch',
-    icon: Icons.watch_rounded,
-    gradientColors: [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
-    glowColor: const Color(0xFF6366F1),
-  ),
-  'Neckband': CategoryStyle(
-    label: 'Neckband',
-    icon: Icons.headphones_rounded,
-    gradientColors: [const Color(0xFFEC4899), const Color(0xFFF43F5E)],
-    glowColor: const Color(0xFFEC4899),
-  ),
-  'Airpods': CategoryStyle(
-    label: 'Airpods',
-    icon: Icons.earbuds_rounded,
-    gradientColors: [const Color(0xFF10B981), const Color(0xFF14B8A6)],
-    glowColor: const Color(0xFF10B981),
-  ),
-  'Power Bank': CategoryStyle(
-    label: 'Power Bank',
-    icon: Icons.battery_charging_full_rounded,
-    gradientColors: [const Color(0xFFF59E0B), const Color(0xFFF97316)],
-    glowColor: const Color(0xFFF59E0B),
-  ),
-  'Earphone': CategoryStyle(
-    label: 'Earphone',
-    icon: Icons.headset_mic_rounded,
-    gradientColors: [const Color(0xFF3B82F6), const Color(0xFF0EA5E9)],
-    glowColor: const Color(0xFF3B82F6),
-  ),
-  'Electronics': CategoryStyle(
-    label: 'Electronics',
-    banglaLabel: 'ইলেকট্রনিক্স',
-    icon: Icons.devices_rounded,
-    gradientColors: [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
-    glowColor: const Color(0xFF6366F1),
-  ),
-  'Fashion': CategoryStyle(
-    label: 'Fashion',
-    banglaLabel: 'ফ্যাশন',
-    icon: Icons.checkroom_rounded,
-    gradientColors: [const Color(0xFF10B981), const Color(0xFF14B8A6)],
-    glowColor: const Color(0xFF10B981),
-  ),
-  'Audio': CategoryStyle(
-    label: 'Audio',
-    banglaLabel: 'অডিও',
-    icon: Icons.headphones_rounded,
-    gradientColors: [const Color(0xFFEC4899), const Color(0xFFF43F5E)],
-    glowColor: const Color(0xFFEC4899),
-  ),
-  'Watches': CategoryStyle(
-    label: 'Watches',
-    banglaLabel: 'ঘড়ি',
-    icon: Icons.watch_rounded,
-    gradientColors: [const Color(0xFFF59E0B), const Color(0xFFF97316)],
-    glowColor: const Color(0xFFF59E0B),
-  ),
-  'Home': CategoryStyle(
-    label: 'Home',
-    banglaLabel: 'হোম',
-    icon: Icons.home_rounded,
-    gradientColors: [const Color(0xFF3B82F6), const Color(0xFF0EA5E9)],
-    glowColor: const Color(0xFF3B82F6),
-  ),
-  'Sports': CategoryStyle(
-    label: 'Sports',
-    banglaLabel: 'স্পোর্টস',
-    icon: Icons.sports_basketball_rounded,
-    gradientColors: [const Color(0xFFEF4444), const Color(0xFFF97316)],
-    glowColor: const Color(0xFFEF4444),
-  ),
-  'Beauty': CategoryStyle(
-    label: 'Beauty',
-    banglaLabel: 'বিউটি',
-    icon: Icons.brush_rounded,
-    gradientColors: [const Color(0xFFD946EF), const Color(0xFFA855F7)],
-    glowColor: const Color(0xFFD946EF),
-  ),
-  'Books': CategoryStyle(
-    label: 'Books',
-    banglaLabel: 'বই',
-    icon: Icons.menu_book_rounded,
-    gradientColors: [const Color(0xFF8B5CF6), const Color(0xFF6366F1)],
-    glowColor: const Color(0xFF8B5CF6),
-  ),
-  'Toys': CategoryStyle(
-    label: 'Toys',
-    banglaLabel: 'খেলনা',
-    icon: Icons.toys_rounded,
-    gradientColors: [const Color(0xFF06B6D4), const Color(0xFF22D3EE)],
-    glowColor: const Color(0xFF06B6D4),
-  ),
+  'All': CategoryStyle(label: 'All', icon: CupertinoIcons.square_grid_2x2, color: const Color(0xFF29B6F6)),
+  'Smart Watch': CategoryStyle(label: 'Smart Watch', icon: CupertinoIcons.watch, color: const Color(0xFF6366F1)),
+  'Neckband': CategoryStyle(label: 'Neckband', icon: CupertinoIcons.headphones, color: const Color(0xFFEC4899)),
+  'Airpods': CategoryStyle(label: 'Airpods', icon: CupertinoIcons.ear, color: const Color(0xFF10B981)),
+  'Power Bank': CategoryStyle(label: 'Power Bank', icon: CupertinoIcons.battery_100, color: const Color(0xFFF59E0B)),
+  'Earphone': CategoryStyle(label: 'Earphone', icon: CupertinoIcons.headset, color: const Color(0xFF3B82F6)),
+  'Electronics': CategoryStyle(label: 'Electronics', icon: CupertinoIcons.device_phone_portrait, color: const Color(0xFF6366F1)),
+  'Fashion': CategoryStyle(label: 'Fashion', icon: CupertinoIcons.bag, color: const Color(0xFF10B981)),
+  'Audio': CategoryStyle(label: 'Audio', icon: CupertinoIcons.speaker_2, color: const Color(0xFFEC4899)),
+  'Watches': CategoryStyle(label: 'Watches', icon: CupertinoIcons.clock, color: const Color(0xFFF59E0B)),
+  'Home': CategoryStyle(label: 'Home', icon: CupertinoIcons.house, color: const Color(0xFF3B82F6)),
+  'Sports': CategoryStyle(label: 'Sports', icon: CupertinoIcons.sportscourt, color: const Color(0xFFEF4444)),
+  'Beauty': CategoryStyle(label: 'Beauty', icon: CupertinoIcons.eyedropper, color: const Color(0xFFD946EF)),
+  'Books': CategoryStyle(label: 'Books', icon: CupertinoIcons.book, color: const Color(0xFF8B5CF6)),
+  'Toys': CategoryStyle(label: 'Toys', icon: CupertinoIcons.gift, color: const Color(0xFF06B6D4)),
 };
 
 CategoryStyle _getCategoryStyle(String category) {
   return _categoryStyles[category] ?? CategoryStyle(
     label: category,
-    icon: Icons.local_offer_rounded,
-    gradientColors: [const Color(0xFF0EA5E9), const Color(0xFF38BDF8)],
-    glowColor: const Color(0xFF0EA5E9),
+    icon: CupertinoIcons.tag,
+    color: const Color(0xFF29B6F6),
   );
-}
-
-// ==================== COLOR TOKENS (iOS Soft) ====================
-
-class AppColors {
-  static const Color primaryLight = Color(0xFFFF2D55);
-  static const Color primaryLightSoft = Color(0xFFFF6482);
-  static const Color accentLight = Color(0xFF5856D6);
-  static const Color successLight = Color(0xFF34C759);
-  static const Color warningLight = Color(0xFFFF9500);
-  static const Color dangerLight = Color(0xFFFF3B30);
-
-  static const Color bgLight = Color(0xFFF2F2F7);
-  static const Color surfaceLight = Colors.white;
-  static const Color cardLight = Colors.white;
-  static const Color textPrimaryLight = Color(0xFF1C1C1E);
-  static const Color textSecondaryLight = Color(0xFF8E8E93);
-  static const Color textMutedLight = Color(0xFFC7C7CC);
-  static const Color borderLight = Color(0xFFE5E5EA);
-  static const Color shadowLight = Color(0x1A000000);
-
-  static const Color primaryDark = Color(0xFFFF6482);
-  static const Color primaryDarkSoft = Color(0xFFFF8FAB);
-  static const Color accentDark = Color(0xFF7B79E0);
-  static const Color successDark = Color(0xFF30D158);
-  static const Color warningDark = Color(0xFFFFB340);
-  static const Color dangerDark = Color(0xFFFF453A);
-
-  static const Color bgDark = Color(0xFF000000);
-  static const Color surfaceDark = Color(0xFF1C1C1E);
-  static const Color cardDark = Color(0xFF2C2C2E);
-  static const Color textPrimaryDark = Color(0xFFFFFFFF);
-  static const Color textSecondaryDark = Color(0xFF8E8E93);
-  static const Color textMutedDark = Color(0xFF636366);
-  static const Color borderDark = Color(0xFF38383A);
-  static const Color shadowDark = Color(0x40FFFFFF);
-
-  static bool _isDark(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark;
-
-  static Color primary(BuildContext context) => _isDark(context) ? primaryDark : primaryLight;
-  static Color primarySoft(BuildContext context) => _isDark(context) ? primaryDarkSoft : primaryLightSoft;
-  static Color accent(BuildContext context) => _isDark(context) ? accentDark : accentLight;
-  static Color success(BuildContext context) => _isDark(context) ? successDark : successLight;
-  static Color warning(BuildContext context) => _isDark(context) ? warningDark : warningLight;
-  static Color danger(BuildContext context) => _isDark(context) ? dangerDark : dangerLight;
-  static Color bg(BuildContext context) => _isDark(context) ? bgDark : bgLight;
-  static Color surface(BuildContext context) => _isDark(context) ? surfaceDark : surfaceLight;
-  static Color card(BuildContext context) => _isDark(context) ? cardDark : cardLight;
-  static Color textPrimary(BuildContext context) => _isDark(context) ? textPrimaryDark : textPrimaryLight;
-  static Color textSecondary(BuildContext context) => _isDark(context) ? textSecondaryDark : textSecondaryLight;
-  static Color textMuted(BuildContext context) => _isDark(context) ? textMutedDark : textMutedLight;
-  static Color border(BuildContext context) => _isDark(context) ? borderDark : borderLight;
-  static Color shadow(BuildContext context) => _isDark(context) ? shadowDark : shadowLight;
 }
 
 // ==================== DATA MODEL ====================
@@ -319,10 +172,6 @@ class ProductModel {
 
   double get myPrice => wholesalePrice + myMargin;
   double get maxMargin => maxResalePrice - wholesalePrice;
-  double get discountPercent {
-    if (originalPrice == null || originalPrice! <= 0) return 0;
-    return ((originalPrice! - wholesalePrice) / originalPrice! * 100).roundToDouble();
-  }
 }
 
 // ==================== MAIN SCREEN ====================
@@ -391,31 +240,42 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     final filtered = _filterProducts(allProducts);
     final myResells = allProducts.where((p) => p.isReselling).toList();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
+    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
+    final cardBackground = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.04);
+    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 1024;
+    final isTablet = screenWidth >= 600 && screenWidth < 1024;
+    final isSmall = screenWidth < 360;
+    final hPadding = isDesktop ? 32.w : isTablet ? 20.w : isSmall ? 12.w : 16.w;
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: AppColors.bg(context),
+        backgroundColor: kBackground,
         body: SafeArea(
           bottom: false,
           child: NestedScrollView(
+            physics: const BouncingScrollPhysics(),
             headerSliverBuilder: (_, __) => [
-              SliverToBoxAdapter(child: _buildSearchBar()),
-              SliverToBoxAdapter(child: _buildBannerCarousel()),
-              SliverToBoxAdapter(child: _buildQuickActions()),
-              SliverToBoxAdapter(
-                child: _buildSectionHeader('Categories', onSeeAll: () {}),
-              ),
-              SliverToBoxAdapter(child: _buildCategoryFilter(allProducts)),
-              SliverToBoxAdapter(
-                child: _buildSectionHeader('Most Popular Products', onSeeAll: () {}),
-              ),
-              SliverToBoxAdapter(child: _buildTabBar(filtered.length, myResells.length)),
+              SliverToBoxAdapter(child: _buildSearchBar(hPadding, isSmall, kTextDark, kTextMid, cardBackground, shadowColor, borderColor)),
+              SliverToBoxAdapter(child: _buildBannerSlider(isSmall, isTablet, isDesktop)),
+              SliverToBoxAdapter(child: _buildQuickActions(hPadding, isSmall, isDesktop, cardBackground, shadowColor, borderColor, kTextDark)),
+              SliverToBoxAdapter(child: _buildSectionHeader(hPadding, isSmall, isDesktop, kTextDark, kTextMid, title: 'Categories', subtitle: 'Browse by category', showViewAll: true)),
+              SliverToBoxAdapter(child: _buildCategoryFilter(allProducts, isSmall, isDesktop, cardBackground, shadowColor, borderColor, kTextDark)),
+              SliverToBoxAdapter(child: _buildSectionHeader(hPadding, isSmall, isDesktop, kTextDark, kTextMid, title: 'Most Popular Products', subtitle: 'Trending now', showViewAll: true)),
+              SliverToBoxAdapter(child: _buildCustomTabBar(filtered.length, myResells.length, hPadding, isSmall, cardBackground, borderColor, kTextDark, kTextMid)),
             ],
             body: TabBarView(
               controller: _tabController,
+              physics: const BouncingScrollPhysics(),
               children: [
-                _buildProductsTab(filtered),
-                _buildMyResellsTab(myResells),
+                _buildProductsTab(filtered, isSmall, isDesktop, isTablet, cardBackground, shadowColor, kTextDark, kTextMid),
+                _buildMyResellsTab(myResells, isSmall, cardBackground, shadowColor, borderColor, kTextDark, kTextMid),
               ],
             ),
           ),
@@ -427,32 +287,28 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
               FloatingActionButton.small(
                 heroTag: 'sales',
                 onPressed: () => _tabController.animateTo(1),
-                backgroundColor: AppColors.card(context),
+                backgroundColor: cardBackground,
                 elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                 child: Badge(
                   label: Text('${myResells.length}'),
-                  child: Icon(Icons.analytics_rounded,
-                      color: AppColors.primary(context), size: 18.sp),
+                  child: Icon(CupertinoIcons.chart_bar, color: const Color(0xFF29B6F6), size: 18.sp),
                 ),
               ).animate().scale(delay: 100.ms),
             SizedBox(height: 8.h),
             FloatingActionButton.extended(
               heroTag: 'add',
               onPressed: _showAddProductSheet,
-              backgroundColor: AppColors.primary(context),
+              backgroundColor: const Color(0xFF29B6F6),
               elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              icon: Icon(Icons.add_rounded, size: 18.sp),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+              icon: Icon(CupertinoIcons.add, size: 18.sp, color: Colors.white),
               label: Text(
                 'Add Product',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
               ),
             ).animate().scale(delay: 150.ms),
@@ -462,25 +318,23 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     );
   }
 
-  // ==================== SEARCH BAR (iOS Style) ====================
-  Widget _buildSearchBar() {
+  // ==================== SEARCH BAR ====================
+  Widget _buildSearchBar(double hPadding, bool isSmall, Color kTextDark, Color kTextMid, Color cardBackground, Color shadowColor, Color borderColor) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+      padding: EdgeInsets.fromLTRB(hPadding, 12.h, hPadding, 0),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.circular(16.r),
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: _isSearchFocused
-                ? AppColors.primary(context).withOpacity(0.4)
-                : AppColors.border(context),
+            color: _isSearchFocused ? const Color(0xFF29B6F6).withOpacity(0.5) : borderColor,
             width: _isSearchFocused ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow(context).withOpacity(0.15),
-              blurRadius: 12,
+              color: shadowColor,
+              blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
@@ -489,22 +343,20 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           controller: _searchController,
           focusNode: _searchFocusNode,
           onChanged: (val) => setState(() => _searchQuery = val),
-          style: GoogleFonts.outfit(
-            fontSize: 14.sp,
-            color: AppColors.textPrimary(context),
+          style: GoogleFonts.poppins(
+            fontSize: isSmall ? 12.sp : 13.sp,
+            color: kTextDark,
           ),
           decoration: InputDecoration(
             hintText: 'Search Products...',
-            hintStyle: GoogleFonts.outfit(
-              fontSize: 14.sp,
-              color: AppColors.textMuted(context),
+            hintStyle: GoogleFonts.poppins(
+              fontSize: isSmall ? 12.sp : 13.sp,
+              color: kTextMid,
             ),
             prefixIcon: Icon(
-              Icons.search_rounded,
-              color: _isSearchFocused
-                  ? AppColors.primary(context)
-                  : AppColors.textMuted(context),
-              size: 20.sp,
+              CupertinoIcons.search,
+              color: _isSearchFocused ? const Color(0xFF29B6F6) : kTextMid,
+              size: isSmall ? 18.sp : 20.sp,
             ),
             suffixIcon: _searchQuery.isNotEmpty
                 ? GestureDetector(
@@ -515,12 +367,12 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                     child: Container(
                       margin: EdgeInsets.all(10.w),
                       decoration: BoxDecoration(
-                        color: AppColors.border(context),
+                        color: borderColor,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.close_rounded,
-                        color: AppColors.textSecondary(context),
+                        CupertinoIcons.xmark,
+                        color: kTextMid,
                         size: 12.sp,
                       ),
                     ),
@@ -535,19 +387,30 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  // ==================== BANNER CAROUSEL ====================
-  Widget _buildBannerCarousel() {
+  // ==================== BANNER SLIDER ====================
+  Widget _buildBannerSlider(bool isSmall, bool isTablet, bool isDesktop) {
     final banners = [
       'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600',
       'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600',
       'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600',
     ];
+    final bannerHeight = isDesktop ? 160.h : isTablet ? 130.h : isSmall ? 100.h : 120.h;
 
     return Container(
-      height: 140.h,
+      height: bannerHeight,
       margin: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(12.r),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -557,15 +420,22 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                 return Image.network(
                   banners[index],
                   fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: const Color(0xFF29B6F6).withOpacity(0.1),
+                      child: Center(child: CupertinoActivityIndicator(radius: 12.r)),
+                    );
+                  },
                   errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.primary(context).withOpacity(0.1),
+                    color: const Color(0xFF29B6F6).withOpacity(0.1),
                     child: Center(
                       child: Text(
                         'অফার কিনুন',
-                        style: GoogleFonts.outfit(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary(context),
+                        style: GoogleFonts.poppins(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF29B6F6),
                         ),
                       ),
                     ),
@@ -579,7 +449,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Colors.black.withOpacity(0.4),
+                    Colors.black.withOpacity(0.3),
                     Colors.transparent,
                     Colors.transparent,
                   ],
@@ -587,7 +457,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
               ),
             ),
             Positioned(
-              left: 16.w,
+              left: 14.w,
               top: 20.h,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -595,14 +465,14 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: AppColors.primary(context),
+                      color: const Color(0xFF29B6F6),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Text(
                       'Special Offer',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 10.sp,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
@@ -610,31 +480,12 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                   SizedBox(height: 8.h),
                   Text(
                     'অফার কিনুন',
-                    style: GoogleFonts.outfit(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w800,
+                    style: GoogleFonts.poppins(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
                       color: Colors.white,
                       shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    'Up to 50% Off',
-                    style: GoogleFonts.outfit(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withOpacity(0.9),
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
+                        Shadow(color: Colors.black.withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 2)),
                       ],
                     ),
                   ),
@@ -648,59 +499,56 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   }
 
   // ==================== QUICK ACTIONS ====================
-  Widget _buildQuickActions() {
+  Widget _buildQuickActions(double hPadding, bool isSmall, bool isDesktop, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark) {
     final actions = [
-      _QuickActionData(icon: Icons.fact_check_outlined, label: 'অর্ডার', color: const Color(0xFF34C759)),
-      _QuickActionData(icon: Icons.storefront_outlined, label: 'ভেন্ডর লিস্ট', color: const Color(0xFFFF9500)),
-      _QuickActionData(icon: Icons.grid_view_rounded, label: 'ক্যাটেগরি', color: const Color(0xFF5856D6)),
-      _QuickActionData(icon: Icons.favorite_border_rounded, label: 'লেভেল করা\nপ্রোডাক্ট', color: const Color(0xFFFF2D55)),
+      _QuickActionData(icon: CupertinoIcons.doc_text, label: 'অর্ডার', color: const Color(0xFF6366F1)),
+      _QuickActionData(icon: CupertinoIcons.person_2, label: 'ভেন্ডর লিস্ট', color: const Color(0xFF0284C7)),
+      _QuickActionData(icon: CupertinoIcons.square_grid_2x2, label: 'ক্যাটেগরি', color: const Color(0xFFEA580C)),
+      _QuickActionData(icon: CupertinoIcons.heart, label: 'লেভেল করা\nপ্রোডাক্ট', color: const Color(0xFF29B6F6)),
     ];
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 0),
+      padding: EdgeInsets.fromLTRB(hPadding, 20.h, hPadding, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: actions.map((action) {
+          final iconSize = isSmall ? 20.sp : isDesktop ? 24.sp : 22.sp;
+          final containerSize = isSmall ? 44.w : isDesktop ? 56.w : 48.w;
+
           return GestureDetector(
             onTap: () => HapticFeedback.lightImpact(),
             child: Column(
               children: [
                 Container(
-                  width: 56.w,
-                  height: 56.w,
+                  width: containerSize,
+                  height: containerSize,
                   decoration: BoxDecoration(
-                    color: AppColors.card(context),
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: AppColors.border(context)),
+                    color: cardBackground,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: borderColor, width: 0.5),
                     boxShadow: [
-                      BoxShadow(
-                        color: AppColors.shadow(context).withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
+                      BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2)),
                     ],
                   ),
-                  child: Icon(
-                    action.icon,
-                    color: action.color,
-                    size: 24.sp,
+                  child: Center(
+                    child: Icon(action.icon, color: action.color, size: iconSize),
                   ),
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 6.h),
                 Text(
                   action.label,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary(context),
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 9.sp : 10.sp,
+                    fontWeight: FontWeight.w500,
+                    color: kTextDark,
                     height: 1.2,
                   ),
                 ),
               ],
             ),
           ).animate().fadeIn(delay: (actions.indexOf(action) * 80).ms).scale(
-            begin: const Offset(0.8, 0.8),
+            begin: const Offset(0.85, 0.85),
             curve: Curves.easeOutBack,
           );
         }).toList(),
@@ -709,44 +557,71 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   }
 
   // ==================== SECTION HEADER ====================
-  Widget _buildSectionHeader(String title, {required VoidCallback onSeeAll}) {
+  Widget _buildSectionHeader(double hPadding, bool isSmall, bool isDesktop, Color kTextDark, Color kTextMid, {required String title, required String subtitle, bool showViewAll = false}) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 24.h, 16.w, 0),
+      padding: EdgeInsets.fromLTRB(hPadding, 24.h, hPadding, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.outfit(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary(context),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: isSmall ? 14.sp : isDesktop ? 18.sp : 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: kTextDark,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.poppins(
+                  fontSize: isSmall ? 10.sp : isDesktop ? 12.sp : 11.sp,
+                  color: kTextMid,
+                ),
+              ),
+            ],
           ),
-          GestureDetector(
-            onTap: onSeeAll,
-            child: Text(
-              'See All',
-              style: GoogleFonts.outfit(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary(context),
+          if (showViewAll)
+            TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'See All',
+                    style: GoogleFonts.poppins(
+                      fontSize: isSmall ? 10.sp : 11.sp,
+                      color: const Color(0xFF29B6F6),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(width: 2.w),
+                  Icon(CupertinoIcons.chevron_right, size: isSmall ? 10.sp : 12.sp, color: const Color(0xFF29B6F6)),
+                ],
               ),
             ),
-          ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms);
   }
 
-  // ==================== CATEGORY FILTER (iOS Style) ====================
-  Widget _buildCategoryFilter(List<ProductModel> allProducts) {
+  // ==================== CATEGORY FILTER ====================
+  Widget _buildCategoryFilter(List<ProductModel> allProducts, bool isSmall, bool isDesktop, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark) {
     final categories = ref.read(productListProvider.notifier).categories;
 
     return SizedBox(
-      height: 100.h,
+      height: isSmall ? 90.h : 100.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
         itemCount: categories.length,
         separatorBuilder: (_, __) => SizedBox(width: 12.w),
@@ -754,73 +629,55 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           final cat = categories[i];
           final selected = _selectedCategory == cat;
           final style = _getCategoryStyle(cat);
+          final iconSize = isSmall ? 20.sp : isDesktop ? 26.sp : 22.sp;
+          final containerSize = isSmall ? 44.w : isDesktop ? 56.w : 50.w;
 
           return GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
               setState(() => _selectedCategory = cat);
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutBack,
-              width: 72.w,
-              child: Column(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    width: 64.w,
-                    height: 64.w,
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? style.gradientColors[0].withOpacity(0.15)
-                          : AppColors.card(context),
-                      borderRadius: BorderRadius.circular(18.r),
-                      border: Border.all(
-                        color: selected
-                            ? style.gradientColors[0].withOpacity(0.4)
-                            : AppColors.border(context),
-                        width: selected ? 2 : 1,
-                      ),
-                      boxShadow: selected
-                          ? [
-                              BoxShadow(
-                                color: style.glowColor.withOpacity(0.25),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : [
-                              BoxShadow(
-                                color: AppColors.shadow(context).withOpacity(0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
+            child: Column(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  width: containerSize,
+                  height: containerSize,
+                  decoration: BoxDecoration(
+                    color: selected ? style.color.withOpacity(0.15) : cardBackground,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected ? style.color.withOpacity(0.5) : borderColor,
+                      width: selected ? 2 : 0.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: shadowColor,
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
                     child: Icon(
                       style.icon,
-                      color: selected
-                          ? style.gradientColors[0]
-                          : AppColors.textSecondary(context),
-                      size: 26.sp,
+                      color: selected ? style.color : kTextDark.withOpacity(0.6),
+                      size: iconSize,
                     ),
                   ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    cat,
-                    style: GoogleFonts.outfit(
-                      fontSize: 10.sp,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                      color: selected
-                          ? style.gradientColors[0]
-                          : AppColors.textSecondary(context),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  cat,
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 9.sp : 10.sp,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? style.color : kTextDark,
                   ),
-                ],
-              ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           );
         },
@@ -828,78 +685,96 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(delay: 300.ms);
   }
 
-  // ==================== TAB BAR (iOS Style) ====================
-  Widget _buildTabBar(int allCount, int myCount) {
+  // ==================== CUSTOM TAB BAR ====================
+  Widget _buildCustomTabBar(int allCount, int myCount, double hPadding, bool isSmall, Color cardBackground, Color borderColor, Color kTextDark, Color kTextMid) {
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 4.h),
+      margin: EdgeInsets.fromLTRB(hPadding, 16.h, hPadding, 4.h),
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.border(context)),
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: borderColor),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow(context).withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
-      child: TabBar(
-        controller: _tabController,
-        labelStyle: GoogleFonts.outfit(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w700,
-        ),
-        unselectedLabelStyle: GoogleFonts.outfit(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w500,
-        ),
-        labelColor: Colors.white,
-        unselectedLabelColor: AppColors.textSecondary(context),
-        indicator: BoxDecoration(
-          color: AppColors.primary(context),
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary(context).withOpacity(0.25),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _tabController.animateTo(0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: EdgeInsets.symmetric(vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: _tabController.index == 0 ? const Color(0xFF29B6F6) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Text(
+                  'All Products ($allCount)',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 11.sp : 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _tabController.index == 0 ? Colors.white : kTextMid,
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        splashFactory: NoSplash.splashFactory,
-        overlayColor: WidgetStateProperty.all(Colors.transparent),
-        tabs: [
-          Tab(text: 'All ($allCount)'),
-          Tab(text: 'My Sales ($myCount)'),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _tabController.animateTo(1),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: EdgeInsets.symmetric(vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: _tabController.index == 1 ? const Color(0xFF29B6F6) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Text(
+                  'My Sales ($myCount)',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 11.sp : 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _tabController.index == 1 ? Colors.white : kTextMid,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     ).animate().fadeIn(delay: 350.ms);
   }
 
   // ==================== PRODUCTS TAB ====================
-  Widget _buildProductsTab(List<ProductModel> products) {
-    if (products.isEmpty) return _buildEmptyState();
+  Widget _buildProductsTab(List<ProductModel> products, bool isSmall, bool isDesktop, bool isTablet, Color cardBackground, Color shadowColor, Color kTextDark, Color kTextMid) {
+    if (products.isEmpty) return _buildEmptyState(kTextMid);
+
+    final crossAxisCount = isSmall ? 2 : (isTablet ? 3 : 2);
+    final childAspectRatio = isSmall ? 0.62 : 0.58;
 
     return GridView.builder(
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 100.h),
+      physics: const BouncingScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12.w,
-        mainAxisSpacing: 12.h,
-        childAspectRatio: 0.58,
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: 10.w,
+        mainAxisSpacing: 10.h,
+        childAspectRatio: childAspectRatio,
       ),
       itemCount: products.length,
-      itemBuilder: (_, i) => _ProductCard(
+      itemBuilder: (_, i) => _ResellProductCard(
         product: products[i],
+        isSmall: isSmall,
+        cardBackground: cardBackground,
+        shadowColor: shadowColor,
+        kTextDark: kTextDark,
+        kTextMid: kTextMid,
         onResell: () => _showResellSheet(products[i]),
-      )
-          .animate()
-          .fadeIn(delay: (i * 60).ms, duration: 350.ms)
-          .slideY(begin: 0.08, curve: Curves.easeOut),
+      ).animate().fadeIn(delay: (i * 50).ms, duration: 300.ms).slideY(begin: 0.06, curve: Curves.easeOut),
     );
   }
 
@@ -932,7 +807,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   }
 
   // ==================== MY RESELLS TAB ====================
-  Widget _buildMyResellsTab(List<ProductModel> myResells) {
+  Widget _buildMyResellsTab(List<ProductModel> myResells, bool isSmall, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark, Color kTextMid) {
     if (myResells.isEmpty) {
       return Center(
         child: Column(
@@ -941,30 +816,26 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
             Container(
               padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
-                color: AppColors.primary(context).withOpacity(0.08),
+                color: const Color(0xFF29B6F6).withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.inventory_2_outlined,
-                size: 44.sp,
-                color: AppColors.primary(context),
-              ),
+              child: Icon(CupertinoIcons.cube_box, size: 44.sp, color: const Color(0xFF29B6F6)),
             ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
             SizedBox(height: 16.h),
             Text(
               'No active sales yet',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary(context),
+                fontWeight: FontWeight.bold,
+                color: kTextDark,
               ),
             ),
             SizedBox(height: 6.h),
             Text(
               'Pick a product and set your margin',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 13.sp,
-                color: AppColors.textSecondary(context),
+                color: kTextMid,
               ),
             ),
             SizedBox(height: 20.h),
@@ -973,11 +844,11 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 decoration: BoxDecoration(
-                  color: AppColors.primary(context),
-                  borderRadius: BorderRadius.circular(14.r),
+                  color: const Color(0xFF29B6F6),
+                  borderRadius: BorderRadius.circular(12.r),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary(context).withOpacity(0.3),
+                      color: const Color(0xFF29B6F6).withOpacity(0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -985,9 +856,9 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                 ),
                 child: Text(
                   'Browse Products',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     fontSize: 14.sp,
                   ),
                 ),
@@ -1000,9 +871,16 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
 
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 100.h),
+      physics: const BouncingScrollPhysics(),
       itemCount: myResells.length,
       itemBuilder: (_, i) => _ActiveResellCard(
         product: myResells[i],
+        isSmall: isSmall,
+        cardBackground: cardBackground,
+        shadowColor: shadowColor,
+        borderColor: borderColor,
+        kTextDark: kTextDark,
+        kTextMid: kTextMid,
         onStop: () {
           final updated = ProductModel(
             id: myResells[i].id,
@@ -1019,27 +897,23 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           );
           ref.read(productListProvider.notifier).updateProduct(updated);
         },
-      )
-          .animate()
-          .fadeIn(delay: (i * 60).ms, duration: 300.ms)
-          .slideX(begin: 0.05, curve: Curves.easeOut),
+      ).animate().fadeIn(delay: (i * 60).ms, duration: 300.ms).slideX(begin: 0.05, curve: Curves.easeOut),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(Color kTextMid) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off_rounded,
-              size: 48.sp, color: AppColors.textMuted(context)),
+          Icon(CupertinoIcons.search, size: 48.sp, color: kTextMid),
           SizedBox(height: 12.h),
           Text(
             'No products found',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary(context),
+              fontWeight: FontWeight.w500,
+              color: kTextMid,
             ),
           ),
         ],
@@ -1048,19 +922,32 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   }
 }
 
-// ==================== PRODUCT CARD (Screenshot Style) ====================
+// ==================== RESELL PRODUCT CARD ====================
 
-class _ProductCard extends StatefulWidget {
+class _ResellProductCard extends StatefulWidget {
   final ProductModel product;
+  final bool isSmall;
+  final Color cardBackground;
+  final Color shadowColor;
+  final Color kTextDark;
+  final Color kTextMid;
   final VoidCallback onResell;
 
-  const _ProductCard({required this.product, required this.onResell});
+  const _ResellProductCard({
+    required this.product,
+    required this.isSmall,
+    required this.cardBackground,
+    required this.shadowColor,
+    required this.kTextDark,
+    required this.kTextMid,
+    required this.onResell,
+  });
 
   @override
-  State<_ProductCard> createState() => _ProductCardState();
+  State<_ResellProductCard> createState() => _ResellProductCardState();
 }
 
-class _ProductCardState extends State<_ProductCard> {
+class _ResellProductCardState extends State<_ResellProductCard> {
   bool _pressed = false;
 
   @override
@@ -1074,15 +961,14 @@ class _ProductCardState extends State<_ProductCard> {
         duration: const Duration(milliseconds: 120),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.circular(20.r),
-            border: Border.all(color: AppColors.border(context).withOpacity(0.6)),
+            color: widget.cardBackground,
+            borderRadius: BorderRadius.circular(12.r),
             boxShadow: [
               BoxShadow(
-                color: AppColors.shadow(context).withOpacity(0.1),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-                spreadRadius: -4,
+                color: widget.shadowColor,
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
               ),
             ],
           ),
@@ -1092,10 +978,9 @@ class _ProductCardState extends State<_ProductCard> {
               Stack(
                 children: [
                   ClipRRect(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20.r)),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
                     child: SizedBox(
-                      height: 130.h,
+                      height: widget.isSmall ? 110.h : 125.h,
                       width: double.infinity,
                       child: Image.network(
                         widget.product.image,
@@ -1103,24 +988,14 @@ class _ProductCardState extends State<_ProductCard> {
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
                           return Container(
-                            color: AppColors.bg(context),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary(context)),
-                              ),
-                            ),
+                            color: const Color(0xFF29B6F6).withOpacity(0.05),
+                            child: Center(child: CupertinoActivityIndicator(radius: 12.r)),
                           );
                         },
                         errorBuilder: (_, __, ___) => Container(
-                          color: AppColors.bg(context),
+                          color: Colors.grey.shade100,
                           child: Center(
-                            child: Icon(
-                              Icons.image_not_supported_outlined,
-                              color: AppColors.textMuted(context),
-                              size: 28.sp,
-                            ),
+                            child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400, size: 28.sp),
                           ),
                         ),
                       ),
@@ -1128,32 +1003,25 @@ class _ProductCardState extends State<_ProductCard> {
                   ),
                   if (widget.product.isReselling)
                     Positioned(
-                      top: 10,
-                      left: 10,
+                      top: 8,
+                      left: 8,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
                         decoration: BoxDecoration(
-                          color: AppColors.success(context),
-                          borderRadius: BorderRadius.circular(8.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.success(context).withOpacity(0.4),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          color: const Color(0xFF34C759),
+                          borderRadius: BorderRadius.circular(6.r),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.check_rounded, color: Colors.white, size: 10.sp),
-                            SizedBox(width: 3.w),
+                            Icon(CupertinoIcons.checkmark_alt, color: Colors.white, size: 9.sp),
+                            SizedBox(width: 2.w),
                             Text(
                               'Active',
-                              style: GoogleFonts.outfit(
-                                fontSize: 9.sp,
+                              style: GoogleFonts.poppins(
+                                fontSize: 8.5.sp,
                                 color: Colors.white,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -1161,28 +1029,25 @@ class _ProductCardState extends State<_ProductCard> {
                       ),
                     ),
                   Positioned(
-                    top: 10,
-                    right: 10,
+                    top: 8,
+                    right: 8,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
                       decoration: BoxDecoration(
-                        color: AppColors.card(context).withOpacity(0.92),
-                        borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(
-                            color: AppColors.border(context).withOpacity(0.5)),
+                        color: widget.cardBackground.withOpacity(0.92),
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.star_rounded,
-                              color: const Color(0xFFFFCC02), size: 11.sp),
+                          Icon(CupertinoIcons.star_fill, color: const Color(0xFFFFCC02), size: 10.sp),
                           SizedBox(width: 2.w),
                           Text(
                             widget.product.rating.toString(),
-                            style: GoogleFonts.outfit(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary(context),
+                            style: GoogleFonts.poppins(
+                              fontSize: 9.sp,
+                              fontWeight: FontWeight.w700,
+                              color: widget.kTextDark,
                             ),
                           ),
                         ],
@@ -1193,57 +1058,56 @@ class _ProductCardState extends State<_ProductCard> {
               ),
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.all(12.w),
+                  padding: EdgeInsets.all(10.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         widget.product.title,
-                        style: GoogleFonts.outfit(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary(context),
+                        style: GoogleFonts.poppins(
+                          fontSize: widget.isSmall ? 10.sp : 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: widget.kTextDark,
                           height: 1.3,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (widget.product.subtitle != null) ...[
-                        SizedBox(height: 3.h),
+                        SizedBox(height: 2.h),
                         Text(
                           widget.product.subtitle!,
-                          style: GoogleFonts.outfit(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary(context),
+                          style: GoogleFonts.poppins(
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.w400,
+                            color: widget.kTextMid,
                             height: 1.2,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                      SizedBox(height: 8.h),
+                      SizedBox(height: 6.h),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
                             '\u09F3${widget.product.wholesalePrice.toInt()}',
-                            style: GoogleFonts.outfit(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primary(context),
+                            style: GoogleFonts.poppins(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF29B6F6),
                             ),
                           ),
-                          SizedBox(width: 6.w),
+                          SizedBox(width: 5.w),
                           if (widget.product.originalPrice != null)
                             Text(
                               '\u09F3${widget.product.originalPrice!.toInt()}',
-                              style: GoogleFonts.outfit(
-                                fontSize: 11.sp,
+                              style: GoogleFonts.poppins(
+                                fontSize: 10.sp,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.textMuted(context),
+                                color: widget.kTextMid,
                                 decoration: TextDecoration.lineThrough,
-                                decorationThickness: 1.5,
                               ),
                             ),
                         ],
@@ -1253,33 +1117,22 @@ class _ProductCardState extends State<_ProductCard> {
                         onTap: widget.onResell,
                         child: Container(
                           width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 9.h),
+                          padding: EdgeInsets.symmetric(vertical: 8.h),
                           decoration: BoxDecoration(
-                            color: AppColors.primary(context),
-                            borderRadius: BorderRadius.circular(12.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary(context).withOpacity(0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
+                            color: const Color(0xFF29B6F6),
+                            borderRadius: BorderRadius.circular(10.r),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.add_rounded,
-                                color: Colors.white,
-                                size: 14.sp,
-                              ),
+                              Icon(CupertinoIcons.add, color: Colors.white, size: 12.sp),
                               SizedBox(width: 4.w),
                               Text(
                                 'Resell',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 11.sp,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10.5.sp,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -1302,28 +1155,39 @@ class _ProductCardState extends State<_ProductCard> {
 
 class _ActiveResellCard extends StatelessWidget {
   final ProductModel product;
+  final bool isSmall;
+  final Color cardBackground;
+  final Color shadowColor;
+  final Color borderColor;
+  final Color kTextDark;
+  final Color kTextMid;
   final VoidCallback onStop;
 
   const _ActiveResellCard({
     required this.product,
+    required this.isSmall,
+    required this.cardBackground,
+    required this.shadowColor,
+    required this.borderColor,
+    required this.kTextDark,
+    required this.kTextMid,
     required this.onStop,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(14.w),
+      margin: EdgeInsets.only(bottom: 10.h),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColors.border(context).withOpacity(0.6)),
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow(context).withOpacity(0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-            spreadRadius: -2,
+            color: shadowColor,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
           ),
         ],
       ),
@@ -1331,35 +1195,35 @@ class _ActiveResellCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(10.r),
             child: SizedBox(
-              width: 66.w,
-              height: 66.w,
+              width: 60.w,
+              height: 60.w,
               child: Image.network(
                 product.image,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(child: CupertinoActivityIndicator(radius: 10.r));
+                },
                 errorBuilder: (_, __, ___) => Container(
-                  color: AppColors.bg(context),
-                  child: Icon(
-                    Icons.image_not_supported_outlined,
-                    color: AppColors.textMuted(context),
-                    size: 24.sp,
-                  ),
+                  color: Colors.grey.shade100,
+                  child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400, size: 22.sp),
                 ),
               ),
             ),
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   product.title,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary(context),
+                    fontWeight: FontWeight.w600,
+                    color: kTextDark,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1369,46 +1233,44 @@ class _ActiveResellCard extends StatelessWidget {
                   children: [
                     Text(
                       'Sell: ',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 11.sp,
-                        color: AppColors.textSecondary(context),
+                        color: kTextMid,
                       ),
                     ),
                     Text(
                       '\u09F3${product.myPrice.toInt()}',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.poppins(
                         fontSize: 14.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary(context),
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF29B6F6),
                       ),
                     ),
                   ],
                 ),
                 SizedBox(height: 4.h),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
                   decoration: BoxDecoration(
-                    color: AppColors.success(context).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(
-                        color: AppColors.success(context).withOpacity(0.25)),
+                    color: const Color(0xFF34C759).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
                     'Profit \u09F3${product.myMargin.toInt()}',
-                    style: GoogleFonts.outfit(
-                      fontSize: 10.sp,
-                      color: AppColors.success(context),
-                      fontWeight: FontWeight.w800,
+                    style: GoogleFonts.poppins(
+                      fontSize: 9.5.sp,
+                      color: const Color(0xFF34C759),
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: 8.h),
                 Row(
                   children: [
                     _MiniButton(
-                      icon: Icons.stop_circle_outlined,
+                      icon: CupertinoIcons.stop_circle,
                       label: 'Stop',
-                      color: AppColors.danger(context),
+                      color: const Color(0xFFFF3B30),
                       onTap: onStop,
                     ),
                   ],
@@ -1443,6 +1305,12 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
+    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
+    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
+
     final maxMargin = widget.product.maxMargin;
     final sellPrice = widget.product.wholesalePrice + _margin;
 
@@ -1451,8 +1319,8 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
       ),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+        color: cardBackground,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1464,7 +1332,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
               width: 40.w,
               height: 4.h,
               decoration: BoxDecoration(
-                color: AppColors.border(context),
+                color: borderColor,
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -1475,11 +1343,18 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(14.r),
+                  borderRadius: BorderRadius.circular(12.r),
                   child: SizedBox(
                     width: 52.w,
                     height: 52.w,
-                    child: Image.network(widget.product.image, fit: BoxFit.cover),
+                    child: Image.network(
+                      widget.product.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey.shade100,
+                        child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400),
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(width: 14.w),
@@ -1489,17 +1364,17 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                     children: [
                       Text(
                         widget.product.title,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.poppins(
                           fontSize: 15.sp,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary(context),
+                          fontWeight: FontWeight.bold,
+                          color: kTextDark,
                         ),
                       ),
                       Text(
                         'Wholesale: \u09F3${widget.product.wholesalePrice.toInt()}',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.poppins(
                           fontSize: 12.sp,
-                          color: AppColors.textSecondary(context),
+                          color: kTextMid,
                         ),
                       ),
                     ],
@@ -1513,10 +1388,10 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Text(
               'Set Your Margin',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary(context),
+                fontWeight: FontWeight.bold,
+                color: kTextDark,
               ),
             ),
           ),
@@ -1526,20 +1401,8 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '\u09F30',
-                  style: GoogleFonts.outfit(
-                    fontSize: 12.sp,
-                    color: AppColors.textMuted(context),
-                  ),
-                ),
-                Text(
-                  '\u09F3${maxMargin.toInt()}',
-                  style: GoogleFonts.outfit(
-                    fontSize: 12.sp,
-                    color: AppColors.textMuted(context),
-                  ),
-                ),
+                Text('\u09F30', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
+                Text('\u09F3${maxMargin.toInt()}', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
               ],
             ),
           ),
@@ -1548,9 +1411,9 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             min: 0,
             max: maxMargin,
             divisions: maxMargin.toInt(),
-            activeColor: AppColors.primary(context),
-            inactiveColor: AppColors.border(context),
-            thumbColor: AppColors.primary(context),
+            activeColor: const Color(0xFF29B6F6),
+            inactiveColor: borderColor,
+            thumbColor: const Color(0xFF29B6F6),
             onChanged: (val) => setState(() => _margin = val),
           ),
           Padding(
@@ -1561,26 +1424,23 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                   child: Container(
                     padding: EdgeInsets.all(14.w),
                     decoration: BoxDecoration(
-                      color: AppColors.bg(context),
-                      borderRadius: BorderRadius.circular(14.r),
-                      border: Border.all(color: AppColors.border(context)),
+                      color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Column(
                       children: [
                         Text(
                           'Margin',
-                          style: GoogleFonts.outfit(
-                            fontSize: 11.sp,
-                            color: AppColors.textMuted(context),
-                          ),
+                          style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
                         ),
                         SizedBox(height: 4.h),
                         Text(
                           '\u09F3${_margin.toInt()}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.poppins(
                             fontSize: 20.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.success(context),
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF34C759),
                           ),
                         ),
                       ],
@@ -1592,27 +1452,23 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                   child: Container(
                     padding: EdgeInsets.all(14.w),
                     decoration: BoxDecoration(
-                      color: AppColors.primary(context).withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(14.r),
-                      border: Border.all(
-                          color: AppColors.primary(context).withOpacity(0.2)),
+                      color: const Color(0xFF29B6F6).withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: const Color(0xFF29B6F6).withOpacity(0.2)),
                     ),
                     child: Column(
                       children: [
                         Text(
                           'Sell Price',
-                          style: GoogleFonts.outfit(
-                            fontSize: 11.sp,
-                            color: AppColors.textMuted(context),
-                          ),
+                          style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
                         ),
                         SizedBox(height: 4.h),
                         Text(
                           '\u09F3${sellPrice.toInt()}',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.poppins(
                             fontSize: 20.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary(context),
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF29B6F6),
                           ),
                         ),
                       ],
@@ -1635,11 +1491,11 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: 16.h),
                 decoration: BoxDecoration(
-                  color: AppColors.primary(context),
-                  borderRadius: BorderRadius.circular(16.r),
+                  color: const Color(0xFF29B6F6),
+                  borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary(context).withOpacity(0.3),
+                      color: const Color(0xFF29B6F6).withOpacity(0.3),
                       blurRadius: 14,
                       offset: const Offset(0, 5),
                     ),
@@ -1648,9 +1504,9 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                 child: Text(
                   'Start Reselling',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.poppins(
                     fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
@@ -1685,18 +1541,9 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
   String _selectedCategory = 'Electronics';
   final List<String> _availableCategories = [
-    'Electronics',
-    'Smart Watch',
-    'Neckband',
-    'Airpods',
-    'Power Bank',
-    'Earphone',
-    'Fashion',
-    'Home',
-    'Sports',
-    'Beauty',
-    'Books',
-    'Toys',
+    'Electronics', 'Smart Watch', 'Neckband', 'Airpods',
+    'Power Bank', 'Earphone', 'Fashion', 'Home',
+    'Sports', 'Beauty', 'Books', 'Toys',
   ];
 
   @override
@@ -1711,9 +1558,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
   }
 
   void _submit() {
-    if (_titleController.text.isEmpty ||
-        _priceController.text.isEmpty ||
-        _maxPriceController.text.isEmpty) {
+    if (_titleController.text.isEmpty || _priceController.text.isEmpty || _maxPriceController.text.isEmpty) {
       HapticFeedback.heavyImpact();
       return;
     }
@@ -1745,13 +1590,19 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
+    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
+    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
+
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
       ),
       decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+        color: cardBackground,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -1764,7 +1615,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: AppColors.border(context),
+                  color: borderColor,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -1777,12 +1628,12 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                   Container(
                     padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
-                      color: AppColors.primary(context).withOpacity(0.1),
+                      color: const Color(0xFF29B6F6).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(14.r),
                     ),
                     child: Icon(
-                      Icons.add_box_rounded,
-                      color: AppColors.primary(context),
+                      CupertinoIcons.add_circled,
+                      color: const Color(0xFF29B6F6),
                       size: 24.sp,
                     ),
                   ),
@@ -1793,17 +1644,17 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                       children: [
                         Text(
                           'Add New Product',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.poppins(
                             fontSize: 17.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary(context),
+                            fontWeight: FontWeight.bold,
+                            color: kTextDark,
                           ),
                         ),
                         Text(
                           'Fill the details to list your product',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.poppins(
                             fontSize: 12.sp,
-                            color: AppColors.textMuted(context),
+                            color: kTextMid,
                           ),
                         ),
                       ],
@@ -1817,21 +1668,33 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
               label: 'Product Title',
               hint: 'e.g. Wireless Earbuds Pro',
               controller: _titleController,
-              icon: Icons.label_outline,
+              icon: CupertinoIcons.tag,
+              kTextDark: kTextDark,
+              kTextMid: kTextMid,
+              borderColor: borderColor,
+              isDark: isDark,
             ),
             SizedBox(height: 14.h),
             _buildTextField(
               label: 'Subtitle (with emoji)',
               hint: 'e.g. 💥Premium Quality',
               controller: _subtitleController,
-              icon: Icons.short_text_rounded,
+              icon: CupertinoIcons.textformat,
+              kTextDark: kTextDark,
+              kTextMid: kTextMid,
+              borderColor: borderColor,
+              isDark: isDark,
             ),
             SizedBox(height: 14.h),
             _buildTextField(
               label: 'Image URL',
               hint: 'Paste product image link (optional)',
               controller: _imageController,
-              icon: Icons.image_outlined,
+              icon: CupertinoIcons.photo,
+              kTextDark: kTextDark,
+              kTextMid: kTextMid,
+              borderColor: borderColor,
+              isDark: isDark,
             ),
             SizedBox(height: 14.h),
             Row(
@@ -1841,8 +1704,12 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                     label: 'Wholesale Price',
                     hint: 'Buying price',
                     controller: _priceController,
-                    icon: Icons.attach_money_rounded,
+                    icon: CupertinoIcons.money_dollar_circle,
                     keyboardType: TextInputType.number,
+                    kTextDark: kTextDark,
+                    kTextMid: kTextMid,
+                    borderColor: borderColor,
+                    isDark: isDark,
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -1851,8 +1718,12 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                     label: 'Original Price',
                     hint: 'MRP (optional)',
                     controller: _originalPriceController,
-                    icon: Icons.money_off_csred_rounded,
+                    icon: CupertinoIcons.tag_circle,
                     keyboardType: TextInputType.number,
+                    kTextDark: kTextDark,
+                    kTextMid: kTextMid,
+                    borderColor: borderColor,
+                    isDark: isDark,
                   ),
                 ),
               ],
@@ -1862,18 +1733,22 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
               label: 'Max Resale Price',
               hint: 'Maximum you can sell for',
               controller: _maxPriceController,
-              icon: Icons.trending_up_rounded,
+              icon: CupertinoIcons.arrow_up_circle,
               keyboardType: TextInputType.number,
+              kTextDark: kTextDark,
+              kTextMid: kTextMid,
+              borderColor: borderColor,
+              isDark: isDark,
             ),
             SizedBox(height: 18.h),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 24.w),
               child: Text(
                 'Select Category',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 13.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary(context),
+                  fontWeight: FontWeight.bold,
+                  color: kTextDark,
                 ),
               ),
             ),
@@ -1882,6 +1757,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
               height: 44.h,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.symmetric(horizontal: 24.w),
                 itemCount: _availableCategories.length,
                 separatorBuilder: (_, __) => SizedBox(width: 8.w),
@@ -1895,27 +1771,11 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                       duration: const Duration(milliseconds: 180),
                       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
                       decoration: BoxDecoration(
-                        gradient: selected
-                            ? LinearGradient(
-                                colors: style.gradientColors,
-                              )
-                            : null,
-                        color: selected ? null : AppColors.bg(context),
-                        borderRadius: BorderRadius.circular(12.r),
+                        color: selected ? style.color.withOpacity(0.15) : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9)),
+                        borderRadius: BorderRadius.circular(10.r),
                         border: Border.all(
-                          color: selected
-                              ? Colors.transparent
-                              : AppColors.border(context),
+                          color: selected ? style.color.withOpacity(0.5) : borderColor,
                         ),
-                        boxShadow: selected
-                            ? [
-                                BoxShadow(
-                                  color: style.glowColor.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ]
-                            : null,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1923,20 +1783,15 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                           Icon(
                             style.icon,
                             size: 15.sp,
-                            color: selected
-                                ? Colors.white
-                                : style.gradientColors[0],
+                            color: selected ? style.color : kTextMid,
                           ),
                           SizedBox(width: 6.w),
                           Text(
                             cat,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.poppins(
                               fontSize: 12.sp,
-                              fontWeight:
-                                  selected ? FontWeight.w700 : FontWeight.w500,
-                              color: selected
-                                  ? Colors.white
-                                  : AppColors.textSecondary(context),
+                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                              color: selected ? style.color : kTextMid,
                             ),
                           ),
                         ],
@@ -1955,11 +1810,11 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 16.h),
                   decoration: BoxDecoration(
-                    color: AppColors.primary(context),
-                    borderRadius: BorderRadius.circular(16.r),
+                    color: const Color(0xFF29B6F6),
+                    borderRadius: BorderRadius.circular(14.r),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary(context).withOpacity(0.3),
+                        color: const Color(0xFF29B6F6).withOpacity(0.3),
                         blurRadius: 14,
                         offset: const Offset(0, 5),
                       ),
@@ -1968,9 +1823,9 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                   child: Text(
                     'Add Product',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.poppins(
                       fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
@@ -1989,6 +1844,10 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     required String hint,
     required TextEditingController controller,
     required IconData icon,
+    required Color kTextDark,
+    required Color kTextMid,
+    required Color borderColor,
+    required bool isDark,
     TextInputType? keyboardType,
   }) {
     return Padding(
@@ -1998,36 +1857,32 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
         children: [
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.poppins(
               fontSize: 12.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary(context),
+              fontWeight: FontWeight.w600,
+              color: kTextDark,
             ),
           ),
           SizedBox(height: 6.h),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.bg(context),
-              borderRadius: BorderRadius.circular(14.r),
-              border: Border.all(color: AppColors.border(context)),
+              color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: borderColor),
             ),
             child: TextField(
               controller: controller,
               keyboardType: keyboardType,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.poppins(
                 fontSize: 14.sp,
-                color: AppColors.textPrimary(context),
+                color: kTextDark,
               ),
               decoration: InputDecoration(
-                prefixIcon: Icon(
-                  icon,
-                  color: AppColors.textMuted(context),
-                  size: 18.sp,
-                ),
+                prefixIcon: Icon(icon, color: kTextMid, size: 18.sp),
                 hintText: hint,
-                hintStyle: GoogleFonts.outfit(
+                hintStyle: GoogleFonts.poppins(
                   fontSize: 13.sp,
-                  color: AppColors.textMuted(context),
+                  color: kTextMid,
                 ),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 14.h),
@@ -2087,9 +1942,7 @@ class _MiniButtonState extends State<_MiniButton> {
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
           decoration: BoxDecoration(
             color: widget.color.withOpacity(_pressed ? 0.18 : 0.1),
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(
-                color: widget.color.withOpacity(0.22), width: 1),
+            borderRadius: BorderRadius.circular(8.r),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -2098,10 +1951,10 @@ class _MiniButtonState extends State<_MiniButton> {
               SizedBox(width: 4.w),
               Text(
                 widget.label,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.poppins(
                   fontSize: 10.sp,
                   color: widget.color,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
