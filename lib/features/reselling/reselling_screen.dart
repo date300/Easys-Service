@@ -1,9 +1,82 @@
-import 'package:flutter/material.dart';
+
+reselling_screen = '''import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
-// ─── Data Models ────────────────────────────────────────────
+// ==================== THEME PROVIDERS ====================
+
+final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
+
+// ==================== COLOR TOKENS (Adaptive) ====================
+
+class AppColors {
+  // Light
+  static const Color primaryLight = Color(0xFF6366F1);
+  static const Color primaryLightSoft = Color(0xFF818CF8);
+  static const Color secondaryLight = Color(0xFF0EA5E9);
+  static const Color successLight = Color(0xFF10B981);
+  static const Color warningLight = Color(0xFFF59E0B);
+  static const Color dangerLight = Color(0xFFEF4444);
+  
+  static const Color bgLight = Color(0xFFF8FAFC);
+  static const Color surfaceLight = Colors.white;
+  static const Color cardLight = Colors.white;
+  static const Color textPrimaryLight = Color(0xFF0F172A);
+  static const Color textSecondaryLight = Color(0xFF64748B);
+  static const Color textMutedLight = Color(0xFF94A3B8);
+  static const Color borderLight = Color(0xFFE2E8F0);
+  static const Color shadowLight = Color(0x1A000000);
+
+  // Dark
+  static const Color primaryDark = Color(0xFF818CF8);
+  static const Color primaryDarkSoft = Color(0xFFA5B4FC);
+  static const Color secondaryDark = Color(0xFF38BDF8);
+  static const Color successDark = Color(0xFF34D399);
+  static const Color warningDark = Color(0xFFFBBF24);
+  static const Color dangerDark = Color(0xFFF87171);
+  
+  static const Color bgDark = Color(0xFF0F172A);
+  static const Color surfaceDark = Color(0xFF1E293B);
+  static const Color cardDark = Color(0xFF1E293B);
+  static const Color textPrimaryDark = Color(0xFFF1F5F9);
+  static const Color textSecondaryDark = Color(0xFF94A3B8);
+  static const Color textMutedDark = Color(0xFF64748B);
+  static const Color borderDark = Color(0xFF334155);
+  static const Color shadowDark = Color(0x40000000);
+
+  static Color primary(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? primaryDark : primaryLight;
+  static Color primarySoft(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? primaryDarkSoft : primaryLightSoft;
+  static Color success(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? successDark : successLight;
+  static Color warning(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? warningDark : warningLight;
+  static Color danger(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? dangerDark : dangerLight;
+  static Color bg(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? bgDark : bgLight;
+  static Color surface(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? surfaceDark : surfaceLight;
+  static Color card(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? cardDark : cardLight;
+  static Color textPrimary(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? textPrimaryDark : textPrimaryLight;
+  static Color textSecondary(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? textSecondaryDark : textSecondaryLight;
+  static Color textMuted(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? textMutedDark : textMutedLight;
+  static Color border(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? borderDark : borderLight;
+  static Color shadow(BuildContext context) => 
+      Theme.of(context).brightness == Brightness.dark ? shadowDark : shadowLight;
+}
+
+// ==================== DATA MODELS ====================
+
 class ProductModel {
   final String id;
   final String title;
@@ -33,100 +106,100 @@ class ProductModel {
   double get maxMargin => maxResalePrice - wholesalePrice;
 }
 
-// ─── Dummy Data ──────────────────────────────────────────────
+// ==================== DUMMY DATA ====================
+
 final List<ProductModel> _dummyProducts = [
   ProductModel(
     id: '1',
-    title: 'প্রিমিয়াম কটন শাড়ি',
-    image: 'https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=শাড়ি',
+    title: 'প্রিমিয়াম ওয়্যারলেস ইয়ারবাডস',
+    image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
     wholesalePrice: 850,
     maxResalePrice: 1400,
-    category: 'পোশাক',
+    category: 'ইলেকট্রনিক্স',
     rating: 4.8,
     totalSold: 234,
   ),
   ProductModel(
     id: '2',
-    title: 'হাতব্যাগ লেদার কালেকশন',
-    image: 'https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=ব্যাগ',
+    title: 'স্মার্ট ওয়াচ সিরিজ ৭',
+    image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400',
     wholesalePrice: 650,
     maxResalePrice: 1100,
-    category: 'ব্যাগ',
+    category: 'গ্যাজেট',
     rating: 4.5,
     totalSold: 189,
   ),
   ProductModel(
     id: '3',
-    title: 'অর্গানিক স্কিনকেয়ার সেট',
-    image: 'https://via.placeholder.com/300x300/A8E6CF/FFFFFF?text=স্কিন',
+    title: 'ব্লুটুথ হেডফোন প্রো',
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
     wholesalePrice: 1200,
     maxResalePrice: 1900,
-    category: 'বিউটি',
+    category: 'অডিও',
     rating: 4.9,
     totalSold: 312,
   ),
   ProductModel(
     id: '4',
-    title: 'ব্লুটুথ হেডফোন Pro',
-    image: 'https://via.placeholder.com/300x300/6C5CE7/FFFFFF?text=হেডফোন',
+    title: 'পাওয়ার ব্যাংক ২০০০০mAh',
+    image: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400',
     wholesalePrice: 1500,
     maxResalePrice: 2500,
-    category: 'ইলেকট্রনিক্স',
+    category: 'অ্যাকসেসরিজ',
     rating: 4.7,
     totalSold: 156,
   ),
   ProductModel(
     id: '5',
-    title: 'কিচেন স্টার্টার কিট',
-    image: 'https://via.placeholder.com/300x300/FD79A8/FFFFFF?text=কিচেন',
+    title: 'ফাস্ট চার্জিং কেবল',
+    image: 'https://images.unsplash.com/photo-1625153669422-6b3c9a3b7c9f?w=400',
     wholesalePrice: 780,
     maxResalePrice: 1300,
-    category: 'গৃহস্থালি',
+    category: 'ক্যাবল',
     rating: 4.6,
     totalSold: 98,
   ),
   ProductModel(
     id: '6',
-    title: 'পুরুষ পারফিউম সেট',
-    image: 'https://via.placeholder.com/300x300/FDCB6E/FFFFFF?text=পারফিউম',
+    title: 'পোর্টেবল স্পিকার মিনি',
+    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400',
     wholesalePrice: 900,
     maxResalePrice: 1600,
-    category: 'বিউটি',
+    category: 'অডিও',
     rating: 4.4,
     totalSold: 267,
   ),
 ];
 
 const List<String> _categories = [
-  'সব', 'পোশাক', 'ব্যাগ', 'বিউটি', 'ইলেকট্রনিক্স', 'গৃহস্থালি',
+  'সব', 'ইলেকট্রনিক্স', 'গ্যাজেট', 'অডিও', 'অ্যাকসেসরিজ', 'ক্যাবল',
 ];
 
-// ─── Main Screen ─────────────────────────────────────────────
-class ResellingScreen extends StatefulWidget {
+// ==================== MAIN SCREEN ====================
+
+class ResellingScreen extends ConsumerStatefulWidget {
   const ResellingScreen({super.key});
 
   @override
-  State<ResellingScreen> createState() => _ResellingScreenState();
+  ConsumerState<ResellingScreen> createState() => _ResellingScreenState();
 }
 
-class _ResellingScreenState extends State<ResellingScreen>
+class _ResellingScreenState extends ConsumerState<ResellingScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'সব';
   String _searchQuery = '';
+  bool _isSearchFocused = false;
 
-  // Wallet stats (dummy)
   final double _walletBalance = 4750;
   final double _todayEarning = 320;
   final int _totalOrders = 18;
 
   List<ProductModel> get _filteredProducts {
     return _dummyProducts.where((p) {
-      final matchCat =
-          _selectedCategory == 'সব' || p.category == _selectedCategory;
-      final matchSearch =
-          p.title.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchCat = _selectedCategory == 'সব' || p.category == _selectedCategory;
+      final matchSearch = p.title.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchCat && matchSearch;
     }).toList();
   }
@@ -138,6 +211,7 @@ class _ResellingScreenState extends State<ResellingScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() => setState(() {}));
   }
 
   @override
@@ -147,7 +221,7 @@ class _ResellingScreenState extends State<ResellingScreen>
     super.dispose();
   }
 
-  // ── Margin Bottom Sheet ──────────────────────────────────────
+  // ==================== MARGIN BOTTOM SHEET ====================
   void _showMarginSheet(BuildContext context, ProductModel product) {
     double margin = product.myMargin > 0 ? product.myMargin : 50;
 
@@ -164,11 +238,20 @@ class _ResellingScreenState extends State<ResellingScreen>
 
             return Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                color: AppColors.card(context),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadow(context),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
-              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w,
-                  MediaQuery.of(context).viewInsets.bottom + 24.h),
+              padding: EdgeInsets.fromLTRB(
+                24.w, 16.h, 24.w,
+                MediaQuery.of(context).viewInsets.bottom + 28.h,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,131 +262,201 @@ class _ResellingScreenState extends State<ResellingScreen>
                       width: 40.w,
                       height: 4.h,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: AppColors.border(context),
                         borderRadius: BorderRadius.circular(2.r),
                       ),
                     ),
                   ),
-                  SizedBox(height: 16.h),
-
-                  // Product title
-                  Text(
-                    product.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    'মার্জিন নির্ধারণ করুন',
-                    style: GoogleFonts.poppins(
-                        fontSize: 12.sp, color: Colors.grey[500]),
-                  ),
                   SizedBox(height: 20.h),
 
-                  // Price info row
+                  // Product Info
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12.r),
+                        child: Image.network(
+                          product.image,
+                          width: 56.w,
+                          height: 56.w,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 56.w,
+                            height: 56.w,
+                            color: AppColors.border(context),
+                            child: Icon(Icons.image_not_supported, color: AppColors.textMuted(context)),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              product.title,
+                              style: GoogleFonts.hindSiliguri(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary(context),
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'পাইকারি মূল্য: ৳${product.wholesalePrice.toInt()}',
+                              style: GoogleFonts.hindSiliguri(
+                                fontSize: 12.sp,
+                                color: AppColors.textSecondary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 24.h),
+
+                  // Price Cards
                   Row(
                     children: [
                       _PriceInfoBox(
-                        label: 'পাইকারি মূল্য',
+                        label: 'পাইকারি',
                         amount: product.wholesalePrice,
-                        color: Colors.blue.shade50,
-                        textColor: Colors.blue.shade700,
+                        bgColor: AppColors.primary(context).withOpacity(0.1),
+                        textColor: AppColors.primary(context),
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: 10.w),
                       _PriceInfoBox(
-                        label: 'আপনার মূল্য',
+                        label: 'আপনার দাম',
                         amount: myPrice,
-                        color: Colors.green.shade50,
-                        textColor: Colors.green.shade700,
+                        bgColor: AppColors.success(context).withOpacity(0.1),
+                        textColor: AppColors.success(context),
                         highlight: true,
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: 10.w),
                       _PriceInfoBox(
-                        label: 'সর্বোচ্চ মূল্য',
+                        label: 'সর্বোচ্চ',
                         amount: product.maxResalePrice,
-                        color: Colors.orange.shade50,
-                        textColor: Colors.orange.shade700,
+                        bgColor: AppColors.warning(context).withOpacity(0.1),
+                        textColor: AppColors.warning(context),
                       ),
                     ],
                   ),
                   SizedBox(height: 20.h),
 
-                  // Profit badge
+                  // Profit Badge
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00C566).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10.r),
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.success(context).withOpacity(0.15),
+                          AppColors.success(context).withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(
-                          color: const Color(0xFF00C566).withOpacity(0.3)),
+                        color: AppColors.success(context).withOpacity(0.3),
+                        width: 1,
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.trending_up_rounded,
-                            color: const Color(0xFF00C566), size: 18.sp),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'আপনার লাভ: ৳${profit.toStringAsFixed(0)} টাকা প্রতি অর্ডারে',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF00C566),
+                        Container(
+                          padding: EdgeInsets.all(6.w),
+                          decoration: BoxDecoration(
+                            color: AppColors.success(context).withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.trending_up_rounded,
+                            color: AppColors.success(context),
+                            size: 16.sp,
+                          ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Text(
+                            'লাভ: ৳${profit.toStringAsFixed(0)} প্রতি পণ্যে',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.success(context),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 20.h),
 
                   // Slider
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('মার্জিন',
-                          style: GoogleFonts.poppins(
-                              fontSize: 13.sp,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500)),
-                      Text('৳${margin.toStringAsFixed(0)}',
-                          style: GoogleFonts.poppins(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF6C5CE7))),
+                      Text(
+                        'মার্জিন সেট করুন',
+                        style: GoogleFonts.hindSiliguri(
+                          fontSize: 13.sp,
+                          color: AppColors.textSecondary(context),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary(context).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          '৳${margin.toStringAsFixed(0)}',
+                          style: GoogleFonts.hindSiliguri(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary(context),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
+                  SizedBox(height: 8.h),
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: const Color(0xFF6C5CE7),
-                      thumbColor: const Color(0xFF6C5CE7),
-                      inactiveTrackColor: Colors.grey[200],
-                      overlayColor:
-                          const Color(0xFF6C5CE7).withOpacity(0.2),
-                      trackHeight: 4,
+                      activeTrackColor: AppColors.primary(context),
+                      thumbColor: AppColors.primary(context),
+                      inactiveTrackColor: AppColors.border(context),
+                      overlayColor: AppColors.primary(context).withOpacity(0.15),
+                      trackHeight: 6,
+                      thumbShape: RoundSliderThumbShape(enabledThumbRadius: 12.r),
+                      overlayShape: RoundSliderOverlayShape(overlayRadius: 24.r),
                     ),
                     child: Slider(
                       min: 10,
                       max: maxMargin,
                       value: margin.clamp(10, maxMargin),
                       divisions: ((maxMargin - 10) / 10).round(),
-                      onChanged: (val) =>
-                          setSheetState(() => margin = val),
+                      onChanged: (val) => setSheetState(() => margin = val),
                     ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('৳10',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11.sp, color: Colors.grey)),
-                      Text('৳${maxMargin.toStringAsFixed(0)} (সর্বোচ্চ)',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11.sp, color: Colors.grey)),
+                      Text(
+                        '৳10',
+                        style: GoogleFonts.hindSiliguri(
+                          fontSize: 11.sp,
+                          color: AppColors.textMuted(context),
+                        ),
+                      ),
+                      Text(
+                        '৳${maxMargin.toStringAsFixed(0)} (সর্বোচ্চ)',
+                        style: GoogleFonts.hindSiliguri(
+                          fontSize: 11.sp,
+                          color: AppColors.textMuted(context),
+                        ),
+                      ),
                     ],
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 24.h),
 
                   // Buttons
                   Row(
@@ -311,13 +464,18 @@ class _ResellingScreenState extends State<ResellingScreen>
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () => Navigator.pop(context),
-                          icon: Icon(Icons.close, size: 16.sp),
-                          label: Text('বাতিল',
-                              style: GoogleFonts.poppins(fontSize: 13.sp)),
+                          icon: Icon(Icons.close_rounded, size: 16.sp),
+                          label: Text(
+                            'বাতিল',
+                            style: GoogleFonts.hindSiliguri(fontSize: 13.sp),
+                          ),
                           style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.textSecondary(context),
+                            side: BorderSide(color: AppColors.border(context)),
                             padding: EdgeInsets.symmetric(vertical: 14.h),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r)),
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
                           ),
                         ),
                       ),
@@ -334,16 +492,20 @@ class _ResellingScreenState extends State<ResellingScreen>
                             _showShareLink(context, product);
                           },
                           icon: Icon(Icons.share_rounded, size: 16.sp),
-                          label: Text('সেভ ও শেয়ার করুন',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600)),
+                          label: Text(
+                            'লিংক তৈরি করুন',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6C5CE7),
+                            backgroundColor: AppColors.primary(context),
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(vertical: 14.h),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r)),
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
                             elevation: 0,
                           ),
                         ),
@@ -359,7 +521,7 @@ class _ResellingScreenState extends State<ResellingScreen>
     );
   }
 
-  // ── Share Link Dialog ────────────────────────────────────────
+  // ==================== SHARE LINK DIALOG ====================
   void _showShareLink(BuildContext context, ProductModel product) {
     final fakeLink =
         'https://resellerapp.com/p/${product.id}?ref=MY_REF_CODE&price=${product.myPrice.toInt()}';
@@ -367,42 +529,68 @@ class _ResellingScreenState extends State<ResellingScreen>
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-        child: Padding(
-          padding: EdgeInsets.all(20.w),
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: BorderRadius.circular(24.r),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow(context),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(24.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Success Animation
               Container(
-                padding: EdgeInsets.all(12.w),
+                padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00C566).withOpacity(0.1),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.success(context).withOpacity(0.2),
+                      AppColors.success(context).withOpacity(0.05),
+                    ],
+                  ),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.check_circle_rounded,
-                    color: const Color(0xFF00C566), size: 36.sp),
-              ),
-              SizedBox(height: 12.h),
-              Text('লিংক তৈরি হয়েছে!',
-                  style: GoogleFonts.poppins(
-                      fontSize: 16.sp, fontWeight: FontWeight.bold)),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success(context),
+                  size: 40.sp,
+                ),
+              ).animate().scale(delay: 100.ms, duration: 400.ms, curve: Curves.elasticOut),
+              SizedBox(height: 16.h),
+              Text(
+                'রিসেল সফল!',
+                style: GoogleFonts.hindSiliguri(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary(context),
+                ),
+              ).animate().fadeIn(delay: 200.ms),
               SizedBox(height: 4.h),
               Text(
-                'আপনার রিসেলিং লিংক প্রস্তুত। এখন শেয়ার করুন।',
+                'আপনার কাস্টম লিংক তৈরি হয়েছে। এখন শেয়ার করুন!',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                    fontSize: 12.sp, color: Colors.grey[500]),
-              ),
-              SizedBox(height: 16.h),
+                style: GoogleFonts.hindSiliguri(
+                  fontSize: 12.sp,
+                  color: AppColors.textSecondary(context),
+                ),
+              ).animate().fadeIn(delay: 300.ms),
+              SizedBox(height: 20.h),
 
-              // Link box
+              // Link Box
               Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(10.r),
+                  color: AppColors.bg(context),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.border(context)),
                 ),
                 child: Row(
                   children: [
@@ -410,67 +598,100 @@ class _ResellingScreenState extends State<ResellingScreen>
                       child: Text(
                         fakeLink,
                         style: GoogleFonts.poppins(
-                            fontSize: 10.sp, color: Colors.grey[600]),
+                          fontSize: 10.sp,
+                          color: AppColors.textMuted(context),
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     GestureDetector(
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: fakeLink));
+                        HapticFeedback.lightImpact();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('লিংক কপি হয়েছে!',
-                                style: GoogleFonts.poppins(fontSize: 12.sp)),
-                            backgroundColor: const Color(0xFF00C566),
+                            content: Text(
+                              'লিংক কপি হয়েছে!',
+                              style: GoogleFonts.hindSiliguri(fontSize: 12.sp),
+                            ),
+                            backgroundColor: AppColors.success(context),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
                             duration: const Duration(seconds: 2),
                           ),
                         );
                       },
-                      child: Icon(Icons.copy_rounded,
-                          size: 18.sp, color: const Color(0xFF6C5CE7)),
+                      child: Container(
+                        padding: EdgeInsets.all(8.w),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary(context).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Icon(
+                          Icons.copy_rounded,
+                          size: 18.sp,
+                          color: AppColors.primary(context),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              ),
-              SizedBox(height: 16.h),
+              ).animate().fadeIn(delay: 400.ms),
+              SizedBox(height: 20.h),
 
-              // Share platforms
+              // Share Platforms
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _ShareIcon(
-                      icon: Icons.facebook_rounded,
-                      label: 'Facebook',
-                      color: const Color(0xFF1877F2)),
-                  SizedBox(width: 16.w),
+                    icon: Icons.facebook_rounded,
+                    label: 'Facebook',
+                    color: const Color(0xFF1877F2),
+                  ),
+                  SizedBox(width: 20.w),
                   _ShareIcon(
-                      icon: Icons.chat_rounded,
-                      label: 'WhatsApp',
-                      color: const Color(0xFF25D366)),
-                  SizedBox(width: 16.w),
+                    icon: Icons.chat_bubble_rounded,
+                    label: 'WhatsApp',
+                    color: const Color(0xFF25D366),
+                  ),
+                  SizedBox(width: 20.w),
                   _ShareIcon(
-                      icon: Icons.link_rounded,
-                      label: 'Copy',
-                      color: const Color(0xFF6C5CE7)),
+                    icon: Icons.telegram_rounded,
+                    label: 'Telegram',
+                    color: const Color(0xFF0088CC),
+                  ),
+                  SizedBox(width: 20.w),
+                  _ShareIcon(
+                    icon: Icons.link_rounded,
+                    label: 'Copy',
+                    color: AppColors.primary(context),
+                  ),
                 ],
-              ),
-              SizedBox(height: 16.h),
+              ).animate().fadeIn(delay: 500.ms),
+              SizedBox(height: 20.h),
 
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C5CE7),
+                    backgroundColor: AppColors.primary(context),
                     foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r)),
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
                     elevation: 0,
                   ),
-                  child: Text('ঠিক আছে',
-                      style: GoogleFonts.poppins(
-                          fontSize: 14.sp, fontWeight: FontWeight.w600)),
+                  child: Text(
+                    'ঠিক আছে',
+                    style: GoogleFonts.hindSiliguri(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -480,11 +701,13 @@ class _ResellingScreenState extends State<ResellingScreen>
     );
   }
 
-  // ── Build ─────────────────────────────────────────────────────
+  // ==================== BUILD ====================
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FF),
+      backgroundColor: AppColors.bg(context),
       body: NestedScrollView(
         headerSliverBuilder: (_, __) => [
           SliverToBoxAdapter(child: _buildHeader()),
@@ -501,10 +724,24 @@ class _ResellingScreenState extends State<ResellingScreen>
           ],
         ),
       ),
+      floatingActionButton: _myResells.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: () => _tabController.animateTo(1),
+              backgroundColor: AppColors.primary(context),
+              icon: Icon(Icons.analytics_rounded, size: 20.sp),
+              label: Text(
+                'আমার রিসেল',
+                style: GoogleFonts.hindSiliguri(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          : null,
     );
   }
 
-  // ── Header ───────────────────────────────────────────────────
+  // ==================== HEADER ====================
   Widget _buildHeader() {
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
@@ -514,22 +751,39 @@ class _ResellingScreenState extends State<ResellingScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('রিসেলিং মার্কেট',
-                  style: GoogleFonts.poppins(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF2D3436))),
-              Text('পণ্য বেছে নিন, শেয়ার করুন, আয় করুন',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12.sp, color: Colors.grey[500])),
+              Text(
+                'রিসেলিং হাব',
+                style: GoogleFonts.hindSiliguri(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary(context),
+                ),
+              ),
+              Text(
+                'পণ্য বাছুন, মার্জিন সেট করুন, লিংক শেয়ার করুন',
+                style: GoogleFonts.hindSiliguri(
+                  fontSize: 12.sp,
+                  color: AppColors.textSecondary(context),
+                ),
+              ),
             ],
           ),
           Stack(
             children: [
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.notifications_none_rounded,
-                    size: 26.sp, color: const Color(0xFF2D3436)),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.card(context),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.border(context)),
+                ),
+                child: IconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.notifications_none_rounded,
+                    size: 24.sp,
+                    color: AppColors.textPrimary(context),
+                  ),
+                ),
               ),
               Positioned(
                 right: 8,
@@ -538,33 +792,38 @@ class _ResellingScreenState extends State<ResellingScreen>
                   width: 8.w,
                   height: 8.w,
                   decoration: const BoxDecoration(
-                      color: Colors.red, shape: BoxShape.circle),
+                    color: Color(0xFFEF4444),
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ],
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: -10, curve: Curves.easeOut);
   }
 
-  // ── Earnings Summary ─────────────────────────────────────────
+  // ==================== EARNINGS SUMMARY ====================
   Widget _buildEarningsSummary() {
     return Container(
       margin: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6C5CE7), Color(0xFF8E7CF3)],
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary(context),
+            AppColors.primarySoft(context),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6C5CE7).withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppColors.primary(context).withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -577,7 +836,11 @@ class _ResellingScreenState extends State<ResellingScreen>
               icon: Icons.account_balance_wallet_rounded,
             ),
           ),
-          Container(width: 1, height: 40.h, color: Colors.white24),
+          Container(
+            width: 1,
+            height: 40.h,
+            color: Colors.white.withOpacity(0.2),
+          ),
           Expanded(
             child: _StatItem(
               label: 'আজকের আয়',
@@ -585,7 +848,11 @@ class _ResellingScreenState extends State<ResellingScreen>
               icon: Icons.trending_up_rounded,
             ),
           ),
-          Container(width: 1, height: 40.h, color: Colors.white24),
+          Container(
+            width: 1,
+            height: 40.h,
+            color: Colors.white.withOpacity(0.2),
+          ),
           Expanded(
             child: _StatItem(
               label: 'মোট অর্ডার',
@@ -595,53 +862,97 @@ class _ResellingScreenState extends State<ResellingScreen>
           ),
         ],
       ),
+    ).animate().fadeIn(delay: 100.ms, duration: 500.ms).scale(
+      begin: const Offset(0.95, 0.95),
+      curve: Curves.easeOut,
     );
   }
 
-  // ── Search Bar ───────────────────────────────────────────────
+  // ==================== SEARCH BAR ====================
   Widget _buildSearchBar() {
     return Padding(
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (val) => setState(() => _searchQuery = val),
-        style: GoogleFonts.poppins(fontSize: 13.sp),
-        decoration: InputDecoration(
-          hintText: 'পণ্য খুঁজুন...',
-          hintStyle: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey),
-          prefixIcon:
-              Icon(Icons.search_rounded, color: Colors.grey, size: 20.sp),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? GestureDetector(
-                  onTap: () {
-                    _searchController.clear();
-                    setState(() => _searchQuery = '');
-                  },
-                  child: Icon(Icons.close_rounded,
-                      color: Colors.grey, size: 18.sp),
-                )
-              : Icon(Icons.tune_rounded,
-                  color: const Color(0xFF6C5CE7), size: 20.sp),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide.none,
+      child: GestureDetector(
+        onTap: () => setState(() => _isSearchFocused = true),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: _isSearchFocused
+                  ? AppColors.primary(context).withOpacity(0.5)
+                  : AppColors.border(context),
+              width: _isSearchFocused ? 1.5 : 1,
+            ),
+            boxShadow: _isSearchFocused
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary(context).withOpacity(0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (val) => setState(() => _searchQuery = val),
+            onTap: () => setState(() => _isSearchFocused = true),
+            onSubmitted: (_) => setState(() => _isSearchFocused = false),
+            style: GoogleFonts.hindSiliguri(fontSize: 13.sp),
+            decoration: InputDecoration(
+              hintText: 'পণ্য খুঁজুন...',
+              hintStyle: GoogleFonts.hindSiliguri(
+                fontSize: 13.sp,
+                color: AppColors.textMuted(context),
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: AppColors.textMuted(context),
+                size: 20.sp,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? GestureDetector(
+                      onTap: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: AppColors.textMuted(context),
+                        size: 18.sp,
+                      ),
+                    )
+                  : Container(
+                      margin: EdgeInsets.all(8.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary(context).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Icon(
+                        Icons.tune_rounded,
+                        color: AppColors.primary(context),
+                        size: 18.sp,
+                      ),
+                    ),
+              filled: false,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            ),
+          ),
         ),
       ),
-    );
+    ).animate().fadeIn(delay: 200.ms);
   }
 
-  // ── Category Filter ──────────────────────────────────────────
+  // ==================== CATEGORY FILTER ====================
   Widget _buildCategoryFilter() {
     return SizedBox(
-      height: 50.h,
+      height: 52.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 0),
+        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 0),
         itemCount: _categories.length,
         separatorBuilder: (_, __) => SizedBox(width: 8.w),
         itemBuilder: (_, i) {
@@ -650,54 +961,87 @@ class _ResellingScreenState extends State<ResellingScreen>
           return GestureDetector(
             onTap: () => setState(() => _selectedCategory = cat),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding:
-                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: selected
-                    ? const Color(0xFF6C5CE7)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(20.r),
+                gradient: selected
+                    ? LinearGradient(
+                        colors: [
+                          AppColors.primary(context),
+                          AppColors.primarySoft(context),
+                        ],
+                      )
+                    : null,
+                color: selected ? null : AppColors.card(context),
+                borderRadius: BorderRadius.circular(24.r),
                 border: Border.all(
                   color: selected
-                      ? const Color(0xFF6C5CE7)
-                      : Colors.grey.shade200,
+                      ? Colors.transparent
+                      : AppColors.border(context),
                 ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary(context).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
               ),
               child: Text(
                 cat,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.hindSiliguri(
                   fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                  color: selected ? Colors.white : Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : AppColors.textSecondary(context),
                 ),
               ),
             ),
           );
         },
       ),
-    );
+    ).animate().fadeIn(delay: 300.ms);
   }
 
-  // ── Tab Bar ──────────────────────────────────────────────────
+  // ==================== TAB BAR ====================
   Widget _buildTabBar() {
     return Container(
       margin: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 4.h),
+      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: TabBar(
         controller: _tabController,
-        labelStyle: GoogleFonts.poppins(
-            fontSize: 13.sp, fontWeight: FontWeight.w600),
-        unselectedLabelStyle:
-            GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w400),
-        labelColor: const Color(0xFF6C5CE7),
-        unselectedLabelColor: Colors.grey,
+        labelStyle: GoogleFonts.hindSiliguri(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: GoogleFonts.hindSiliguri(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w400,
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: AppColors.textSecondary(context),
         indicator: BoxDecoration(
-          color: const Color(0xFF6C5CE7).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10.r),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary(context),
+              AppColors.primarySoft(context),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary(context).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         dividerColor: Colors.transparent,
@@ -706,50 +1050,71 @@ class _ResellingScreenState extends State<ResellingScreen>
           Tab(text: 'আমার রিসেল (${_myResells.length})'),
         ],
       ),
-    );
+    ).animate().fadeIn(delay: 350.ms);
   }
 
-  // ── Products Tab ─────────────────────────────────────────────
+  // ==================== PRODUCTS TAB ====================
   Widget _buildProductsTab() {
     final products = _filteredProducts;
     if (products.isEmpty) return _buildEmptyState();
 
     return GridView.builder(
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12.w,
         mainAxisSpacing: 12.h,
-        childAspectRatio: 0.68,
+        childAspectRatio: 0.65,
       ),
       itemCount: products.length,
       itemBuilder: (_, i) => _ProductCard(
         product: products[i],
         onSetMargin: () => _showMarginSheet(context, products[i]),
+      ).animate().fadeIn(delay: (i * 50).ms).slideY(
+        begin: 20,
+        curve: Curves.easeOut,
       ),
     );
   }
 
-  // ── My Resells Tab ───────────────────────────────────────────
+  // ==================== MY RESELLS TAB ====================
   Widget _buildMyResellsTab() {
     if (_myResells.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined,
-                size: 64.sp, color: Colors.grey[300]),
-            SizedBox(height: 12.h),
-            Text('এখনো কোনো পণ্য রিসেল করছেন না',
-                style: GoogleFonts.poppins(
-                    fontSize: 14.sp, color: Colors.grey[400])),
+            Container(
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: AppColors.primary(context).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.inventory_2_outlined,
+                size: 48.sp,
+                color: AppColors.primary(context),
+              ),
+            ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+            SizedBox(height: 16.h),
+            Text(
+              'এখনো কোনো পণ্য রিসেল করা হয়নি',
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 14.sp,
+                color: AppColors.textSecondary(context),
+              ),
+            ),
             SizedBox(height: 8.h),
             TextButton(
               onPressed: () => _tabController.animateTo(0),
-              child: Text('পণ্য বেছে নিন',
-                  style: GoogleFonts.poppins(
-                      color: const Color(0xFF6C5CE7),
-                      fontWeight: FontWeight.w600)),
+              child: Text(
+                'পণ্য বাছুন',
+                style: GoogleFonts.hindSiliguri(
+                  color: AppColors.primary(context),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                ),
+              ),
             ),
           ],
         ),
@@ -757,13 +1122,16 @@ class _ResellingScreenState extends State<ResellingScreen>
     }
 
     return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
       itemCount: _myResells.length,
       itemBuilder: (_, i) => _ActiveResellCard(
         product: _myResells[i],
         onShare: () => _showShareLink(context, _myResells[i]),
         onEdit: () => _showMarginSheet(context, _myResells[i]),
         onStop: () => setState(() => _myResells[i].isReselling = false),
+      ).animate().fadeIn(delay: (i * 80).ms).slideX(
+        begin: 20,
+        curve: Curves.easeOut,
       ),
     );
   }
@@ -773,171 +1141,17 @@ class _ResellingScreenState extends State<ResellingScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off_rounded, size: 64.sp, color: Colors.grey[300]),
+          Icon(
+            Icons.search_off_rounded,
+            size: 64.sp,
+            color: AppColors.textMuted(context),
+          ),
           SizedBox(height: 12.h),
-          Text('কোনো পণ্য পাওয়া যায়নি',
-              style: GoogleFonts.poppins(
-                  fontSize: 14.sp, color: Colors.grey[400])),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Product Card Widget ──────────────────────────────────────
-class _ProductCard extends StatelessWidget {
-  final ProductModel product;
-  final VoidCallback onSetMargin;
-
-  const _ProductCard({required this.product, required this.onSetMargin});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(16.r)),
-                child: Container(
-                  height: 130.h,
-                  width: double.infinity,
-                  color: Colors.grey[100],
-                  child: Icon(Icons.image_not_supported_outlined,
-                      color: Colors.grey[300], size: 40.sp),
-                ),
-              ),
-              if (product.isReselling)
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 6.w, vertical: 2.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00C566),
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Text('রিসেলিং',
-                        style: GoogleFonts.poppins(
-                            fontSize: 9.sp,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.star_rounded,
-                          color: Colors.amber, size: 11.sp),
-                      SizedBox(width: 2.w),
-                      Text(product.rating.toString(),
-                          style: GoogleFonts.poppins(fontSize: 9.sp)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          Padding(
-            padding: EdgeInsets.all(10.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.title,
-                  style: GoogleFonts.poppins(
-                      fontSize: 12.sp, fontWeight: FontWeight.w600),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 6.h),
-
-                // Price row
-                Row(
-                  children: [
-                    Icon(Icons.storefront_rounded,
-                        size: 11.sp, color: Colors.grey),
-                    SizedBox(width: 3.w),
-                    Text('৳${product.wholesalePrice.toInt()}',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11.sp,
-                            color: Colors.grey[500])),
-                    const Spacer(),
-                    Text(
-                      '+৳${product.maxMargin.toInt()} লাভ',
-                      style: GoogleFonts.poppins(
-                          fontSize: 10.sp,
-                          color: const Color(0xFF00C566),
-                          fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Text('${product.totalSold} বার বিক্রি',
-                    style: GoogleFonts.poppins(
-                        fontSize: 10.sp, color: Colors.grey[400])),
-                SizedBox(height: 8.h),
-
-                // Button
-                GestureDetector(
-                  onTap: onSetMargin,
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: product.isReselling
-                          ? const Color(0xFF00C566)
-                          : const Color(0xFF6C5CE7),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          product.isReselling
-                              ? Icons.share_rounded
-                              : Icons.add_shopping_cart_rounded,
-                          color: Colors.white,
-                          size: 13.sp,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          product.isReselling ? 'শেয়ার করুন' : 'রিসেল করুন',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+          Text(
+            'কোনো পণ্য পাওয়া যায়নি',
+            style: GoogleFonts.hindSiliguri(
+              fontSize: 14.sp,
+              color: AppColors.textSecondary(context),
             ),
           ),
         ],
@@ -946,7 +1160,264 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-// ─── Active Resell Card ───────────────────────────────────────
+// ==================== PRODUCT CARD ====================
+class _ProductCard extends StatelessWidget {
+  final ProductModel product;
+  final VoidCallback onSetMargin;
+
+  const _ProductCard({required this.product, required this.onSetMargin});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onSetMargin,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: AppColors.border(context)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow(context),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                  child: Container(
+                    height: 140.h,
+                    width: double.infinity,
+                    color: AppColors.bg(context),
+                    child: Image.network(
+                      product.image,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primary(context),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: AppColors.bg(context),
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
+                          color: AppColors.textMuted(context),
+                          size: 40.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (product.isReselling)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.success(context),
+                            AppColors.success(context).withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(8.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.success(context).withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: Colors.white,
+                            size: 10.sp,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            'সক্রিয়',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 9.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.card(context).withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: AppColors.border(context)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.star_rounded,
+                          color: Colors.amber,
+                          size: 12.sp,
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          product.rating.toString(),
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            Padding(
+              padding: EdgeInsets.all(12.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.title,
+                    style: GoogleFonts.hindSiliguri(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary(context),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 8.h),
+
+                  // Price row
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary(context).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          '৳${product.wholesalePrice.toInt()}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary(context),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        '+৳${product.maxMargin.toInt()} লাভ',
+                        style: GoogleFonts.hindSiliguri(
+                          fontSize: 10.sp,
+                          color: AppColors.success(context),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    '${product.totalSold} বার বিক্রি',
+                    style: GoogleFonts.hindSiliguri(
+                      fontSize: 10.sp,
+                      color: AppColors.textMuted(context),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+
+                  // Button
+                  GestureDetector(
+                    onTap: onSetMargin,
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: product.isReselling
+                              ? [
+                                  AppColors.success(context),
+                                  AppColors.success(context).withOpacity(0.8),
+                                ]
+                              : [
+                                  AppColors.primary(context),
+                                  AppColors.primarySoft(context),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(12.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (product.isReselling
+                                    ? AppColors.success(context)
+                                    : AppColors.primary(context))
+                                .withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            product.isReselling
+                                ? Icons.share_rounded
+                                : Icons.add_shopping_cart_rounded,
+                            color: Colors.white,
+                            size: 14.sp,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            product.isReselling ? 'শেয়ার করুন' : 'রিসেল করুন',
+                            style: GoogleFonts.hindSiliguri(
+                              fontSize: 11.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== ACTIVE RESELL CARD ====================
 class _ActiveResellCard extends StatelessWidget {
   final ProductModel product;
   final VoidCallback onShare;
@@ -966,30 +1437,38 @@ class _ActiveResellCard extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: AppColors.border(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.shadow(context),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Image placeholder
-          Container(
-            width: 72.w,
-            height: 72.w,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12.r),
+          // Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14.r),
+            child: Container(
+              width: 72.w,
+              height: 72.w,
+              color: AppColors.bg(context),
+              child: Image.network(
+                product.image,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.image_not_supported_outlined,
+                  color: AppColors.textMuted(context),
+                  size: 28.sp,
+                ),
+              ),
             ),
-            child: Icon(Icons.image_not_supported_outlined,
-                color: Colors.grey[300], size: 28.sp),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 14.w),
 
           Expanded(
             child: Column(
@@ -997,64 +1476,81 @@ class _ActiveResellCard extends StatelessWidget {
               children: [
                 Text(
                   product.title,
-                  style: GoogleFonts.poppins(
-                      fontSize: 13.sp, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.hindSiliguri(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary(context),
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 4.h),
                 Row(
                   children: [
-                    Text('আমার মূল্য: ',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11.sp, color: Colors.grey[500])),
-                    Text('৳${product.myPrice.toInt()}',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF6C5CE7))),
-                  ],
-                ),
-                SizedBox(height: 2.h),
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00C566).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6.r),
+                    Text(
+                      'আপনার দাম: ',
+                      style: GoogleFonts.hindSiliguri(
+                        fontSize: 11.sp,
+                        color: AppColors.textSecondary(context),
                       ),
-                      child: Text(
-                        'লাভ ৳${product.myMargin.toInt()}',
-                        style: GoogleFonts.poppins(
-                            fontSize: 10.sp,
-                            color: const Color(0xFF00C566),
-                            fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      '৳${product.myPrice.toInt()}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary(context),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 4.h),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.success(context).withOpacity(0.15),
+                        AppColors.success(context).withOpacity(0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(
+                      color: AppColors.success(context).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Text(
+                    'লাভ ৳${product.myMargin.toInt()}',
+                    style: GoogleFonts.hindSiliguri(
+                      fontSize: 10.sp,
+                      color: AppColors.success(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10.h),
                 Row(
                   children: [
                     _MiniButton(
-                        icon: Icons.share_rounded,
-                        label: 'শেয়ার',
-                        color: const Color(0xFF6C5CE7),
-                        onTap: onShare),
+                      icon: Icons.share_rounded,
+                      label: 'শেয়ার',
+                      color: AppColors.primary(context),
+                      onTap: onShare,
+                    ),
                     SizedBox(width: 6.w),
                     _MiniButton(
-                        icon: Icons.edit_rounded,
-                        label: 'এডিট',
-                        color: Colors.orange,
-                        onTap: onEdit),
+                      icon: Icons.edit_rounded,
+                      label: 'এডিট',
+                      color: AppColors.warning(context),
+                      onTap: onEdit,
+                    ),
                     SizedBox(width: 6.w),
                     _MiniButton(
-                        icon: Icons.stop_circle_outlined,
-                        label: 'বন্ধ',
-                        color: Colors.red,
-                        onTap: onStop),
+                      icon: Icons.stop_circle_outlined,
+                      label: 'বন্ধ',
+                      color: AppColors.danger(context),
+                      onTap: onStop,
+                    ),
                   ],
                 ),
               ],
@@ -1066,29 +1562,48 @@ class _ActiveResellCard extends StatelessWidget {
   }
 }
 
-// ─── Small Helpers ────────────────────────────────────────────
+// ==================== HELPER WIDGETS ====================
+
 class _StatItem extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
 
-  const _StatItem(
-      {required this.label, required this.value, required this.icon});
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white70, size: 18.sp),
-        SizedBox(height: 4.h),
-        Text(value,
-            style: GoogleFonts.poppins(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.white)),
-        Text(label,
-            style: GoogleFonts.poppins(fontSize: 9.sp, color: Colors.white60),
-            textAlign: TextAlign.center),
+        Container(
+          padding: EdgeInsets.all(8.w),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white.withOpacity(0.9), size: 18.sp),
+        ),
+        SizedBox(height: 6.h),
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        Text(
+          label,
+          style: GoogleFonts.hindSiliguri(
+            fontSize: 9.sp,
+            color: Colors.white.withOpacity(0.7),
+          ),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
   }
@@ -1097,14 +1612,14 @@ class _StatItem extends StatelessWidget {
 class _PriceInfoBox extends StatelessWidget {
   final String label;
   final double amount;
-  final Color color;
+  final Color bgColor;
   final Color textColor;
   final bool highlight;
 
   const _PriceInfoBox({
     required this.label,
     required this.amount,
-    required this.color,
+    required this.bgColor,
     required this.textColor,
     this.highlight = false,
   });
@@ -1113,25 +1628,32 @@ class _PriceInfoBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 8.w),
         decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(10.r),
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12.r),
           border: highlight
-              ? Border.all(color: textColor.withOpacity(0.4))
+              ? Border.all(color: textColor.withOpacity(0.4), width: 1.5)
               : null,
         ),
         child: Column(
           children: [
-            Text('৳${amount.toInt()}',
-                style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: textColor)),
-            Text(label,
-                style: GoogleFonts.poppins(
-                    fontSize: 9.sp, color: textColor.withOpacity(0.7)),
-                textAlign: TextAlign.center),
+            Text(
+              '৳${amount.toInt()}',
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 9.sp,
+                color: textColor.withOpacity(0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
@@ -1144,22 +1666,36 @@ class _ShareIcon extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _ShareIcon(
-      {required this.icon, required this.label, required this.color});
+  const _ShareIcon({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: EdgeInsets.all(10.w),
-          decoration:
-              BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-          child: Icon(icon, color: color, size: 22.sp),
+        GestureDetector(
+          onTap: () => HapticFeedback.lightImpact(),
+          child: Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withOpacity(0.2)),
+            ),
+            child: Icon(icon, color: color, size: 22.sp),
+          ),
         ),
-        SizedBox(height: 4.h),
-        Text(label,
-            style: GoogleFonts.poppins(fontSize: 10.sp, color: Colors.grey[600])),
+        SizedBox(height: 6.h),
+        Text(
+          label,
+          style: GoogleFonts.hindSiliguri(
+            fontSize: 10.sp,
+            color: AppColors.textSecondary(context),
+          ),
+        ),
       ],
     );
   }
@@ -1171,34 +1707,50 @@ class _MiniButton extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _MiniButton(
-      {required this.icon,
-      required this.label,
-      required this.color,
-      required this.onTap});
+  const _MiniButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 11.sp, color: color),
-            SizedBox(width: 3.w),
-            Text(label,
-                style: GoogleFonts.poppins(
-                    fontSize: 10.sp,
-                    color: color,
-                    fontWeight: FontWeight.w600)),
+            Icon(icon, size: 12.sp, color: color),
+            SizedBox(width: 4.w),
+            Text(
+              label,
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 10.sp,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
+'''
+
+with open('/mnt/agents/output/reselling_screen.dart', 'w', encoding='utf-8') as f:
+    f.write(reselling_screen)
+
+print("File saved successfully!")
+print(f"Total lines: {len(reselling_screen.splitlines())}")
