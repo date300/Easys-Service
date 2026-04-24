@@ -14,10 +14,8 @@ class RechargeScreen extends StatefulWidget {
 }
 
 class _RechargeScreenState extends State<RechargeScreen> {
-  // Design Tokens
-  static const Color kBackground = Color(0xFFF8FAFC);
-  static const Color kTextDark   = Color(0xFF0F172A);
-  static const Color kPrimary    = Color(0xFF29B6F6);
+  // Design Tokens - Only Primary Color is static
+  static const Color kPrimary = Color(0xFF29B6F6);
 
   final List<String> operators = ['gp', 'robi', 'airtel', 'bl', 'teletalk'];
   
@@ -39,7 +37,6 @@ class _RechargeScreenState extends State<RechargeScreen> {
   // Predefined amounts for quick selection
   final List<String> quickAmounts = ['20', '50', '100', '200', '500', '1000'];
 
-  // 🔥 1. API Call: Execute Recharge
   Future<void> _handleRecharge() async {
     final number = _numberController.text.trim();
     final amount = _amountController.text.trim();
@@ -55,7 +52,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
       final payload = {
         "number": number,
         "amount": amount,
-        "operator": selectedOperator, // Backend handles the lowercase
+        "operator": selectedOperator,
       };
 
       final response = await http.post(
@@ -78,31 +75,61 @@ class _RechargeScreenState extends State<RechargeScreen> {
     }
   }
 
-  // Success Dialog with Lottie Animation
   void _showSuccessDialog(String trxid) {
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subTextColor = isDark ? Colors.grey.shade400 : Colors.grey;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: dialogBg,  // 🔥 DYNAMIC
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Lottie.network(
-              'https://lottie.host/86d49492-9387-434a-91d8-06775797669d/Asf7H2WvKz.json', // Success Checkmark
+              'https://lottie.host/86d49492-9387-434a-91d8-06775797669d/Asf7H2WvKz.json',
               height: 120.h,
               repeat: false,
             ),
-            Text('Success!', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18.sp)),
+            Text(
+              'Success!',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 18.sp,
+                color: textColor,  // 🔥 DYNAMIC
+              ),
+            ),
             SizedBox(height: 10.h),
-            Text('Recharge request sent successfully.', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey)),
+            Text(
+              'Recharge request sent successfully.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 12.sp,
+                color: subTextColor,  // 🔥 DYNAMIC
+              ),
+            ),
             SizedBox(height: 5.h),
-            SelectableText('TRX: $trxid', style: GoogleFonts.poppins(fontSize: 11.sp, fontWeight: FontWeight.bold, color: kPrimary)),
+            SelectableText(
+              'TRX: $trxid',
+              style: GoogleFonts.poppins(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.bold,
+                color: kPrimary,
+              ),
+            ),
             SizedBox(height: 20.h),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: kPrimary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r))),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                ),
                 onPressed: () {
                   Navigator.pop(context);
                   _numberController.clear();
@@ -110,7 +137,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
                 },
                 child: const Text('OK', style: TextStyle(color: Colors.white)),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -118,16 +145,55 @@ class _RechargeScreenState extends State<RechargeScreen> {
   }
 
   void _showSnack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color, behavior: SnackBarBehavior.floating));
+    // 🔥 DYNAMIC SNACKBAR
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          msg,
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 DYNAMIC THEME COLORS
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
+    final appBarBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.02);
+    final fieldBorder = isDark ? const Color(0xFF333333) : Colors.grey.shade200;
+    final hintColor = isDark ? Colors.grey.shade500 : Colors.grey;
+    final iconColor = isDark ? Colors.grey.shade400 : Colors.grey;
+    final chipBg = isDark ? const Color(0xFF2C2C2C) : Colors.white;
+    final chipBorder = isDark ? const Color(0xFF444444) : Colors.grey.shade200;
+    final chipText = isDark ? Colors.grey.shade400 : Colors.grey;
+
     return Scaffold(
-      backgroundColor: kBackground,
+      backgroundColor: kBackground,  // 🔥 DYNAMIC
       appBar: AppBar(
-        title: Text('Mobile Recharge', style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-        backgroundColor: Colors.white, elevation: 0.5, centerTitle: true,
+        title: Text(
+          'Mobile Recharge',
+          style: GoogleFonts.poppins(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: kTextDark,  // 🔥 DYNAMIC
+          ),
+        ),
+        backgroundColor: appBarBg,  // 🔥 DYNAMIC
+        elevation: isDark ? 0 : 0.5,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: kTextDark),  // 🔥 DYNAMIC
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20.w),
@@ -135,21 +201,43 @@ class _RechargeScreenState extends State<RechargeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Number Input
-            _buildSectionTitle("Enter Mobile Number"),
-            _buildTextField(_numberController, "01XXXXXXXXX", CupertinoIcons.phone, TextInputType.phone),
+            _buildSectionTitle("Enter Mobile Number", kTextDark),
+            _buildTextField(
+              _numberController,
+              "01XXXXXXXXX",
+              CupertinoIcons.phone,
+              TextInputType.phone,
+              cardBg,
+              shadowColor,
+              fieldBorder,
+              hintColor,
+              iconColor,
+              kTextDark,
+            ),
 
             SizedBox(height: 20.h),
 
             // Operator Selection
-            _buildSectionTitle("Select Operator"),
+            _buildSectionTitle("Select Operator", kTextDark),
             SizedBox(height: 10.h),
-            _buildOperatorSelector(),
+            _buildOperatorSelector(chipBg, chipBorder, chipText, kTextDark),
 
             SizedBox(height: 25.h),
 
             // Amount Input
-            _buildSectionTitle("Recharge Amount"),
-            _buildTextField(_amountController, "Amount (BDT)", CupertinoIcons.money_dollar, TextInputType.number),
+            _buildSectionTitle("Recharge Amount", kTextDark),
+            _buildTextField(
+              _amountController,
+              "Amount (BDT)",
+              CupertinoIcons.money_dollar,
+              TextInputType.number,
+              cardBg,
+              shadowColor,
+              fieldBorder,
+              hintColor,
+              iconColor,
+              kTextDark,
+            ),
 
             // Quick Amount Chips
             SizedBox(height: 15.h),
@@ -157,8 +245,12 @@ class _RechargeScreenState extends State<RechargeScreen> {
               spacing: 10.w,
               children: quickAmounts.map((amt) => ActionChip(
                 label: Text('৳$amt'),
-                backgroundColor: Colors.white,
-                labelStyle: GoogleFonts.poppins(fontSize: 12.sp, color: kTextDark),
+                backgroundColor: chipBg,  // 🔥 DYNAMIC
+                side: BorderSide(color: chipBorder),  // 🔥 DYNAMIC
+                labelStyle: GoogleFonts.poppins(
+                  fontSize: 12.sp,
+                  color: kTextDark,  // 🔥 DYNAMIC
+                ),
                 onPressed: () => setState(() => _amountController.text = amt),
               )).toList(),
             ),
@@ -178,7 +270,14 @@ class _RechargeScreenState extends State<RechargeScreen> {
                 onPressed: isProcessing ? null : _handleRecharge,
                 child: isProcessing 
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : Text('Recharge Now', style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white)),
+                  : Text(
+                      'Recharge Now',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
               ),
             ),
           ],
@@ -187,20 +286,52 @@ class _RechargeScreenState extends State<RechargeScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(title, style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: kTextDark));
+  Widget _buildSectionTitle(String title, Color kTextDark) {
+    return Text(
+      title,
+      style: GoogleFonts.poppins(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w600,
+        color: kTextDark,  // 🔥 DYNAMIC
+      ),
+    );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, TextInputType type) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint,
+    IconData icon,
+    TextInputType type,
+    Color cardBg,
+    Color shadowColor,
+    Color fieldBorder,
+    Color hintColor,
+    Color iconColor,
+    Color textColor,
+  ) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15.r), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)]),
+      decoration: BoxDecoration(
+        color: cardBg,  // 🔥 DYNAMIC
+        borderRadius: BorderRadius.circular(15.r),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,  // 🔥 DYNAMIC
+            blurRadius: 10,
+          ),
+        ],
+        border: Border.all(color: fieldBorder, width: 1),  // 🔥 DYNAMIC
+      ),
       child: TextField(
         controller: controller,
         keyboardType: type,
-        style: GoogleFonts.poppins(fontSize: 15.sp),
+        style: GoogleFonts.poppins(
+          fontSize: 15.sp,
+          color: textColor,  // 🔥 DYNAMIC
+        ),
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: Icon(icon, color: Colors.grey),
+          hintStyle: GoogleFonts.poppins(color: hintColor),  // 🔥 DYNAMIC
+          prefixIcon: Icon(icon, color: iconColor),  // 🔥 DYNAMIC
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
         ),
@@ -208,7 +339,12 @@ class _RechargeScreenState extends State<RechargeScreen> {
     );
   }
 
-  Widget _buildOperatorSelector() {
+  Widget _buildOperatorSelector(
+    Color chipBg,
+    Color chipBorder,
+    Color chipText,
+    Color selectedTextColor,
+  ) {
     return SizedBox(
       height: 50.h,
       child: ListView.builder(
@@ -223,14 +359,20 @@ class _RechargeScreenState extends State<RechargeScreen> {
               margin: EdgeInsets.only(right: 10.w),
               padding: EdgeInsets.symmetric(horizontal: 15.w),
               decoration: BoxDecoration(
-                color: isSelected ? operatorColors[op] : Colors.white,
+                color: isSelected ? operatorColors[op] : chipBg,  // 🔥 DYNAMIC
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: isSelected ? operatorColors[op]! : Colors.grey.shade200),
+                border: Border.all(
+                  color: isSelected ? operatorColors[op]! : chipBorder,  // 🔥 DYNAMIC
+                ),
               ),
               child: Center(
                 child: Text(
                   operatorNames[op]!,
-                  style: GoogleFonts.poppins(fontSize: 12.sp, color: isSelected ? Colors.white : Colors.grey, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.sp,
+                    color: isSelected ? Colors.white : chipText,  // 🔥 DYNAMIC
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ),
             ),
