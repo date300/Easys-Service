@@ -342,7 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               icon: Icon(isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, size: isSmall ? 12.sp : 14.sp, color: HomeScreen.kPrimary),
               label: Text(isExpanded ? 'Less' : 'More', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 11.sp, fontWeight: FontWeight.w600, color: HomeScreen.kPrimary)),
             ),
-          ),
+ 	         ),
       ],
     );
   }
@@ -387,7 +387,7 @@ class _ServiceCard extends ConsumerWidget {
   void _navigateToDetail(BuildContext context, WidgetRef ref) {
     ref.read(isDetailViewProvider.notifier).state = true;
     ref.read(detailViewTitleProvider.notifier).state = service.name;
-   context.go(service.route!);
+   context.push(service.route!);
   }
 
   void _onTap(BuildContext context, WidgetRef ref) {
