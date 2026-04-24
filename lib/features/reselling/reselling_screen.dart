@@ -115,20 +115,22 @@ class CategoryStyle {
   });
 }
 
+// FIXED: Replaced invalid CupertinoIcons (watch, headset, ear, speaker_2, sportscourt, eyedropper)
+// with safe alternatives that exist in Flutter 3.41.6
 final Map<String, CategoryStyle> _categoryStyles = {
   'All': CategoryStyle(label: 'All', icon: CupertinoIcons.square_grid_2x2, color: const Color(0xFF29B6F6)),
-  'Smart Watch': CategoryStyle(label: 'Smart Watch', icon: CupertinoIcons.watch, color: const Color(0xFF6366F1)),
+  'Smart Watch': CategoryStyle(label: 'Smart Watch', icon: CupertinoIcons.clock, color: const Color(0xFF6366F1)),
   'Neckband': CategoryStyle(label: 'Neckband', icon: CupertinoIcons.headphones, color: const Color(0xFFEC4899)),
-  'Airpods': CategoryStyle(label: 'Airpods', icon: CupertinoIcons.ear, color: const Color(0xFF10B981)),
+  'Airpods': CategoryStyle(label: 'Airpods', icon: CupertinoIcons.music_note, color: const Color(0xFF10B981)),
   'Power Bank': CategoryStyle(label: 'Power Bank', icon: CupertinoIcons.battery_100, color: const Color(0xFFF59E0B)),
-  'Earphone': CategoryStyle(label: 'Earphone', icon: CupertinoIcons.headset, color: const Color(0xFF3B82F6)),
+  'Earphone': CategoryStyle(label: 'Earphone', icon: CupertinoIcons.mic, color: const Color(0xFF3B82F6)),
   'Electronics': CategoryStyle(label: 'Electronics', icon: CupertinoIcons.device_phone_portrait, color: const Color(0xFF6366F1)),
   'Fashion': CategoryStyle(label: 'Fashion', icon: CupertinoIcons.bag, color: const Color(0xFF10B981)),
-  'Audio': CategoryStyle(label: 'Audio', icon: CupertinoIcons.speaker_2, color: const Color(0xFFEC4899)),
+  'Audio': CategoryStyle(label: 'Audio', icon: CupertinoIcons.volume_up, color: const Color(0xFFEC4899)),
   'Watches': CategoryStyle(label: 'Watches', icon: CupertinoIcons.clock, color: const Color(0xFFF59E0B)),
   'Home': CategoryStyle(label: 'Home', icon: CupertinoIcons.house, color: const Color(0xFF3B82F6)),
-  'Sports': CategoryStyle(label: 'Sports', icon: CupertinoIcons.sportscourt, color: const Color(0xFFEF4444)),
-  'Beauty': CategoryStyle(label: 'Beauty', icon: CupertinoIcons.eyedropper, color: const Color(0xFFD946EF)),
+  'Sports': CategoryStyle(label: 'Sports', icon: CupertinoIcons.bolt, color: const Color(0xFFEF4444)),
+  'Beauty': CategoryStyle(label: 'Beauty', icon: CupertinoIcons.heart, color: const Color(0xFFD946EF)),
   'Books': CategoryStyle(label: 'Books', icon: CupertinoIcons.book, color: const Color(0xFF8B5CF6)),
   'Toys': CategoryStyle(label: 'Toys', icon: CupertinoIcons.gift, color: const Color(0xFF06B6D4)),
 };
