@@ -18,7 +18,7 @@ import '../main.dart';
 
 // ==================== HELPERS ====================
 
-/// ⭐ FIXED: দুইটা প্যারামিটার নিতে হবে — BuildContext + GoRouterState
+/// ⭐ FIXED: GoRouterState প্যারামিটার যোগ করা হয়েছে
 Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
   final container = ProviderScope.containerOf(context);
   container.read(isDetailViewProvider.notifier).state = false;
@@ -26,14 +26,13 @@ Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) as
   return true;
 }
 
-/// Detail Route বানানোর হেল্পার
 GoRoute _detailRoute({
   required String path,
   required Widget Function(BuildContext, GoRouterState) builder,
 }) {
   return GoRoute(
     path: path,
-    onExit: _resetDetailProviders, // এখন সিগনেচার মিলে গেছে
+    onExit: _resetDetailProviders,
     builder: builder,
   );
 }
