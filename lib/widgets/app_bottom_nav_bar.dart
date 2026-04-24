@@ -7,7 +7,6 @@ class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final void Function(int) onTap;
 
-  // Primary Theme Color
   static const Color skyBlue = Color(0xFF29B6F6);
 
   const AppBottomNavBar({
@@ -18,36 +17,32 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic Theme Colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05);
-    final unselectedIconColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
-    final unselectedTextColor = isDark ? Colors.grey.shade500 : Colors.grey.shade500;
+    final backgroundColor = isDark ? const Color(0xFF000000) : Colors.white;
+    final unselectedColor = isDark ? Colors.grey.shade600 : Colors.grey.shade500;
 
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            blurRadius: 15,
-            offset: const Offset(0, -4),
+        border: Border(
+          top: BorderSide(
+            color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
+            width: 0.5,
           ),
-        ],
+        ),
       ),
       child: SafeArea(
-        child: Container(
-          height: 65.h,
-          padding: EdgeInsets.symmetric(horizontal: 12.w),
+        top: false, // শুধু নিচের প্যাডিং রাখবে
+        child: SizedBox(
+          height: 48.h, // TikTok স্টাইল — অনেক চিকন
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildNavItem(0, CupertinoIcons.house, CupertinoIcons.house_fill, 'Home', isDark, unselectedIconColor, unselectedTextColor),
-              _buildNavItem(1, CupertinoIcons.bag, CupertinoIcons.bag_fill, 'Reselling', isDark, unselectedIconColor, unselectedTextColor),
-              _buildNavItem(2, CupertinoIcons.doc_text, CupertinoIcons.doc_text_fill, 'Jobs', isDark, unselectedIconColor, unselectedTextColor),
-              // Profile এর ইনডেক্স এখন ৩ করা হয়েছে
-              _buildNavItem(3, CupertinoIcons.person, CupertinoIcons.person_fill, 'Profile', isDark, unselectedIconColor, unselectedTextColor),
+              _buildNavItem(0, CupertinoIcons.house, CupertinoIcons.house_fill, 'Home', unselectedColor),
+              _buildNavItem(1, CupertinoIcons.bag, CupertinoIcons.bag_fill, 'Reselling', unselectedColor),
+              _buildNavItem(2, CupertinoIcons.doc_text, CupertinoIcons.doc_text_fill, 'Jobs', unselectedColor),
+              _buildNavItem(3, CupertinoIcons.person, CupertinoIcons.person_fill, 'Profile', unselectedColor),
             ],
           ),
         ),
@@ -56,60 +51,39 @@ class AppBottomNavBar extends StatelessWidget {
   }
 
   Widget _buildNavItem(
-    int index, 
-    IconData inactiveIcon, 
-    IconData activeIcon, 
+    int index,
+    IconData inactiveIcon,
+    IconData activeIcon,
     String label,
-    bool isDark,
-    Color unselectedIconColor,
-    Color unselectedTextColor,
+    Color unselectedColor,
   ) {
     final isSelected = index == currentIndex;
-    final selectedBgColor = isDark ? skyBlue.withOpacity(0.15) : skyBlue.withOpacity(0.1);
 
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            padding: EdgeInsets.all(isSelected ? 5.w : 2.w),
-            decoration: BoxDecoration(
-              color: isSelected ? selectedBgColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: Icon(
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTap(index),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
               isSelected ? activeIcon : inactiveIcon,
-              color: isSelected ? skyBlue : unselectedIconColor,
-              size: 22.sp,
+              color: isSelected ? skyBlue : unselectedColor,
+              size: 20.sp, // ছোট আইকন
             ),
-          ),
-          
-          SizedBox(height: 2.h),
-          
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              color: isSelected ? skyBlue : unselectedTextColor,
-              fontSize: 9.sp,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            SizedBox(height: 2.h),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                color: isSelected ? skyBlue : unselectedColor,
+                fontSize: 9.sp, // ছোট টেক্সট
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                height: 1.0,
+              ),
             ),
-          ),
-          
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            margin: EdgeInsets.only(top: 2.h),
-            height: 1.5.h,
-            width: isSelected ? 10.w : 0,
-            decoration: BoxDecoration(
-              color: skyBlue,
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
