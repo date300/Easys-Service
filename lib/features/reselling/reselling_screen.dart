@@ -19,7 +19,7 @@ class AppColors {
   static const Color successLight = Color(0xFF10B981);
   static const Color warningLight = Color(0xFFF59E0B);
   static const Color dangerLight = Color(0xFFEF4444);
-  
+
   static const Color bgLight = Color(0xFFF8FAFC);
   static const Color surfaceLight = Colors.white;
   static const Color cardLight = Colors.white;
@@ -36,7 +36,7 @@ class AppColors {
   static const Color successDark = Color(0xFF34D399);
   static const Color warningDark = Color(0xFFFBBF24);
   static const Color dangerDark = Color(0xFFF87171);
-  
+
   static const Color bgDark = Color(0xFF0F172A);
   static const Color surfaceDark = Color(0xFF1E293B);
   static const Color cardDark = Color(0xFF1E293B);
@@ -110,68 +110,68 @@ class ProductModel {
 final List<ProductModel> _dummyProducts = [
   ProductModel(
     id: '1',
-    title: 'à¦¸à§à¦®à¦¾à¦°à§à¦ à¦à¦¯à¦¼à¦¾à¦ à¦ªà§à¦°à§',
+    title: 'স্মার্ট ওয়াচ প্রো',
     image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
     wholesalePrice: 850,
     maxResalePrice: 1400,
-    category: 'à¦à¦²à§à¦à¦à§à¦°à¦¨à¦¿à¦à§à¦¸',
+    category: 'ইলেকট্রনিক্স',
     rating: 4.8,
     totalSold: 234,
   ),
   ProductModel(
     id: '2',
-    title: 'à¦à¦¯à¦¼à§à¦¯à¦¾à¦°à¦²à§à¦¸ à¦à¦¯à¦¼à¦¾à¦°à¦¬à¦¾à¦¡',
+    title: 'ওয়্যারলেস ইয়ারবাড',
     image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400',
     wholesalePrice: 650,
     maxResalePrice: 1100,
-    category: 'à¦à§à¦¯à¦¾à¦à§à¦',
+    category: 'গ্যাজেট',
     rating: 4.5,
     totalSold: 189,
   ),
   ProductModel(
     id: '3',
-    title: 'à¦¬à§à¦²à§à¦à§à¦¥ à¦¸à§à¦ªà¦¿à¦à¦¾à¦°',
+    title: 'ব্লুটুথ স্পিকার',
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
     wholesalePrice: 1200,
     maxResalePrice: 1900,
-    category: 'à¦à¦¡à¦¿à¦',
+    category: 'অডিও',
     rating: 4.9,
     totalSold: 312,
   ),
   ProductModel(
     id: '4',
-    title: 'à¦ªà¦¾à¦à¦¯à¦¼à¦¾à¦° à¦¬à§à¦¯à¦¾à¦à¦ à§¨à§¦à§¦à§¦à§¦mAh',
+    title: 'পাওয়ার ব্যাংক ২০০০০mAh',
     image: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400',
     wholesalePrice: 1500,
     maxResalePrice: 2500,
-    category: 'à¦à§à¦¯à¦¾à¦à§à¦¸à§à¦¸à¦°à¦¿à¦',
+    category: 'অ্যাক্সেসরিজ',
     rating: 4.7,
     totalSold: 156,
   ),
   ProductModel(
     id: '5',
-    title: 'à¦«à¦¾à¦¸à§à¦ à¦à¦¾à¦°à§à¦à¦¾à¦° à¦à§à¦¬à¦²',
+    title: 'ফাস্ট চার্জার কেবল',
     image: 'https://images.unsplash.com/photo-1625153669422-6b3c9a3b7c9f?w=400',
     wholesalePrice: 780,
     maxResalePrice: 1300,
-    category: 'à¦à§à¦¯à¦¾à¦¬à¦²',
+    category: 'ক্যাবল',
     rating: 4.6,
     totalSold: 98,
   ),
   ProductModel(
     id: '6',
-    title: 'à¦ªà§à¦°à§à¦à§à¦¬à¦² à¦²à§à¦¯à¦¾à¦®à§à¦ª',
+    title: 'পোর্টেবল ল্যাম্প',
     image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400',
     wholesalePrice: 900,
     maxResalePrice: 1600,
-    category: 'à¦à¦¡à¦¿à¦',
+    category: 'অডিও',
     rating: 4.4,
     totalSold: 267,
   ),
 ];
 
 const List<String> _categories = [
-  'à¦¸à¦¬', 'à¦à¦²à§à¦à¦à§à¦°à¦¨à¦¿à¦à§à¦¸', 'à¦à§à¦¯à¦¾à¦à§à¦', 'à¦à¦¡à¦¿à¦', 'à¦à§à¦¯à¦¾à¦à§à¦¸à§à¦¸à¦°à¦¿à¦', 'à¦à§à¦¯à¦¾à¦¬à¦²',
+  'সব', 'ইলেকট্রনিক্স', 'গ্যাজেট', 'অডিও', 'অ্যাক্সেসরিজ', 'ক্যাবল',
 ];
 
 // ==================== MAIN SCREEN ====================
@@ -187,7 +187,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'à¦¸à¦¬';
+  String _selectedCategory = 'সব';
   String _searchQuery = '';
   bool _isSearchFocused = false;
 
@@ -197,7 +197,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
 
   List<ProductModel> get _filteredProducts {
     return _dummyProducts.where((p) {
-      final matchCat = _selectedCategory == 'à¦¸à¦¬' || p.category == _selectedCategory;
+      final matchCat = _selectedCategory == 'সব' || p.category == _selectedCategory;
       final matchSearch = p.title.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchCat && matchSearch;
     }).toList();
@@ -301,7 +301,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                             ),
                             SizedBox(height: 2.h),
                             Text(
-                              'à¦ªà¦¾à¦à¦à¦¾à¦°à¦¿ à¦®à§à¦²à§à¦¯: à§³${product.wholesalePrice.toInt()}',
+                              'পাইকারি মূল্য: ৳\${product.wholesalePrice.toInt()}',
                               style: GoogleFonts.hindSiliguri(
                                 fontSize: 12.sp,
                                 color: AppColors.textSecondary(context),
@@ -318,14 +318,14 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                   Row(
                     children: [
                       _PriceInfoBox(
-                        label: 'à¦ªà¦¾à¦à¦à¦¾à¦°à¦¿',
+                        label: 'পাইকারি',
                         amount: product.wholesalePrice,
                         bgColor: AppColors.primary(context).withOpacity(0.1),
                         textColor: AppColors.primary(context),
                       ),
                       SizedBox(width: 10.w),
                       _PriceInfoBox(
-                        label: 'à¦à¦®à¦¾à¦° à¦¦à¦¾à¦®',
+                        label: 'আমার দাম',
                         amount: myPrice,
                         bgColor: AppColors.success(context).withOpacity(0.1),
                         textColor: AppColors.success(context),
@@ -333,7 +333,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                       ),
                       SizedBox(width: 10.w),
                       _PriceInfoBox(
-                        label: 'à¦¸à¦°à§à¦¬à§à¦à§à¦',
+                        label: 'সর্বোচ্চ',
                         amount: product.maxResalePrice,
                         bgColor: AppColors.warning(context).withOpacity(0.1),
                         textColor: AppColors.warning(context),
@@ -375,7 +375,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                         SizedBox(width: 10.w),
                         Expanded(
                           child: Text(
-                            'à¦²à¦¾à¦­: à§³${profit.toStringAsFixed(0)} à¦ªà§à¦°à¦¤à¦¿ à¦ªà¦¿à¦¸à§',
+                            'লাভ: ৳\${profit.toStringAsFixed(0)} প্রতি পিসে',
                             style: GoogleFonts.hindSiliguri(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
@@ -393,7 +393,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'à¦®à¦¾à¦°à§à¦à¦¿à¦¨ à¦¸à§à¦ à¦à¦°à§à¦¨',
+                        'মার্জিন সেট করুন',
                         style: GoogleFonts.hindSiliguri(
                           fontSize: 13.sp,
                           color: AppColors.textSecondary(context),
@@ -407,7 +407,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Text(
-                          'à§³${margin.toStringAsFixed(0)}',
+                          '৳\${margin.toStringAsFixed(0)}',
                           style: GoogleFonts.hindSiliguri(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.bold,
@@ -440,14 +440,14 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'à§³10',
+                        '৳10',
                         style: GoogleFonts.hindSiliguri(
                           fontSize: 11.sp,
                           color: AppColors.textMuted(context),
                         ),
                       ),
                       Text(
-                        'à§³${maxMargin.toStringAsFixed(0)} (à¦¸à¦°à§à¦¬à§à¦à§à¦)',
+                        '৳\${maxMargin.toStringAsFixed(0)} (সর্বোচ্চ)',
                         style: GoogleFonts.hindSiliguri(
                           fontSize: 11.sp,
                           color: AppColors.textMuted(context),
@@ -465,7 +465,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                           onPressed: () => Navigator.pop(context),
                           icon: Icon(Icons.close_rounded, size: 16.sp),
                           label: Text(
-                            'à¦¬à¦¾à¦¤à¦¿à¦²',
+                            'বাতিল',
                             style: GoogleFonts.hindSiliguri(fontSize: 13.sp),
                           ),
                           style: OutlinedButton.styleFrom(
@@ -492,7 +492,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                           },
                           icon: Icon(Icons.share_rounded, size: 16.sp),
                           label: Text(
-                            'à¦²à¦¿à¦à¦ à¦¶à§à¦¯à¦¼à¦¾à¦° à¦à¦°à§à¦¨',
+                            'লিংক শেয়ার করুন',
                             style: GoogleFonts.hindSiliguri(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
@@ -523,7 +523,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   // ==================== SHARE LINK DIALOG ====================
   void _showShareLink(BuildContext context, ProductModel product) {
     final fakeLink =
-        'https://resellerapp.com/p/${product.id}?ref=MY_REF_CODE&price=${product.myPrice.toInt()}';
+        'https://resellerapp.com/p/\${product.id}?ref=MY_REF_CODE&price=\${product.myPrice.toInt()}';
 
     showDialog(
       context: context,
@@ -565,7 +565,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
               ).animate().scale(delay: 100.ms, duration: 400.ms, curve: Curves.elasticOut),
               SizedBox(height: 16.h),
               Text(
-                'à¦°à¦¿à¦¸à§à¦² à¦¶à§à¦°à§!',
+                'রিসেল শুরু!',
                 style: GoogleFonts.hindSiliguri(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
@@ -574,7 +574,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
               ).animate().fadeIn(delay: 200.ms),
               SizedBox(height: 4.h),
               Text(
-                'à¦à¦ªà¦¨à¦¾à¦° à¦ªà¦£à§à¦¯à§à¦° à¦²à¦¿à¦à¦ à¦¤à§à¦°à¦¿ à¦¹à¦¯à¦¼à§à¦à§à¥¤ à¦à¦à¦¨ à¦¶à§à¦¯à¦¼à¦¾à¦° à¦à¦°à§à¦¨!',
+                'আপনার পণ্যের লিংক তৈরি হয়েছে। এখন শেয়ার করুন!',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.hindSiliguri(
                   fontSize: 12.sp,
@@ -610,7 +610,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              'à¦²à¦¿à¦à¦ à¦à¦ªà¦¿ à¦¹à¦¯à¦¼à§à¦à§!',
+                              'লিংক কপি হয়েছে!',
                               style: GoogleFonts.hindSiliguri(fontSize: 12.sp),
                             ),
                             backgroundColor: AppColors.success(context),
@@ -685,7 +685,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                     elevation: 0,
                   ),
                   child: Text(
-                    'à¦ à¦¿à¦ à¦à¦à§',
+                    'ঠিক আছে',
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -729,7 +729,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
               backgroundColor: AppColors.primary(context),
               icon: Icon(Icons.analytics_rounded, size: 20.sp),
               label: Text(
-                'à¦à¦®à¦¾à¦° à¦°à¦¿à¦¸à§à¦²',
+                'আমার রিসেল',
                 style: GoogleFonts.hindSiliguri(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -751,7 +751,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'à¦°à¦¿à¦¸à§à¦²à¦¿à¦ à¦¹à¦¾à¦¬',
+                'রিসেলিং হাব',
                 style: GoogleFonts.hindSiliguri(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.bold,
@@ -759,7 +759,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                 ),
               ),
               Text(
-                'à¦ªà¦£à§à¦¯ à¦¬à¦¾à¦à§à¦¨, à¦®à¦¾à¦°à§à¦à¦¿à¦¨ à¦¸à§à¦ à¦à¦°à§à¦¨, à¦²à¦¿à¦à¦ à¦¶à§à¦¯à¦¼à¦¾à¦° à¦à¦°à§à¦¨',
+                'পণ্য বাছুন, মার্জিন সেট করুন, লিংক শেয়ার করুন',
                 style: GoogleFonts.hindSiliguri(
                   fontSize: 12.sp,
                   color: AppColors.textSecondary(context),
@@ -830,8 +830,8 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
         children: [
           Expanded(
             child: _StatItem(
-              label: 'à¦à¦¯à¦¼à¦¾à¦²à§à¦ à¦¬à§à¦¯à¦¾à¦²à§à¦¨à§à¦¸',
-              value: 'à§³${_walletBalance.toStringAsFixed(0)}',
+              label: 'ওয়ালেট ব্যালেন্স',
+              value: '৳\${_walletBalance.toStringAsFixed(0)}',
               icon: Icons.account_balance_wallet_rounded,
             ),
           ),
@@ -842,8 +842,8 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           ),
           Expanded(
             child: _StatItem(
-              label: 'à¦à¦à¦à§à¦° à¦à¦¯à¦¼',
-              value: 'à§³${_todayEarning.toStringAsFixed(0)}',
+              label: 'আজকের আয়',
+              value: '৳\${_todayEarning.toStringAsFixed(0)}',
               icon: Icons.trending_up_rounded,
             ),
           ),
@@ -854,8 +854,8 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           ),
           Expanded(
             child: _StatItem(
-              label: 'à¦®à§à¦ à¦à¦°à§à¦¡à¦¾à¦°',
-              value: '$_totalOrders à¦à¦¿',
+              label: 'মোট অর্ডার',
+              value: '\$_totalOrders টি',
               icon: Icons.shopping_bag_rounded,
             ),
           ),
@@ -901,7 +901,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
             onSubmitted: (_) => setState(() => _isSearchFocused = false),
             style: GoogleFonts.hindSiliguri(fontSize: 13.sp),
             decoration: InputDecoration(
-              hintText: 'à¦ªà¦£à§à¦¯ à¦à§à¦à¦à§à¦¨...',
+              hintText: 'পণ্য খুঁজুন...',
               hintStyle: GoogleFonts.hindSiliguri(
                 fontSize: 13.sp,
                 color: AppColors.textMuted(context),
@@ -1045,8 +1045,8 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
         indicatorSize: TabBarIndicatorSize.tab,
         dividerColor: Colors.transparent,
         tabs: [
-          Tab(text: 'à¦¸à¦¬ à¦ªà¦£à§à¦¯ (${_filteredProducts.length})'),
-          Tab(text: 'à¦à¦®à¦¾à¦° à¦°à¦¿à¦¸à§à¦² (${_myResells.length})'),
+          Tab(text: 'সব পণ্য (\${_filteredProducts.length})'),
+          Tab(text: 'আমার রিসেল (\${_myResells.length})'),
         ],
       ),
     ).animate().fadeIn(delay: 350.ms);
@@ -1097,7 +1097,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
             ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
             SizedBox(height: 16.h),
             Text(
-              'à¦à¦ªà¦¨à¦¿ à¦à¦à¦¨à§ à¦à§à¦¨à§ à¦ªà¦£à§à¦¯ à¦°à¦¿à¦¸à§à¦² à¦à¦°à§à¦¨à¦¨à¦¿',
+              'আপনি এখনো কোনো পণ্য রিসেল করেননি',
               style: GoogleFonts.hindSiliguri(
                 fontSize: 14.sp,
                 color: AppColors.textSecondary(context),
@@ -1107,7 +1107,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
             TextButton(
               onPressed: () => _tabController.animateTo(0),
               child: Text(
-                'à¦ªà¦£à§à¦¯ à¦¦à§à¦à§à¦¨',
+                'পণ্য দেখুন',
                 style: GoogleFonts.hindSiliguri(
                   color: AppColors.primary(context),
                   fontWeight: FontWeight.w600,
@@ -1147,7 +1147,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           ),
           SizedBox(height: 12.h),
           Text(
-            'à¦à§à¦¨à§ à¦ªà¦£à§à¦¯ à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿',
+            'কোনো পণ্য পাওয়া যায়নি',
             style: GoogleFonts.hindSiliguri(
               fontSize: 14.sp,
               color: AppColors.textSecondary(context),
@@ -1252,7 +1252,7 @@ class _ProductCard extends StatelessWidget {
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            'à¦à§à¦¯à¦¾à¦à§à¦à¦¿à¦­',
+                            'অ্যাক্টিভ',
                             style: GoogleFonts.hindSiliguri(
                               fontSize: 9.sp,
                               color: Colors.white,
@@ -1324,7 +1324,7 @@ class _ProductCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6.r),
                         ),
                         child: Text(
-                          'à§³${product.wholesalePrice.toInt()}',
+                          '৳\${product.wholesalePrice.toInt()}',
                           style: GoogleFonts.poppins(
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w600,
@@ -1334,7 +1334,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                       SizedBox(width: 6.w),
                       Text(
-                        '+à§³${product.maxMargin.toInt()} à¦²à¦¾à¦­',
+                        '+৳\${product.maxMargin.toInt()} লাভ',
                         style: GoogleFonts.hindSiliguri(
                           fontSize: 10.sp,
                           color: AppColors.success(context),
@@ -1345,7 +1345,7 @@ class _ProductCard extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    '${product.totalSold} à¦¬à¦¾à¦° à¦¬à¦¿à¦à§à¦°à¦¿',
+                    '\${product.totalSold} বার বিক্রি',
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 10.sp,
                       color: AppColors.textMuted(context),
@@ -1395,7 +1395,7 @@ class _ProductCard extends StatelessWidget {
                           ),
                           SizedBox(width: 6.w),
                           Text(
-                            product.isReselling ? 'à¦¶à§à¦¯à¦¼à¦¾à¦° à¦à¦°à§à¦¨' : 'à¦°à¦¿à¦¸à§à¦² à¦à¦°à§à¦¨',
+                            product.isReselling ? 'শেয়ার করুন' : 'রিসেল করুন',
                             style: GoogleFonts.hindSiliguri(
                               fontSize: 11.sp,
                               color: Colors.white,
@@ -1487,14 +1487,14 @@ class _ActiveResellCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'à¦à¦®à¦¾à¦° à¦¦à¦¾à¦®: ',
+                      'আমার দাম: ',
                       style: GoogleFonts.hindSiliguri(
                         fontSize: 11.sp,
                         color: AppColors.textSecondary(context),
                       ),
                     ),
                     Text(
-                      'à§³${product.myPrice.toInt()}',
+                      '৳\${product.myPrice.toInt()}',
                       style: GoogleFonts.poppins(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
@@ -1519,7 +1519,7 @@ class _ActiveResellCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'à¦²à¦¾à¦­ à§³${product.myMargin.toInt()}',
+                    'লাভ ৳\${product.myMargin.toInt()}',
                     style: GoogleFonts.hindSiliguri(
                       fontSize: 10.sp,
                       color: AppColors.success(context),
@@ -1532,21 +1532,21 @@ class _ActiveResellCard extends StatelessWidget {
                   children: [
                     _MiniButton(
                       icon: Icons.share_rounded,
-                      label: 'à¦¶à§à¦¯à¦¼à¦¾à¦°',
+                      label: 'শেয়ার',
                       color: AppColors.primary(context),
                       onTap: onShare,
                     ),
                     SizedBox(width: 6.w),
                     _MiniButton(
                       icon: Icons.edit_rounded,
-                      label: 'à¦à¦¡à¦¿à¦',
+                      label: 'এডিট',
                       color: AppColors.warning(context),
                       onTap: onEdit,
                     ),
                     SizedBox(width: 6.w),
                     _MiniButton(
                       icon: Icons.stop_circle_outlined,
-                      label: 'à¦¬à¦¨à§à¦§',
+                      label: 'বন্ধ',
                       color: AppColors.danger(context),
                       onTap: onStop,
                     ),
@@ -1638,7 +1638,7 @@ class _PriceInfoBox extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'à§³${amount.toInt()}',
+              '৳\${amount.toInt()}',
               style: GoogleFonts.poppins(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.bold,
@@ -1694,5 +1694,55 @@ class _ShareIcon extends StatelessWidget {
             fontSize: 10.sp,
             color: AppColors.textSecondary(context),
           ),
-      	  ),
-      
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _MiniButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12.sp, color: color),
+            SizedBox(width: 4.w),
+            Text(
+              label,
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 10.sp,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
