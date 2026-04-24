@@ -201,10 +201,6 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   String _searchQuery = '';
   bool _isSearchFocused = false;
 
-  final double _walletBalance = 4750;
-  final double _todayEarning = 320;
-  final int _totalOrders = 18;
-
   List<ProductModel> get _filteredProducts {
     return _dummyProducts.where((p) {
       final matchCat =
@@ -238,491 +234,6 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     super.dispose();
   }
 
-  // ==================== MARGIN BOTTOM SHEET ====================
-  void _showMarginSheet(BuildContext context, ProductModel product) {
-    double margin = product.myMargin > 0
-        ? product.myMargin
-        : (product.maxMargin * 0.3).clamp(10, product.maxMargin);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      useSafeArea: true,
-      builder: (_) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            final myPrice = product.wholesalePrice + margin;
-            final profit = margin;
-            final maxMargin = product.maxMargin;
-
-            return Container(
-              decoration: BoxDecoration(
-                color: AppColors.card(context),
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(24.r)),
-              ),
-              padding: EdgeInsets.fromLTRB(
-                18.w,
-                14.h,
-                18.w,
-                MediaQuery.of(context).viewInsets.bottom + 24.h,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Handle
-                  Center(
-                    child: Container(
-                      width: 32.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.border(context),
-                        borderRadius: BorderRadius.circular(3.r),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-
-                  Text(
-                    'Set Margin',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary(context),
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    'Choose your profit per sale',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12.sp,
-                      color: AppColors.textMuted(context),
-                    ),
-                  ),
-                  SizedBox(height: 14.h),
-
-                  // Product Info Row
-                  Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.bg(context),
-                      borderRadius: BorderRadius.circular(14.r),
-                      border: Border.all(color: AppColors.border(context)),
-                    ),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10.r),
-                          child: Image.network(
-                            product.image,
-                            width: 46.w,
-                            height: 46.w,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 46.w,
-                              height: 46.w,
-                              color: AppColors.border(context),
-                              child: Icon(Icons.image_not_supported,
-                                  color: AppColors.textMuted(context),
-                                  size: 18.sp),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                product.title,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary(context),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                'Wholesale: ৳${product.wholesalePrice.toInt()}',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 11.sp,
-                                  color: AppColors.textSecondary(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Price Cards
-                  Row(
-                    children: [
-                      _PriceInfoBox(
-                        label: 'Wholesale',
-                        amount: product.wholesalePrice,
-                        bgColor: AppColors.primary(context).withOpacity(0.08),
-                        textColor: AppColors.primary(context),
-                      ),
-                      SizedBox(width: 6.w),
-                      _PriceInfoBox(
-                        label: 'Your Price',
-                        amount: myPrice,
-                        bgColor: AppColors.success(context).withOpacity(0.08),
-                        textColor: AppColors.success(context),
-                        highlight: true,
-                      ),
-                      SizedBox(width: 6.w),
-                      _PriceInfoBox(
-                        label: 'Max',
-                        amount: product.maxResalePrice,
-                        bgColor: AppColors.warning(context).withOpacity(0.08),
-                        textColor: AppColors.warning(context),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Profit Badge
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.success(context).withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(
-                        color: AppColors.success(context).withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(6.w),
-                          decoration: BoxDecoration(
-                            color:
-                                AppColors.success(context).withOpacity(0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.trending_up_rounded,
-                            color: AppColors.success(context),
-                            size: 14.sp,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'Profit: ৳${profit.toStringAsFixed(0)} per sale',
-                          style: GoogleFonts.outfit(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.success(context),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // Slider Label
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Your Margin',
-                        style: GoogleFonts.outfit(
-                          fontSize: 12.sp,
-                          color: AppColors.textSecondary(context),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 10.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary(context).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(9.r),
-                        ),
-                        child: Text(
-                          '৳${margin.toStringAsFixed(0)}',
-                          style: GoogleFonts.outfit(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary(context),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 4.h),
-
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: AppColors.primary(context),
-                      thumbColor: Colors.white,
-                      inactiveTrackColor: AppColors.border(context),
-                      overlayColor:
-                          AppColors.primary(context).withOpacity(0.12),
-                      trackHeight: 4,
-                      thumbShape:
-                          RoundSliderThumbShape(enabledThumbRadius: 11.r),
-                      overlayShape:
-                          RoundSliderOverlayShape(overlayRadius: 22.r),
-                    ),
-                    child: Slider(
-                      min: 10,
-                      max: maxMargin > 10 ? maxMargin : 11,
-                      value:
-                          margin.clamp(10, maxMargin > 10 ? maxMargin : 11),
-                      divisions: maxMargin > 10
-                          ? ((maxMargin - 10) / 10).round().clamp(1, 100)
-                          : 1,
-                      onChanged: (val) =>
-                          setSheetState(() => margin = val),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('৳10',
-                          style: GoogleFonts.outfit(
-                              fontSize: 10.sp,
-                              color: AppColors.textMuted(context))),
-                      Text('৳${maxMargin.toStringAsFixed(0)} (max)',
-                          style: GoogleFonts.outfit(
-                              fontSize: 10.sp,
-                              color: AppColors.textMuted(context))),
-                    ],
-                  ),
-                  SizedBox(height: 20.h),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _IOSButton(
-                          label: 'Cancel',
-                          onTap: () => Navigator.pop(context),
-                          outlined: true,
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        flex: 2,
-                        child: _IOSButton(
-                          label: 'Share Link',
-                          icon: Icons.share_rounded,
-                          onTap: () {
-                            setState(() {
-                              product.isReselling = true;
-                              product.myMargin = margin;
-                            });
-                            Navigator.pop(context);
-                            _showShareLink(context, product);
-                          },
-                          primary: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // ==================== SHARE LINK DIALOG ====================
-  void _showShareLink(BuildContext context, ProductModel product) {
-    final fakeLink =
-        'https://resellerapp.com/p/${product.id}?ref=MY_REF&price=${product.myPrice.toInt()}';
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.black54,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.symmetric(horizontal: 18.w),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.card(context),
-            borderRadius: BorderRadius.circular(22.r),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow(context),
-                blurRadius: 36,
-                offset: const Offset(0, 14),
-              ),
-            ],
-          ),
-          padding: EdgeInsets.all(20.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 58.w,
-                height: 58.w,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.success(context),
-                      AppColors.success(context).withOpacity(0.7),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.success(context).withOpacity(0.3),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child:
-                    Icon(Icons.check_rounded, color: Colors.white, size: 28.sp),
-              )
-                  .animate()
-                  .scale(
-                      delay: 80.ms,
-                      duration: 450.ms,
-                      curve: Curves.elasticOut),
-              SizedBox(height: 12.h),
-              Text(
-                'Link Ready!',
-                style: GoogleFonts.outfit(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary(context),
-                  letterSpacing: -0.3,
-                ),
-              ).animate().fadeIn(delay: 180.ms),
-              SizedBox(height: 3.h),
-              Text(
-                'Your resell link has been created',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
-                  fontSize: 12.sp,
-                  color: AppColors.textSecondary(context),
-                ),
-              ).animate().fadeIn(delay: 240.ms),
-              SizedBox(height: 16.h),
-
-              // Link Box
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: fakeLink));
-                  HapticFeedback.mediumImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          Icon(Icons.check_circle_rounded,
-                              color: Colors.white, size: 14.sp),
-                          SizedBox(width: 6.w),
-                          Text('Link copied!',
-                              style: GoogleFonts.outfit(fontSize: 12.sp)),
-                        ],
-                      ),
-                      backgroundColor: AppColors.success(context),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r)),
-                      margin: EdgeInsets.all(14.w),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.bg(context),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: AppColors.border(context)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          fakeLink,
-                          style: GoogleFonts.outfit(
-                            fontSize: 9.5.sp,
-                            color: AppColors.textMuted(context),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Container(
-                        padding: EdgeInsets.all(7.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary(context).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Icon(Icons.copy_rounded,
-                            size: 14.sp,
-                            color: AppColors.primary(context)),
-                      ),
-                    ],
-                  ),
-                ),
-              ).animate().fadeIn(delay: 300.ms),
-              SizedBox(height: 16.h),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _ShareIcon(
-                    icon: Icons.facebook_rounded,
-                    label: 'Facebook',
-                    color: const Color(0xFF1877F2),
-                  ),
-                  SizedBox(width: 14.w),
-                  _ShareIcon(
-                    icon: Icons.chat_bubble_rounded,
-                    label: 'WhatsApp',
-                    color: const Color(0xFF25D366),
-                  ),
-                  SizedBox(width: 14.w),
-                  _ShareIcon(
-                    icon: Icons.send_rounded,
-                    label: 'Telegram',
-                    color: const Color(0xFF0088CC),
-                  ),
-                  SizedBox(width: 14.w),
-                  _ShareIcon(
-                    icon: Icons.link_rounded,
-                    label: 'Copy',
-                    color: AppColors.primary(context),
-                  ),
-                ],
-              ).animate().fadeIn(delay: 380.ms),
-              SizedBox(height: 18.h),
-
-              SizedBox(
-                width: double.infinity,
-                child: _IOSButton(
-                  label: 'Done',
-                  onTap: () => Navigator.pop(context),
-                  primary: true,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   // ==================== BUILD ====================
   @override
   Widget build(BuildContext context) {
@@ -734,8 +245,6 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           bottom: false,
           child: NestedScrollView(
             headerSliverBuilder: (_, __) => [
-              SliverToBoxAdapter(child: _buildHeader()),
-              SliverToBoxAdapter(child: _buildEarningsSummary()),
               SliverToBoxAdapter(child: _buildSearchBar()),
               SliverToBoxAdapter(child: _buildCategoryFilter()),
               SliverToBoxAdapter(child: _buildTabBar()),
@@ -766,93 +275,6 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
             : null,
       ),
     );
-  }
-
-  // ==================== HEADER (no notification icon) ====================
-  Widget _buildHeader() {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(18.w, 12.h, 18.w, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Reseller Market',
-            style: GoogleFonts.outfit(
-              fontSize: 22.sp,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary(context),
-              letterSpacing: -0.5,
-              height: 1.1,
-            ),
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            'Pick products, set margin, earn profit',
-            style: GoogleFonts.outfit(
-              fontSize: 11.sp,
-              color: AppColors.textMuted(context),
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.08, curve: Curves.easeOut);
-  }
-
-  // ==================== EARNINGS SUMMARY ====================
-  Widget _buildEarningsSummary() {
-    return Container(
-      margin: EdgeInsets.fromLTRB(18.w, 12.h, 18.w, 0),
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary(context),
-            AppColors.accent(context),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary(context).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: -2,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatItem(
-              label: 'Balance',
-              value: '৳${_walletBalance.toStringAsFixed(0)}',
-              icon: Icons.account_balance_wallet_rounded,
-            ),
-          ),
-          Container(width: 1, height: 32.h, color: Colors.white24),
-          Expanded(
-            child: _StatItem(
-              label: "Today's Profit",
-              value: '৳${_todayEarning.toStringAsFixed(0)}',
-              icon: Icons.trending_up_rounded,
-            ),
-          ),
-          Container(width: 1, height: 32.h, color: Colors.white24),
-          Expanded(
-            child: _StatItem(
-              label: 'Total Orders',
-              value: '$_totalOrders',
-              icon: Icons.shopping_bag_rounded,
-            ),
-          ),
-        ],
-      ),
-    )
-        .animate()
-        .fadeIn(delay: 100.ms, duration: 500.ms)
-        .scale(begin: const Offset(0.96, 0.96), curve: Curves.easeOut);
   }
 
   // ==================== SEARCH BAR ====================
@@ -1069,7 +491,6 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
       itemCount: products.length,
       itemBuilder: (_, i) => _ProductCard(
         product: products[i],
-        onSetMargin: () => _showMarginSheet(context, products[i]),
       )
           .animate()
           .fadeIn(delay: (i * 50).ms, duration: 300.ms)
@@ -1150,8 +571,6 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
       itemCount: _myResells.length,
       itemBuilder: (_, i) => _ActiveResellCard(
         product: _myResells[i],
-        onShare: () => _showShareLink(context, _myResells[i]),
-        onEdit: () => _showMarginSheet(context, _myResells[i]),
         onStop: () => setState(() => _myResells[i].isReselling = false),
       )
           .animate()
@@ -1182,105 +601,11 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   }
 }
 
-// ==================== IOS BUTTON ====================
-class _IOSButton extends StatefulWidget {
-  final String label;
-  final IconData? icon;
-  final VoidCallback onTap;
-  final bool primary;
-  final bool outlined;
-
-  const _IOSButton({
-    required this.label,
-    required this.onTap,
-    this.icon,
-    this.primary = false,
-    this.outlined = false,
-  });
-
-  @override
-  State<_IOSButton> createState() => _IOSButtonState();
-}
-
-class _IOSButtonState extends State<_IOSButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        HapticFeedback.mediumImpact();
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 110),
-        child: AnimatedOpacity(
-          opacity: _pressed ? 0.85 : 1.0,
-          duration: const Duration(milliseconds: 110),
-          child: Container(
-            padding: EdgeInsets.symmetric(vertical: 13.h),
-            decoration: BoxDecoration(
-              color: widget.outlined
-                  ? Colors.transparent
-                  : widget.primary
-                      ? AppColors.primary(context)
-                      : AppColors.card(context),
-              borderRadius: BorderRadius.circular(12.r),
-              border: widget.outlined
-                  ? Border.all(color: AppColors.border(context), width: 1.5)
-                  : null,
-              boxShadow: widget.primary
-                  ? [
-                      BoxShadow(
-                        color: AppColors.primary(context).withOpacity(0.25),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (widget.icon != null) ...[
-                  Icon(
-                    widget.icon,
-                    size: 14.sp,
-                    color: widget.outlined
-                        ? AppColors.textSecondary(context)
-                        : Colors.white,
-                  ),
-                  SizedBox(width: 5.w),
-                ],
-                Text(
-                  widget.label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: widget.outlined
-                        ? AppColors.textSecondary(context)
-                        : Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ==================== PRODUCT CARD ====================
 class _ProductCard extends StatefulWidget {
   final ProductModel product;
-  final VoidCallback onSetMargin;
 
-  const _ProductCard({required this.product, required this.onSetMargin});
+  const _ProductCard({required this.product});
 
   @override
   State<_ProductCard> createState() => _ProductCardState();
@@ -1296,7 +621,6 @@ class _ProductCardState extends State<_ProductCard> {
       onTapUp: (_) {
         setState(() => _pressed = false);
         HapticFeedback.lightImpact();
-        widget.onSetMargin();
       },
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
@@ -1492,16 +816,11 @@ class _ProductCardState extends State<_ProductCard> {
                         width: double.infinity,
                         padding: EdgeInsets.symmetric(vertical: 8.h),
                         decoration: BoxDecoration(
-                          color: widget.product.isReselling
-                              ? AppColors.success(context)
-                              : AppColors.primary(context),
+                          color: AppColors.primary(context),
                           borderRadius: BorderRadius.circular(10.r),
                           boxShadow: [
                             BoxShadow(
-                              color: (widget.product.isReselling
-                                      ? AppColors.success(context)
-                                      : AppColors.primary(context))
-                                  .withOpacity(0.25),
+                              color: AppColors.primary(context).withOpacity(0.25),
                               blurRadius: 7,
                               offset: const Offset(0, 3),
                             ),
@@ -1511,15 +830,13 @@ class _ProductCardState extends State<_ProductCard> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              widget.product.isReselling
-                                  ? Icons.share_rounded
-                                  : Icons.add_rounded,
+                              Icons.add_rounded,
                               color: Colors.white,
                               size: 12.sp,
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              widget.product.isReselling ? 'Share' : 'Resell',
+                              'Resell',
                               style: GoogleFonts.outfit(
                                 fontSize: 10.5.sp,
                                 color: Colors.white,
@@ -1544,14 +861,10 @@ class _ProductCardState extends State<_ProductCard> {
 // ==================== ACTIVE RESELL CARD ====================
 class _ActiveResellCard extends StatelessWidget {
   final ProductModel product;
-  final VoidCallback onShare;
-  final VoidCallback onEdit;
   final VoidCallback onStop;
 
   const _ActiveResellCard({
     required this.product,
-    required this.onShare,
-    required this.onEdit,
     required this.onStop,
   });
 
@@ -1654,20 +967,6 @@ class _ActiveResellCard extends StatelessWidget {
                 Row(
                   children: [
                     _MiniButton(
-                      icon: Icons.share_rounded,
-                      label: 'Share',
-                      color: AppColors.primary(context),
-                      onTap: onShare,
-                    ),
-                    SizedBox(width: 5.w),
-                    _MiniButton(
-                      icon: Icons.edit_rounded,
-                      label: 'Edit',
-                      color: AppColors.warning(context),
-                      onTap: onEdit,
-                    ),
-                    SizedBox(width: 5.w),
-                    _MiniButton(
                       icon: Icons.stop_circle_outlined,
                       label: 'Stop',
                       color: AppColors.danger(context),
@@ -1685,147 +984,6 @@ class _ActiveResellCard extends StatelessWidget {
 }
 
 // ==================== HELPER WIDGETS ====================
-
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: EdgeInsets.all(7.w),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.18),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: Colors.white, size: 14.sp),
-        ),
-        SizedBox(height: 5.h),
-        Text(
-          value,
-          style: GoogleFonts.outfit(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-        Text(
-          label,
-          style: GoogleFonts.outfit(
-            fontSize: 8.5.sp,
-            color: Colors.white.withOpacity(0.72),
-            height: 1.2,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
-class _PriceInfoBox extends StatelessWidget {
-  final String label;
-  final double amount;
-  final Color bgColor;
-  final Color textColor;
-  final bool highlight;
-
-  const _PriceInfoBox({
-    required this.label,
-    required this.amount,
-    required this.bgColor,
-    required this.textColor,
-    this.highlight = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(11.r),
-          border: highlight
-              ? Border.all(color: textColor.withOpacity(0.35), width: 1.5)
-              : null,
-        ),
-        child: Column(
-          children: [
-            Text(
-              '৳${amount.toInt()}',
-              style: GoogleFonts.outfit(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-                color: textColor,
-              ),
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                fontSize: 8.5.sp,
-                color: textColor.withOpacity(0.75),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ShareIcon extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _ShareIcon({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => HapticFeedback.lightImpact(),
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(11.w),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-              border: Border.all(color: color.withOpacity(0.18)),
-            ),
-            child: Icon(icon, color: color, size: 18.sp),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              fontSize: 9.sp,
-              color: AppColors.textSecondary(context),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _MiniButton extends StatefulWidget {
   final IconData icon;
