@@ -8,7 +8,14 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-import '../../main.dart';
+// আপনার প্রজেক্টের পাথ অনুযায়ী নিচের ইম্পোর্টগুলো ঠিক করে নেবেন
+import 'edit_profile/edit_profile_screen.dart';
+import '../../main.dart'; // themeModeProvider এবং authProvider এর জন্য
+
+// ==========================================
+// 1. Profile Data Model & API Provider
+// ==========================================
+// এটি একই ফাইলে রাখার ফলে "Not Defined" এরর আসবে না
 
 class UserProfile {
   final String fullName;
@@ -59,6 +66,10 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   return null;
 });
 
+// ==========================================
+// 2. ProfileScreen Widget
+// ==========================================
+
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -66,11 +77,13 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Theme Dynamic Colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF121212) : Colors.white;
     final headerColor = isDark ? const Color(0xFF1E1E1E) : skyBlue;
     final avatarBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
 
+    // API থেকে প্রোফাইল ডাটা রিড করা হচ্ছে
     final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
@@ -78,6 +91,7 @@ class ProfileScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
+            // Header with Real Profile Info
             Container(
               width: double.infinity,
               padding: EdgeInsets.only(
@@ -102,44 +116,54 @@ class ProfileScreen extends ConsumerWidget {
 
             SizedBox(height: 10.h),
 
+            // Menu Items
             Expanded(
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 10.w),
                 physics: const BouncingScrollPhysics(),
                 children: [
+                  // 0. Theme Selector Card
                   _buildThemeSelectorCard(context, ref, isDark),
 
                   SizedBox(height: 10.h),
 
-                  // ✅ Edit Profile — GoRouter + isDetailViewProvider
+                  // 1. Edit Profile
                   _buildProfileItem(
                     context,
                     Icons.edit_outlined,
                     "Edit Profile",
                     isDark: isDark,
-                    onTap: () {
-                      ref.read(isDetailViewProvider.notifier).state = true;
-                      ref.read(detailViewTitleProvider.notifier).state = 'Edit Profile';
-                      context.push('/edit-profile');
-                    },
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EditProfileScreen(),
+                      ),
+                    ),
                   ),
 
+                  // 2. My Wallet
                   _buildProfileItem(
                     context,
                     Icons.account_balance_wallet_rounded,
                     "My Wallet",
                     isDark: isDark,
-                    onTap: () {},
+                    onTap: () {
+                      // context.go('/wallet');
+                    },
                   ),
 
+                  // 3. History
                   _buildProfileItem(
                     context,
                     Icons.history_rounded,
                     "History",
                     isDark: isDark,
-                    onTap: () {},
+                    onTap: () {
+                      // context.go('/history');
+                    },
                   ),
 
+                  // 4. Language
                   _buildProfileItem(
                     context,
                     Icons.language_rounded,
@@ -156,6 +180,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
 
+                  // 5. Logout
                   _buildProfileItem(
                     context,
                     Icons.logout_rounded,
@@ -166,6 +191,7 @@ class ProfileScreen extends ConsumerWidget {
                     onTap: () => _showLogoutDialog(context, ref, isDark),
                   ),
 
+                  // 6. Delete Account
                   _buildProfileItem(
                     context,
                     Icons.delete_forever_rounded,
@@ -183,6 +209,10 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+
+  // ==========================================
+  // Header Helpers
+  // ==========================================
 
   Widget _buildProfileHeader(BuildContext context, UserProfile? user, Color avatarBg, bool isDark) {
     final String name = user?.fullName ?? "No Name";
@@ -264,9 +294,13 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  // ==========================================
+  // Menu & Utility Helpers
+  // ==========================================
+
   Widget _buildThemeSelectorCard(BuildContext context, WidgetRef ref, bool isDark) {
     final themeMode = ref.watch(themeModeProvider);
-    const primaryColor = skyBlue;
+    final primaryColor = isDark ? skyBlue : skyBlue;
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 6.w),
@@ -279,7 +313,7 @@ class ProfileScreen extends ConsumerWidget {
       child: Column(
         children: [
           ListTile(
-            leading: const Icon(Icons.palette, color: primaryColor),
+            leading: Icon(Icons.palette, color: primaryColor),
             title: Text('Theme Mode', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
           ),
           _buildThemeTile(ref, Icons.light_mode, 'Light Mode', ThemeMode.light, themeMode, isDark, primaryColor),
@@ -305,10 +339,7 @@ class ProfileScreen extends ConsumerWidget {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        side: isDark ? const BorderSide(color: Color(0xFF333333)) : BorderSide.none,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r), side: isDark ? const BorderSide(color: Color(0xFF333333)) : BorderSide.none),
       child: ListTile(
         leading: Icon(icon, color: iconColor ?? skyBlue, size: 22.sp),
         title: Text(title, style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w500, color: textColor ?? (isDark ? Colors.white : Colors.black87))),
@@ -322,69 +353,52 @@ class ProfileScreen extends ConsumerWidget {
     return Container(
       color: isDark ? const Color(0xFF2C2C2C) : skyBlue.withOpacity(0.1),
       child: Center(
-        child: Text(
-          name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: GoogleFonts.poppins(color: skyBlue, fontSize: 32.sp, fontWeight: FontWeight.bold),
-        ),
+        child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: GoogleFonts.poppins(color: skyBlue, fontSize: 32.sp, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
   void _copyAffiliateId(BuildContext context, String id) {
     Clipboard.setData(ClipboardData(text: id));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('ID কপি হয়েছে!'), behavior: SnackBarBehavior.floating),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ID কপি করা হয়েছে!'), behavior: SnackBarBehavior.floating));
   }
 
   void _showLanguageDialog(BuildContext context, bool isDark) {
-    showDialog(
-      context: context,
-      builder: (c) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        title: Text('Select Language', style: GoogleFonts.poppins(color: isDark ? Colors.white : Colors.black)),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(title: Text('English', style: TextStyle(color: isDark ? Colors.white : Colors.black)), onTap: () => Navigator.pop(c)),
-          ListTile(title: Text('বাংলা', style: TextStyle(color: isDark ? Colors.white : Colors.black)), onTap: () => Navigator.pop(c)),
-        ]),
-      ),
-    );
+    showDialog(context: context, builder: (c) => AlertDialog(
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      title: Text('Select Language', style: GoogleFonts.poppins(color: isDark ? Colors.white : Colors.black)),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        ListTile(title: Text('English', style: TextStyle(color: isDark ? Colors.white : Colors.black)), onTap: () => Navigator.pop(c)),
+        ListTile(title: Text('বাংলা', style: TextStyle(color: isDark ? Colors.white : Colors.black)), onTap: () => Navigator.pop(c)),
+      ]),
+    ));
   }
 
   void _showLogoutDialog(BuildContext context, WidgetRef ref, bool isDark) {
-    showDialog(
-      context: context,
-      builder: (c) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        title: Text('Logout', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-        content: Text('Are you sure?', style: TextStyle(color: isDark ? Colors.white70 : Colors.black)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(c);
-              await ref.read(authProvider.notifier).logout();
-              if (context.mounted) context.go('/login');
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.orange)),
-          ),
-        ],
-      ),
-    );
+    showDialog(context: context, builder: (c) => AlertDialog(
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      title: Text('Logout', style: TextStyle(color: isDark ? Colors.white : Colors.black)),
+      content: Text('Are you sure?', style: TextStyle(color: isDark ? Colors.white70 : Colors.black)),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+        TextButton(onPressed: () async {
+          Navigator.pop(c);
+          await ref.read(authProvider.notifier).logout();
+          if (context.mounted) context.go('/login');
+        }, child: const Text('Logout', style: TextStyle(color: Colors.orange))),
+      ],
+    ));
   }
 
   void _showDeleteAccountDialog(BuildContext context, bool isDark) {
-    showDialog(
-      context: context,
-      builder: (c) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
-        content: const Text('This cannot be undone. Are you sure?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-        ],
-      ),
-    );
+    showDialog(context: context, builder: (c) => AlertDialog(
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
+      content: const Text('This cannot be undone. Are you sure?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+      ],
+    ));
   }
 }
