@@ -19,7 +19,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '1',
       title: '3 Piece Exclusive',
-      subtitle: '?Exclusive Premium Collection',
+      subtitle: '✨ Exclusive Premium Collection',
       image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
       wholesalePrice: 1270,
       originalPrice: 1590,
@@ -30,7 +30,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '2',
       title: 'Smart Watch S2000',
-      subtitle: '??Latest Series',
+      subtitle: '🔥 Latest Series',
       image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400',
       wholesalePrice: 950,
       originalPrice: 1300,
@@ -41,7 +41,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '3',
       title: 'Walar Mr Thin 6500',
-      subtitle: '??Premium Quality',
+      subtitle: '💎 Premium Quality',
       image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400',
       wholesalePrice: 570,
       originalPrice: 980,
@@ -52,7 +52,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '4',
       title: 'Mini Portable Fan',
-      subtitle: '??Summer Essential',
+      subtitle: '☀️ Summer Essential',
       image: 'https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=400',
       wholesalePrice: 450,
       originalPrice: 720,
@@ -63,7 +63,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '5',
       title: 'Leather Card Holder',
-      subtitle: '?Stylish & Compact',
+      subtitle: '✨ Stylish & Compact',
       image: 'https://images.unsplash.com/photo-1624114545437-f1b17c603a3a?w=400',
       wholesalePrice: 380,
       originalPrice: 650,
@@ -74,7 +74,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '6',
       title: 'Premium Wrist Watch',
-      subtitle: '??Classic Design',
+      subtitle: '⌚ Classic Design',
       image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400',
       wholesalePrice: 1100,
       originalPrice: 1600,
@@ -402,7 +402,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                     color: const Color(0xFF29B6F6).withOpacity(0.1),
                     child: Center(
                       child: Text(
-                        '???? ?????',
+                        'Banner Load Error',
                         style: GoogleFonts.poppins(
                           fontSize: 22.sp,
                           fontWeight: FontWeight.bold,
@@ -450,7 +450,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    '???? ?????',
+                    'Mega Sale',
                     style: GoogleFonts.poppins(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.bold,
@@ -472,10 +472,10 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   // ==================== QUICK ACTIONS ====================
   Widget _buildQuickActions(double hPadding, bool isSmall, bool isDesktop, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark) {
     final actions = [
-      _QuickActionData(icon: CupertinoIcons.doc_text, label: '??????', color: const Color(0xFF6366F1)),
-      _QuickActionData(icon: CupertinoIcons.person_2, label: '?????? ?????', color: const Color(0xFF0284C7)),
-      _QuickActionData(icon: CupertinoIcons.square_grid_2x2, label: '?????????', color: const Color(0xFFEA580C)),
-      _QuickActionData(icon: CupertinoIcons.heart, label: '????? ???\n?????????', color: const Color(0xFF29B6F6)),
+      _QuickActionData(icon: CupertinoIcons.doc_text, label: 'Orders', color: const Color(0xFF6366F1)),
+      _QuickActionData(icon: CupertinoIcons.person_2, label: 'My Customers', color: const Color(0xFF0284C7)),
+      _QuickActionData(icon: CupertinoIcons.square_grid_2x2, label: 'Categories', color: const Color(0xFFEA580C)),
+      _QuickActionData(icon: CupertinoIcons.heart, label: 'My\nWishlist', color: const Color(0xFF29B6F6)),
     ];
 
     return Padding(
@@ -1063,7 +1063,7 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '৳${widget.product.wholesalePrice.toInt()}',
+                            '\$${widget.product.wholesalePrice.toInt()}',
                             style: GoogleFonts.poppins(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.bold,
@@ -1073,7 +1073,7 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                           SizedBox(width: 5.w),
                           if (widget.product.originalPrice != null)
                             Text(
-                              '৳${widget.product.originalPrice!.toInt()}',
+                              '\$${widget.product.originalPrice!.toInt()}',
                               style: GoogleFonts.poppins(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w500,
@@ -1210,7 +1210,7 @@ class _ActiveResellCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '৳${product.myPrice.toInt()}',
+                      '\$${product.myPrice.toInt()}',
                       style: GoogleFonts.poppins(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.bold,
@@ -1227,7 +1227,7 @@ class _ActiveResellCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    'Profit ৳${product.myMargin.toInt()}',
+                    'Profit \$${product.myMargin.toInt()}',
                     style: GoogleFonts.poppins(
                       fontSize: 9.5.sp,
                       color: const Color(0xFF34C759),
@@ -1412,7 +1412,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             SizedBox(height: 14.h),
             _buildTextField(
               label: 'Subtitle (with emoji)',
-              hint: 'e.g. ?Premium Quality',
+              hint: 'e.g. ✨ Premium Quality',
               controller: _subtitleController,
               icon: CupertinoIcons.textformat,
               kTextDark: kTextDark,
