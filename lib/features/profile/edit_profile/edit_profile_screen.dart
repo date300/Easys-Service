@@ -342,8 +342,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _lastNameChange = DateTime.now();
           _checkNameChangeEligibility();
         });
-        // Refresh global profile provider
-        ref.invalidate(userProfileProvider);
+        // Refresh global profile provider (optional — uncomment if userProfileProvider exists in your main.dart)
+        // ref.invalidate(userProfileProvider);
       } else {
         _showSnack(data['message'] ?? "Failed to update profile", Colors.red);
       }
