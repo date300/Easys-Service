@@ -64,6 +64,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
+    // Set detail view mode so MainWrapper/AppTopBar shows back button + title
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(isDetailViewProvider.notifier).state = true;
+        ref.read(detailViewTitleProvider.notifier).state = 'Edit Profile';
+      }
+    });
     _fetchProfile();
   }
 
@@ -437,53 +444,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // ===== DETAILS PAGE HEADER =====
-  Widget _buildHeader(BuildContext context, bool isDark, Color textColor, Color cardColor, Color borderColor) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              ref.read(isDetailViewProvider.notifier).state = false;
-              Navigator.of(context).pop();
-            },
-            child: Container(
-              padding: EdgeInsets.all(8.w),
-              decoration: BoxDecoration(
-                color: cardColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: borderColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.arrow_back_rounded,
-                color: textColor,
-                size: 20.sp,
-              ),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Text(
-            'Edit Profile',
-            style: GoogleFonts.poppins(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  @override
   Widget build(BuildContext context) {
     final isDesktop = _isDesktop(context);
     final isTablet = _isTablet(context);
@@ -513,11 +474,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 : CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
-                      // ===== DETAILS PAGE HEADER =====
-                      SliverToBoxAdapter(
-                        child: _buildHeader(context, isDark, textColor, cardColor, borderColor),
-                      ),
-
                       // ===== PROFILE FORM =====
                       SliverToBoxAdapter(
                         child: Padding(
@@ -959,6 +915,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _emailController.dispose();
     _referralCodeController.dispose();
     _referredByController.dispose();
+    // Reset detail view mode so MainWrapper/AppTopBar returns to normal
+    ref.read(isDetailViewProvider.notifier).state = false;
+    ref.read(detailViewTitleProvider.notifier).state = '';
     super.dispose();
   }
 }
