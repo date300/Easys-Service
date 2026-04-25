@@ -10,7 +10,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../main.dart';
+import '../../../main.dart';
 
 // ==========================================
 // Edit Profile Screen — Full Details Page
