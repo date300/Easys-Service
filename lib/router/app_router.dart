@@ -10,7 +10,7 @@ import '../features/reselling/reselling_screen.dart';
 import '../features/microjobs/microjobs_screen.dart';
 import '../features/campaigns/campaigns_screen.dart';
 import '../features/profile/profile_screen.dart';
-import '../features/profile/edit_profile/edit_profile_screen.dart'; // â­ à¦¨à¦¤à§à¦¨ à¦à¦®à¦ªà§à¦°à§à¦
+import '../features/profile/edit_profile/edit_profile_screen.dart';
 import '../features/auth/registration_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
@@ -87,7 +87,6 @@ final GoRouter appRouter = GoRouter(
           path: '/recharge',
           builder: (context, state) => const RechargeScreen(),
         ),
-        // â­ à¦¨à¦¤à§à¦¨ à¦°à§à¦ â Edit Profile (Detail à¦ªà§à¦ à¦¹à¦¿à¦¸à§à¦¬à§)
         _detailRoute(
           path: '/edit_profile',
           builder: (context, state) => const EditProfileScreen(),
@@ -125,4 +124,8 @@ final GoRouter appRouter = GoRouter(
     if (isSplash) return null;
     if (!isLoggedIn && isNotification) return '/login';
     if (!isLoggedIn && !isRegister && !isLogin && !isNotification) return '/login';
-    if (isLoggedIn && (isLogi
+    if (isLoggedIn && (isLogin || isRegister)) return '/home';
+
+    return null;
+  },
+);
