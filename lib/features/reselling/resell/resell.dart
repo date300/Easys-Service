@@ -4,11 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
-// NOTE: Update this import to point to your main file containing ProductModel
-// import 'path_to_your_main_file.dart' show ProductModel;
-
-// ==================== RESELL BOTTOM SHEET ====================
+import '../models/product_model.dart';
 
 class ResellBottomSheet extends StatefulWidget {
   final ProductModel product;
@@ -95,7 +91,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                         ),
                       ),
                       Text(
-                        'Wholesale: ৳${widget.product.wholesalePrice.toInt()}',
+                        'Wholesale: \u09F3${widget.product.wholesalePrice.toInt()}',
                         style: GoogleFonts.poppins(
                           fontSize: 12.sp,
                           color: kTextMid,
@@ -125,8 +121,8 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('৳0', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
-                Text('৳${maxMargin.toInt()}', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
+                Text('\u09F30', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
+                Text('\u09F3${maxMargin.toInt()}', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
               ],
             ),
           ),
@@ -160,7 +156,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          '৳${_margin.toInt()}',
+                          '\u09F3${_margin.toInt()}',
                           style: GoogleFonts.poppins(
                             fontSize: 20.sp,
                             fontWeight: FontWeight.bold,
@@ -188,7 +184,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          '৳${sellPrice.toInt()}',
+                          '\u09F3${sellPrice.toInt()}',
                           style: GoogleFonts.poppins(
                             fontSize: 20.sp,
                             fontWeight: FontWeight.bold,
