@@ -17,7 +17,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '1',
       title: '3 Piece Exclusive',
-      subtitle: 'â¨Exclusive Premium Collection',
+      subtitle: '✨Exclusive Premium Collection',
       image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
       wholesalePrice: 1270,
       originalPrice: 1590,
@@ -28,7 +28,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '2',
       title: 'Smart Watch S2000',
-      subtitle: 'âLatest Series',
+      subtitle: '⌚Latest Series',
       image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400',
       wholesalePrice: 950,
       originalPrice: 1300,
@@ -39,7 +39,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '3',
       title: 'Walar Mr Thin 6500',
-      subtitle: 'ðPremium Quality',
+      subtitle: '👗Premium Quality',
       image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400',
       wholesalePrice: 570,
       originalPrice: 980,
@@ -50,7 +50,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '4',
       title: 'Mini Portable Fan',
-      subtitle: 'ðSummer Essential',
+      subtitle: '🌀Summer Essential',
       image: 'https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=400',
       wholesalePrice: 450,
       originalPrice: 720,
@@ -61,7 +61,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '5',
       title: 'Leather Card Holder',
-      subtitle: 'ð¼Stylish & Compact',
+      subtitle: '💼Stylish & Compact',
       image: 'https://images.unsplash.com/photo-1624114545437-f1b17c603a3a?w=400',
       wholesalePrice: 380,
       originalPrice: 650,
@@ -72,7 +72,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     ProductModel(
       id: '6',
       title: 'Premium Wrist Watch',
-      subtitle: 'âClassic Design',
+      subtitle: '⌚Classic Design',
       image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400',
       wholesalePrice: 1100,
       originalPrice: 1600,
@@ -1702,7 +1702,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             SizedBox(height: 14.h),
             _buildTextField(
               label: 'Subtitle (with emoji)',
-              hint: 'e.g. â¨Premium Quality',
+              hint: 'e.g. ✨Premium Quality',
               controller: _subtitleController,
               icon: CupertinoIcons.textformat,
               kTextDark: kTextDark,
@@ -2510,7 +2510,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Resell à¦à¦°à§ à¦à¦¯à¦¼ à¦à¦°à§à¦¨!',
+                  'Resell করে আয় করুন!',
                   style: GoogleFonts.poppins(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.bold,
@@ -2518,7 +2518,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   ),
                 ),
                 Text(
-                  'à¦¸à¦°à§à¦¬à§à¦à§à¦ \u09F3${maxProfit.toInt()} à¦ªà¦°à§à¦¯à¦¨à§à¦¤ à¦²à¦¾à¦­ à¦à¦°à¦¤à§ à¦ªà¦¾à¦°à¦¬à§à¦¨',
+                  'সর্বোচ্চ \u09F3${maxProfit.toInt()} পর্যন্ত লাভ করতে পারবেন',
                   style: GoogleFonts.poppins(
                     fontSize: 11.sp,
                     color: Colors.white.withOpacity(0.85),
@@ -2535,10 +2535,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
   Widget _buildDeliveryInfo(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor) {
     final items = [
-      _InfoRow(icon: CupertinoIcons.location, color: const Color(0xFF34C759), title: 'à¦¡à§à¦²à¦¿à¦­à¦¾à¦°à¦¿', value: 'à¦¢à¦¾à¦à¦¾à¦¯à¦¼ à§¨-à§© à¦¦à¦¿à¦¨ â¢ à¦¸à¦¾à¦°à¦¾à¦¦à§à¦¶à§ à§ª-à§­ à¦¦à¦¿à¦¨'),
-      _InfoRow(icon: CupertinoIcons.return_icon, color: const Color(0xFF29B6F6), title: 'à¦°à¦¿à¦à¦¾à¦°à§à¦¨', value: 'à§­ à¦¦à¦¿à¦¨à§à¦° à¦®à¦§à§à¦¯à§ à¦«à§à¦°à¦¤ à¦¦à§à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¬à§'),
-      _InfoRow(icon: CupertinoIcons.shield_fill, color: const Color(0xFF6366F1), title: 'à¦à¦¯à¦¼à¦¾à¦°à§à¦¨à§à¦à¦¿', value: 'à§¬ à¦®à¦¾à¦¸à§à¦° à¦à¦¯à¦¼à¦¾à¦°à§à¦¨à§à¦à¦¿'),
-      _InfoRow(icon: CupertinoIcons.checkmark_seal, color: const Color(0xFFFF6600), title: 'à¦à¦¥à§à¦¨à¦à¦¿à¦', value: 'à§§à§¦à§¦% à¦à¦°à¦¿à¦à¦¿à¦¨à¦¾à¦² à¦ªà§à¦°à§à¦¡à¦¾à¦à§à¦ à¦à§à¦¯à¦¾à¦°à¦¾à¦¨à§à¦à¦¿'),
+      _InfoRow(icon: CupertinoIcons.location, color: const Color(0xFF34C759), title: 'ডেলিভারি', value: 'ঢাকায় ২-৩ দিন • সারাদেশে ৪-৭ দিন'),
+      _InfoRow(icon: CupertinoIcons.return_icon, color: const Color(0xFF29B6F6), title: 'রিটার্ন', value: '৭ দিনের মধ্যে ফেরত দেওয়া যাবে'),
+      _InfoRow(icon: CupertinoIcons.shield_fill, color: const Color(0xFF6366F1), title: 'ওয়ারেন্টি', value: '৬ মাসের ওয়ারেন্টি'),
+      _InfoRow(icon: CupertinoIcons.checkmark_seal, color: const Color(0xFFFF6600), title: 'অথেনটিক', value: '১০০% অরিজিনাল প্রোডাক্ট গ্যারান্টি'),
     ];
 
     return Container(
@@ -2548,7 +2548,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'à¦¡à§à¦²à¦¿à¦­à¦¾à¦°à¦¿ à¦ à¦°à¦¿à¦à¦¾à¦°à§à¦¨',
+            'ডেলিভারি ও রিটার্ন',
             style: GoogleFonts.poppins(
               fontSize: 14.sp,
               fontWeight: FontWeight.bold,
@@ -2618,11 +2618,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
   Widget _buildHighlights(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor) {
     final highlights = [
-      'â à¦à¦à§à¦à¦®à¦¾à¦¨à§à¦° à¦®à§à¦à§à¦°à¦¿à¦¯à¦¼à¦¾à¦² à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦° à¦à¦°à¦¾ à¦¹à¦¯à¦¼à§à¦à§',
-      'â à¦¦à§à¦°à§à¦à¦¸à§à¦¥à¦¾à¦¯à¦¼à§ à¦à¦¬à¦ à¦à§à¦à¦¸à¦',
-      'â à¦¹à¦¾à¦²à¦à¦¾ à¦à¦à¦¨à§à¦° à¦¡à¦¿à¦à¦¾à¦à¦¨',
-      'â à¦¸à¦¹à¦à§ à¦ªà¦°à¦¿à¦·à§à¦à¦¾à¦° à¦à¦°à¦¾ à¦¯à¦¾à¦¯à¦¼',
-      'â à¦¬à¦¿à¦­à¦¿à¦¨à§à¦¨ à¦¸à¦¾à¦à¦à§ à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼',
+      '✅ উচ্চমানের মেটেরিয়াল ব্যবহার করা হয়েছে',
+      '✅ দীর্ঘস্থায়ী এবং টেকসই',
+      '✅ হালকা ওজনের ডিজাইন',
+      '✅ সহজে পরিষ্কার করা যায়',
+      '✅ বিভিন্ন সাইজে পাওয়া যায়',
     ];
 
     return Container(
@@ -2636,7 +2636,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               Icon(CupertinoIcons.star_circle_fill, color: const Color(0xFFFF6600), size: 18.sp),
               SizedBox(width: 8.w),
               Text(
-                'à¦ªà§à¦°à§à¦¡à¦¾à¦à§à¦ à¦¹à¦¾à¦à¦²à¦¾à¦à¦à¦¸',
+                'প্রোডাক্ট হাইলাইটস',
                 style: GoogleFonts.poppins(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.bold,
@@ -2664,10 +2664,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
   Widget _buildDescription(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor) {
     const fullDesc =
-        'à¦à¦ à¦ªà§à¦°à§à¦¡à¦¾à¦à§à¦à¦à¦¿ à¦¸à¦°à§à¦¬à§à¦à§à¦ à¦®à¦¾à¦¨à§à¦° à¦à¦¾à¦à¦à¦¾à¦®à¦¾à¦² à¦¦à¦¿à¦¯à¦¼à§ à¦¤à§à¦°à¦¿à¥¤ à¦à¦®à¦¾à¦¦à§à¦° à¦¦à¦à§à¦· à¦à¦¾à¦°à¦¿à¦à¦°à¦°à¦¾ à¦ªà§à¦°à¦¤à¦¿à¦à¦¿ à¦ªà¦£à§à¦¯ à¦¯à¦¤à§à¦¨ à¦¸à¦¹à¦à¦¾à¦°à§ à¦¤à§à¦°à¦¿ à¦à¦°à§à¦à§à¦¨à¥¤ '
-        'à¦à¦à¦¿ à¦¦à§à¦¨à¦¨à§à¦¦à¦¿à¦¨ à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à§à¦° à¦à¦¨à§à¦¯ à¦à¦ªà¦¯à§à¦à§à¦¤ à¦à¦¬à¦ à¦¦à§à¦°à§à¦à¦¸à§à¦¥à¦¾à¦¯à¦¼à§à¥¤ à¦¬à¦¿à¦­à¦¿à¦¨à§à¦¨ à¦°à¦ à¦ à¦¡à¦¿à¦à¦¾à¦à¦¨à§ à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¥¤ '
-        'à¦¬à¦¿à¦¶à§à¦· à¦à¦°à§ à¦¯à¦¾à¦°à¦¾ à¦¸à§à¦à¦¾à¦à¦²à¦¿à¦¶ à¦à¦¬à¦ à¦à§à¦à¦¸à¦ à¦ªà¦£à§à¦¯ à¦à§à¦à¦à¦à§à¦¨ à¦¤à¦¾à¦¦à§à¦° à¦à¦¨à§à¦¯ à¦à¦à¦¿ à¦ªà¦¾à¦°à¦«à§à¦à§à¦ à¦à¦¯à¦¼à§à¦¸à¥¤ '
-        'à¦à§à¦¨à§ à¦ªà§à¦°à¦¶à§à¦¨ à¦¥à¦¾à¦à¦²à§ à¦à¦®à¦¾à¦¦à§à¦° à¦¸à¦¾à¦¥à§ à¦¯à§à¦à¦¾à¦¯à§à¦ à¦à¦°à§à¦¨à¥¤ à¦à¦®à¦°à¦¾ à¦¸à¦°à§à¦¬à¦¦à¦¾ à¦à¦ªà¦¨à¦¾à¦° à¦¸à§à¦¬à¦¾à¦¯à¦¼ à¦¨à¦¿à¦¯à¦¼à§à¦à¦¿à¦¤à¥¤';
+        'এই প্রোডাক্টটি সর্বোচ্চ মানের কাঁচামাল দিয়ে তৈরি। আমাদের দক্ষ কারিগররা প্রতিটি পণ্য যত্ন সহকারে তৈরি করেছেন। '
+        'এটি দৈনন্দিন ব্যবহারের জন্য উপযুক্ত এবং দীর্ঘস্থায়ী। বিভিন্ন রঙ ও ডিজাইনে পাওয়া যায়। '
+        'বিশেষ করে যারা স্টাইলিশ এবং টেকসই পণ্য খুঁজছেন তাদের জন্য এটি পারফেক্ট চয়েস। '
+        'কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন। আমরা সর্বদা আপনার সেবায় নিয়োজিত।';
 
     final shortDesc = fullDesc.substring(0, 120) + '...';
 
@@ -2682,7 +2682,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               Icon(CupertinoIcons.doc_text, color: const Color(0xFF29B6F6), size: 18.sp),
               SizedBox(width: 8.w),
               Text(
-                'à¦¬à¦¿à¦¸à§à¦¤à¦¾à¦°à¦¿à¦¤ à¦¬à¦¿à¦¬à¦°à¦£',
+                'বিস্তারিত বিবরণ',
                 style: GoogleFonts.poppins(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.bold,
@@ -2720,7 +2720,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             child: Row(
               children: [
                 Text(
-                  _showFullDescription ? 'à¦à¦® à¦¦à§à¦à§à¦¨' : 'à¦à¦°à¦ à¦¦à§à¦à§à¦¨',
+                  _showFullDescription ? 'কম দেখুন' : 'আরও দেখুন',
                   style: GoogleFonts.poppins(
                     fontSize: 12.sp,
                     color: const Color(0xFF29B6F6),
@@ -2753,7 +2753,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'à¦¬à¦¿à¦à§à¦°à§à¦¤à¦¾à¦° à¦¤à¦¥à§à¦¯',
+            'বিক্রেতার তথ্য',
             style: GoogleFonts.poppins(
               fontSize: 14.sp,
               fontWeight: FontWeight.bold,
@@ -2806,7 +2806,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                       ],
                     ),
                     Text(
-                      'â­ 4.9 â¢ 2.3k+ à¦¬à¦¿à¦à§à¦°à¦¯à¦¼ â¢ 98% à¦ªà¦à¦¿à¦à¦¿à¦­ à¦°à¦¿à¦­à¦¿à¦',
+                      '⭐ 4.9 • 2.3k+ বিক্রয় • 98% পজিটিভ রিভিউ',
                       style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
                     ),
                   ],
@@ -2819,7 +2819,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
-                  'à¦­à¦¿à¦à¦¿à¦',
+                  'ভিজিট',
                   style: GoogleFonts.poppins(
                     fontSize: 11.sp,
                     color: const Color(0xFFFF6600),
@@ -2836,9 +2836,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
   Widget _buildRatings(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor) {
     final reviews = [
-      _Review(name: 'à¦°à¦¾à¦¹à§à¦²à¦¾ à¦¬à§à¦à¦®', rating: 5, text: 'à¦à¦¸à¦¾à¦§à¦¾à¦°à¦£ à¦ªà§à¦°à§à¦¡à¦¾à¦à§à¦! à¦®à¦¾à¦¨ à¦à¦¨à§à¦ à¦­à¦¾à¦²à§, à¦¦à¦¾à¦® à¦à¦à¦¦à¦® à¦¸à¦¾à¦¶à§à¦°à¦¯à¦¼à§à¥¤', time: 'à§¨ à¦¦à¦¿à¦¨ à¦à¦à§'),
-      _Review(name: 'à¦à¦°à¦¿à¦® à¦¸à¦¾à¦¹à§à¦¬', rating: 4, text: 'à¦ªà§à¦°à§à¦¡à¦¾à¦à§à¦ à¦­à¦¾à¦²à§ à¦à¦¿à¦¨à§à¦¤à§ à¦¡à§à¦²à¦¿à¦­à¦¾à¦°à¦¿ à¦à¦à¦à§ à¦¦à§à¦°à¦¿ à¦¹à¦¯à¦¼à§à¦à§à¥¤', time: 'à§« à¦¦à¦¿à¦¨ à¦à¦à§'),
-      _Review(name: 'à¦¸à¦¾à¦²à¦®à¦¾ à¦à¦¾à¦¨à¦®', rating: 5, text: 'à¦à§à¦¬à¦ à¦­à¦¾à¦²à§ à¦à§à¦¯à¦¼à¦¾à¦²à¦¿à¦à¦¿à¥¤ à¦à¦¬à¦¾à¦° à¦à¦¿à¦¨à¦¬à¥¤', time: 'à§§ à¦¸à¦ªà§à¦¤à¦¾à¦¹ à¦à¦à§'),
+      _Review(name: 'রাহেলা বেগম', rating: 5, text: 'অসাধারণ প্রোডাক্ট! মান অনেক ভালো, দাম একদম সাশ্রয়ী।', time: '২ দিন আগে'),
+      _Review(name: 'করিম সাহেব', rating: 4, text: 'প্রোডাক্ট ভালো কিন্তু ডেলিভারি একটু দেরি হয়েছে।', time: '৫ দিন আগে'),
+      _Review(name: 'সালমা খানম', rating: 5, text: 'খুবই ভালো কোয়ালিটি। আবার কিনব।', time: '১ সপ্তাহ আগে'),
     ];
 
     return Container(
@@ -2851,7 +2851,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'à¦°à¦¿à¦­à¦¿à¦ à¦ à¦°à§à¦à¦¿à¦',
+                'রিভিউ ও রেটিং',
                 style: GoogleFonts.poppins(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.bold,
@@ -2866,7 +2866,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'à¦¸à¦¬ à¦¦à§à¦à§à¦¨',
+                  'সব দেখুন',
                   style: GoogleFonts.poppins(
                     fontSize: 12.sp,
                     color: const Color(0xFF29B6F6),
@@ -2902,7 +2902,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    '234 à¦°à¦¿à¦­à¦¿à¦',
+                    '234 রিভিউ',
                     style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
                   ),
                 ],
@@ -3058,7 +3058,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'à¦¹à§à¦²à¦¸à§à¦² à¦ªà§à¦°à¦¾à¦à¦¸',
+                'হোলসেল প্রাইস',
                 style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid),
               ),
               Text(
@@ -3079,3 +3079,69 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
+                    colors: [Color(0xFFFF6600), Color(0xFFFF9500)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF6600).withOpacity(0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.cart_badge_plus, color: Colors.white, size: 18.sp),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'এখনই Resell করুন',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ).animate().scale(delay: 600.ms, curve: Curves.elasticOut),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== PRODUCT DETAILS HELPERS ====================
+
+class _InfoRow {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String value;
+
+  _InfoRow({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.value,
+  });
+}
+
+class _Review {
+  final String name;
+  final int rating;
+  final String text;
+  final String time;
+
+  _Review({
+    required this.name,
+    required this.rating,
+    required this.text,
+    required this.time,
+  });
+}
