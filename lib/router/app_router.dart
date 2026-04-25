@@ -88,7 +88,7 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const RechargeScreen(),
         ),
         _detailRoute(
-          path: '/edit_profile',
+          path: '/edit-profile',
           builder: (context, state) => const EditProfileScreen(),
         ),
         GoRoute(
