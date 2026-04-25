@@ -1,20 +1,12 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../../main.dart';
-
-// ==========================================
-// Edit Profile Screen — Full Details Page
-// ==========================================
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -39,6 +31,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _idVerified = false;
   String? _errorMsg;
 
+  // FIX: Backend থেকে সম্পূর্ণ URL আসে, সেটাই সরাসরি রাখা হচ্ছে
   String? _profilePictureUrl;
 
   DateTime? _lastNameChange;
@@ -46,6 +39,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String? _nameChangeMessage;
   String _originalName = '';
 
+  // Cache busting এর জন্য timestamp
   int _imageKey = 0;
 
   final ImagePicker _picker = ImagePicker();
@@ -64,13 +58,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Set detail view mode so MainWrapper/AppTopBar shows back button + title
-    Future.microtask(() {
-      if (mounted) {
-        ref.read(isDetailViewProvider.notifier).state = true;
-        ref.read(detailViewTitleProvider.notifier).state = 'Edit Profile';
-      }
-    });
     _fetchProfile();
   }
 
@@ -102,6 +89,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (response.statusCode == 200 && data['status'] == 'success') {
         final user = data['user'];
+
+        // FIX: Backend profile_picture ফিল্ডে সম্পূর্ণ URL পাঠায়
+        // (profile controller এ baseUrl + path জুড়ে দেওয়া আছে)
+        // তাই সরাসরি সেটাই ব্যবহার করতে হবে
         final rawPic = user['profile_picture'];
 
         setState(() {
@@ -113,7 +104,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _referredByController.text = user['referred_by']?.toString() ?? '';
           _idVerified = user['id_verified'] == 1 || user['id_verified'] == true;
 
+          // FIX: null বা empty হলে null রাখো, নয়তো URL সরাসরি রাখো
           if (rawPic != null && rawPic.toString().isNotEmpty) {
+            // Cache bust করার জন্য timestamp query param যোগ করো
             final ts = DateTime.now().millisecondsSinceEpoch;
             _profilePictureUrl = "${rawPic.toString()}?v=$ts";
             _imageKey = ts;
@@ -224,6 +217,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (streamedResponse.statusCode == 200 && data['status'] == 'success') {
         _showSnack("Profile picture updated successfully", Colors.green);
+        // Upload সফল হলে profile আবার fetch করো — নতুন URL পাবে
         await _fetchProfile();
       } else {
         _showSnack(data['message'] ?? "Failed to upload image", Colors.red);
@@ -323,90 +317,87 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
 
     if (newName == _originalName) {
-      _showSnack("No changes to save", Colors.orange);
+      _showSnack("No changes made", Colors.orange);
       return;
     }
 
     setState(() => _isSaving = true);
-
     try {
       final token = await _getToken();
-      final response = await http.post(
-        Uri.parse("$baseUrl/user/profile/update"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({"full_name": newName}),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .put(
+            Uri.parse("$baseUrl/user/change-full-name"),
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token",
+            },
+            body: jsonEncode({"full_name": newName}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == 'success') {
-        _showSnack("Profile updated successfully!", Colors.green);
-        setState(() {
-          _originalName = newName;
-          _lastNameChange = DateTime.now();
-          _checkNameChangeEligibility();
-        });
-        // Refresh global profile provider (optional — uncomment if userProfileProvider exists in your main.dart)
-        // ref.invalidate(userProfileProvider);
+        _showSnack("Full name updated successfully", Colors.green);
+        await _fetchProfile();
       } else {
-        _showSnack(data['message'] ?? "Failed to update profile", Colors.red);
+        _showSnack(data['message'] ?? "Update failed", Colors.red);
       }
     } catch (e) {
-      debugPrint("Save Profile Error: $e");
+      debugPrint("Save Exception: $e");
       _showSnack("Something went wrong!", Colors.red);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  void _showSnack(String message, Color color) {
+  void _showSnack(String msg, Color color) {
     if (!mounted) return;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: GoogleFonts.poppins(fontSize: 12.sp)),
+        content: Text(
+          msg,
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: color,
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : color,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
       ),
     );
   }
 
   void _showImageOptions() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bottomSheetBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final sheetBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: bottomSheetBg,
+      backgroundColor: sheetBg,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => Container(
+        padding: EdgeInsets.all(20.w),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              margin: EdgeInsets.only(top: 8.h),
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2.r),
+            Text(
+              "Profile Picture",
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 20.h),
             ListTile(
-              leading: Icon(Icons.photo_library_rounded,
-                  color: skyBlue),
+              leading: const Icon(Icons.photo_library, color: skyBlue),
               title: Text(
-                "Change Photo",
-                style: GoogleFonts.poppins(
-                    color: isDark ? Colors.white : Colors.black87),
+                "Choose from Gallery",
+                style: GoogleFonts.poppins(color: textColor),
               ),
               onTap: () {
                 Navigator.pop(ctx);
@@ -437,23 +428,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
               onTap: () => Navigator.pop(ctx),
             ),
-            SizedBox(height: 16.h),
           ],
         ),
       ),
     );
   }
 
-
+  @override
   Widget build(BuildContext context) {
     final isDesktop = _isDesktop(context);
     final isTablet = _isTablet(context);
     final maxW = isDesktop ? 520.0 : isTablet ? 540.0 : double.infinity;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final backgroundColor = isDark ? const Color(0xFF121212) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.grey.shade400 : Colors.black45;
     final hintColor = isDark ? Colors.grey.shade500 : Colors.black38;
     final fieldBgReadOnly =
@@ -462,46 +451,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF3F4F6);
     final avatarBg = isDark ? const Color(0xFF2C2C2C) : Colors.grey[200];
     final avatarIconColor = isDark ? Colors.grey.shade400 : Colors.grey;
-    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.shade200;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: skyBlue))
-            : _errorMsg != null
-                ? _buildError(isDark)
-                : CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      // ===== PROFILE FORM =====
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isTablet ? 40 : isDesktop ? 32 : 16.w,
-                            vertical: 8.h,
-                          ),
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: maxW),
-                              child: _buildForm(
-                                context,
-                                isDark,
-                                textColor,
-                                subTextColor,
-                                hintColor,
-                                fieldBgReadOnly,
-                                fieldBgEditable,
-                                avatarBg,
-                                avatarIconColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+    return Container(
+      color: backgroundColor,
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: skyBlue))
+          : _errorMsg != null
+              ? _buildError(isDark)
+              : SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 40 : isDesktop ? 32 : 24.w,
+                    vertical: 28.h,
                   ),
-      ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxW),
+                      child: _buildForm(
+                          context,
+                          isDark,
+                          textColor,
+                          subTextColor,
+                          hintColor,
+                          fieldBgReadOnly,
+                          fieldBgEditable,
+                          avatarBg,
+                          avatarIconColor),
+                    ),
+                  ),
+                ),
     );
   }
 
@@ -565,6 +542,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       border: Border.all(color: skyBlue, width: 3),
                     ),
                     child: ClipOval(
+                      // FIX: _profilePictureUrl সরাসরি ব্যবহার করা হচ্ছে
+                      // এটায় ইতিমধ্যে full URL + cache bust param আছে
                       child: _profilePictureUrl != null
                           ? Image.network(
                               _profilePictureUrl!,
@@ -915,9 +894,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _emailController.dispose();
     _referralCodeController.dispose();
     _referredByController.dispose();
-    // Reset detail view mode so MainWrapper/AppTopBar returns to normal
-    ref.read(isDetailViewProvider.notifier).state = false;
-    ref.read(detailViewTitleProvider.notifier).state = '';
     super.dispose();
   }
 }

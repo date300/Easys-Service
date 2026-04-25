@@ -8,11 +8,14 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-import '../../main.dart';
+// আপনার প্রজেক্টের পাথ অনুযায়ী নিচের ইম্পোর্টগুলো ঠিক করে নেবেন
+import 'edit_profile/edit_profile_screen.dart';
+import '../../main.dart'; // themeModeProvider এবং authProvider এর জন্য
 
 // ==========================================
 // 1. Profile Data Model & API Provider
 // ==========================================
+// এটি একই ফাইলে রাখার ফলে "Not Defined" এরর আসবে না
 
 class UserProfile {
   final String fullName;
@@ -74,11 +77,13 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Theme Dynamic Colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF121212) : Colors.white;
     final headerColor = isDark ? const Color(0xFF1E1E1E) : skyBlue;
     final avatarBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
 
+    // API থেকে প্রোফাইল ডাটা রিড করা হচ্ছে
     final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
@@ -86,6 +91,7 @@ class ProfileScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
+            // Header with Real Profile Info
             Container(
               width: double.infinity,
               padding: EdgeInsets.only(
@@ -110,44 +116,54 @@ class ProfileScreen extends ConsumerWidget {
 
             SizedBox(height: 10.h),
 
+            // Menu Items
             Expanded(
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 10.w),
                 physics: const BouncingScrollPhysics(),
                 children: [
+                  // 0. Theme Selector Card
                   _buildThemeSelectorCard(context, ref, isDark),
 
                   SizedBox(height: 10.h),
 
-                  // ✅ FIXED: Edit Profile — এখন Detail পেজ হিসেবে যাবে
+                  // 1. Edit Profile
                   _buildProfileItem(
                     context,
                     Icons.edit_outlined,
                     "Edit Profile",
                     isDark: isDark,
-                    onTap: () {
-                      ref.read(isDetailViewProvider.notifier).state = true;
-                      ref.read(detailViewTitleProvider.notifier).state = 'Edit Profile';
-                      context.push('/edit_profile');
-                    },
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EditProfileScreen(),
+                      ),
+                    ),
                   ),
 
+                  // 2. My Wallet
                   _buildProfileItem(
                     context,
                     Icons.account_balance_wallet_rounded,
                     "My Wallet",
                     isDark: isDark,
-                    onTap: () {},
+                    onTap: () {
+                      // context.go('/wallet');
+                    },
                   ),
 
+                  // 3. History
                   _buildProfileItem(
                     context,
                     Icons.history_rounded,
                     "History",
                     isDark: isDark,
-                    onTap: () {},
+                    onTap: () {
+                      // context.go('/history');
+                    },
                   ),
 
+                  // 4. Language
                   _buildProfileItem(
                     context,
                     Icons.language_rounded,
@@ -164,6 +180,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
 
+                  // 5. Logout
                   _buildProfileItem(
                     context,
                     Icons.logout_rounded,
@@ -174,6 +191,7 @@ class ProfileScreen extends ConsumerWidget {
                     onTap: () => _showLogoutDialog(context, ref, isDark),
                   ),
 
+                  // 6. Delete Account
                   _buildProfileItem(
                     context,
                     Icons.delete_forever_rounded,
@@ -191,6 +209,10 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+
+  // ==========================================
+  // Header Helpers
+  // ==========================================
 
   Widget _buildProfileHeader(BuildContext context, UserProfile? user, Color avatarBg, bool isDark) {
     final String name = user?.fullName ?? "No Name";
@@ -271,6 +293,10 @@ class ProfileScreen extends ConsumerWidget {
       ],
     );
   }
+
+  // ==========================================
+  // Menu & Utility Helpers
+  // ==========================================
 
   Widget _buildThemeSelectorCard(BuildContext context, WidgetRef ref, bool isDark) {
     final themeMode = ref.watch(themeModeProvider);
