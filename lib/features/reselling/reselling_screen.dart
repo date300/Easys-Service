@@ -5,8 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'models/product_model.dart';
-import 'resell/resell.dart';
+
 
 // ==================== RIVERPOD PROVIDERS ====================
 
