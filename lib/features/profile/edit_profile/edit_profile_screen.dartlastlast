@@ -18,7 +18,6 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   static const Color skyBlue = Color(0xFF29B6F6);
   static const String baseUrl = "https://easy.ltcminematrix.com/api";
-  static const String staticBase = "https://easy.ltcminematrix.com";
 
   final _nameController = TextEditingController();
   final _mobileController = TextEditingController();
@@ -31,11 +30,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _isUploadingImage = false;
   bool _idVerified = false;
   String? _errorMsg;
-  String? _profilePicture;
+
+  // FIX: Backend থেকে সম্পূর্ণ URL আসে, সেটাই সরাসরি রাখা হচ্ছে
+  String? _profilePictureUrl;
+
   DateTime? _lastNameChange;
   bool _canChangeName = true;
   String? _nameChangeMessage;
   String _originalName = '';
+
+  // Cache busting এর জন্য timestamp
+  int _imageKey = 0;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -84,6 +89,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (response.statusCode == 200 && data['status'] == 'success') {
         final user = data['user'];
+
+        // FIX: Backend profile_picture ফিল্ডে সম্পূর্ণ URL পাঠায়
+        // (profile controller এ baseUrl + path জুড়ে দেওয়া আছে)
+        // তাই সরাসরি সেটাই ব্যবহার করতে হবে
+        final rawPic = user['profile_picture'];
+
         setState(() {
           _originalName = user['full_name'] ?? '';
           _nameController.text = _originalName;
@@ -92,21 +103,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _referralCodeController.text = user['referral_code'] ?? '';
           _referredByController.text = user['referred_by']?.toString() ?? '';
           _idVerified = user['id_verified'] == 1 || user['id_verified'] == true;
-          _profilePicture = user['profile_picture'];
+
+          // FIX: null বা empty হলে null রাখো, নয়তো URL সরাসরি রাখো
+          if (rawPic != null && rawPic.toString().isNotEmpty) {
+            // Cache bust করার জন্য timestamp query param যোগ করো
+            final ts = DateTime.now().millisecondsSinceEpoch;
+            _profilePictureUrl = "${rawPic.toString()}?v=$ts";
+            _imageKey = ts;
+          } else {
+            _profilePictureUrl = null;
+            _imageKey = 0;
+          }
 
           if (user['last_name_change'] != null) {
-            _lastNameChange = DateTime.parse(user['last_name_change']);
+            _lastNameChange = DateTime.tryParse(user['last_name_change']);
           } else {
             _lastNameChange = null;
           }
           _checkNameChangeEligibility();
         });
+
+        debugPrint("✅ Profile picture URL: $_profilePictureUrl");
       } else {
         setState(() {
           _errorMsg = data['message'] ?? 'Failed to load profile';
         });
       }
     } catch (e) {
+      debugPrint("❌ Fetch profile error: $e");
       setState(() {
         _errorMsg = "Something went wrong!";
       });
@@ -193,6 +217,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (streamedResponse.statusCode == 200 && data['status'] == 'success') {
         _showSnack("Profile picture updated successfully", Colors.green);
+        // Upload সফল হলে profile আবার fetch করো — নতুন URL পাবে
         await _fetchProfile();
       } else {
         _showSnack(data['message'] ?? "Failed to upload image", Colors.red);
@@ -263,7 +288,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (response.statusCode == 200 && data['status'] == 'success') {
         _showSnack("Profile picture deleted successfully", Colors.green);
-        setState(() => _profilePicture = null);
+        setState(() {
+          _profilePictureUrl = null;
+          _imageKey = 0;
+        });
       } else {
         _showSnack(data['message'] ?? "Failed to delete image", Colors.red);
       }
@@ -288,7 +316,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return;
     }
 
-    // কোনো পরিবর্তন না হলে save করার দরকার নেই
     if (newName == _originalName) {
       _showSnack("No changes made", Colors.orange);
       return;
@@ -332,7 +359,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           msg,
           style: GoogleFonts.poppins(color: Colors.white),
         ),
-        // FIX: সবসময় semantic color ব্যবহার করো, dark mode এও
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -342,11 +368,70 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  // FIX: Backend থেকে full URL আসলে আবার URL বানানো হবে না
-  String _getProfileImageUrl() {
-    if (_profilePicture == null || _profilePicture!.isEmpty) return "";
-    if (_profilePicture!.startsWith('http')) return _profilePicture!;
-    return "$staticBase/uploads/profile_pics/$_profilePicture";
+  void _showImageOptions() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: sheetBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (ctx) => Container(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "Profile Picture",
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            SizedBox(height: 20.h),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: skyBlue),
+              title: Text(
+                "Choose from Gallery",
+                style: GoogleFonts.poppins(color: textColor),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadImage();
+              },
+            ),
+            if (_profilePictureUrl != null)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: Text(
+                  "Remove Photo",
+                  style: GoogleFonts.poppins(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _deleteProfilePicture();
+                },
+              ),
+            ListTile(
+              leading: Icon(
+                Icons.cancel,
+                color: isDark ? Colors.grey : Colors.grey.shade600,
+              ),
+              title: Text(
+                "Cancel",
+                style: GoogleFonts.poppins(
+                    color: isDark ? Colors.grey : Colors.grey.shade600),
+              ),
+              onTap: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -448,8 +533,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             children: [
               Stack(
                 children: [
-                  // FIX: DecorationImage এর বদলে ClipOval + Image.network ব্যবহার করা হয়েছে
-                  // যাতে error হলে fallback icon দেখায়
                   Container(
                     width: avatarSize,
                     height: avatarSize,
@@ -459,18 +542,27 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       border: Border.all(color: skyBlue, width: 3),
                     ),
                     child: ClipOval(
-                      child: _profilePicture != null
+                      // FIX: _profilePictureUrl সরাসরি ব্যবহার করা হচ্ছে
+                      // এটায় ইতিমধ্যে full URL + cache bust param আছে
+                      child: _profilePictureUrl != null
                           ? Image.network(
-                              _getProfileImageUrl(),
+                              _profilePictureUrl!,
+                              key: ValueKey(_imageKey),
                               width: avatarSize,
                               height: avatarSize,
                               fit: BoxFit.cover,
-                              // FIX: image load fail হলে fallback icon দেখাবে
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.person,
-                                size: iconSize,
-                                color: avatarIconColor,
-                              ),
+                              headers: const {
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache',
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                debugPrint("❌ Image load error: $error");
+                                return Icon(
+                                  Icons.person,
+                                  size: iconSize,
+                                  color: avatarIconColor,
+                                );
+                              },
                               loadingBuilder: (_, child, progress) {
                                 if (progress == null) return child;
                                 return Center(
@@ -525,7 +617,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                 ],
               ),
-              if (_profilePicture != null) ...[
+              if (_profilePictureUrl != null) ...[
                 SizedBox(height: 8.h),
                 TextButton.icon(
                   onPressed: _isUploadingImage ? null : _deleteProfilePicture,
@@ -729,72 +821,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
         SizedBox(height: 80.h),
       ],
-    );
-  }
-
-  void _showImageOptions() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final sheetBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: sheetBg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-      ),
-      builder: (ctx) => Container(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Profile Picture",
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: skyBlue),
-              title: Text(
-                "Choose from Gallery",
-                style: GoogleFonts.poppins(color: textColor),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickAndUploadImage();
-              },
-            ),
-            if (_profilePicture != null)
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: Text(
-                  "Remove Photo",
-                  style: GoogleFonts.poppins(color: Colors.red),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _deleteProfilePicture();
-                },
-              ),
-            ListTile(
-              leading: Icon(
-                Icons.cancel,
-                color: isDark ? Colors.grey : Colors.grey.shade600,
-              ),
-              title: Text(
-                "Cancel",
-                style: GoogleFonts.poppins(
-                    color: isDark ? Colors.grey : Colors.grey.shade600),
-              ),
-              onTap: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
