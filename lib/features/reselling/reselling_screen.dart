@@ -1063,7 +1063,7 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'à§³${widget.product.wholesalePrice.toInt()}',
+                            '৳${widget.product.wholesalePrice.toInt()}',
                             style: GoogleFonts.poppins(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.bold,
@@ -1073,7 +1073,7 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                           SizedBox(width: 5.w),
                           if (widget.product.originalPrice != null)
                             Text(
-                              'à§³${widget.product.originalPrice!.toInt()}',
+                              '৳${widget.product.originalPrice!.toInt()}',
                               style: GoogleFonts.poppins(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w500,
@@ -1210,7 +1210,7 @@ class _ActiveResellCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'à§³${product.myPrice.toInt()}',
+                      '৳${product.myPrice.toInt()}',
                       style: GoogleFonts.poppins(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.bold,
@@ -1227,7 +1227,7 @@ class _ActiveResellCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
-                    'Profit à§³${product.myMargin.toInt()}',
+                    'Profit ৳${product.myMargin.toInt()}',
                     style: GoogleFonts.poppins(
                       fontSize: 9.5.sp,
                       color: const Color(0xFF34C759),
@@ -1696,4 +1696,6 @@ class _MiniButtonState extends State<_MiniButton> {
           ),
         ),
       ),
-    
+    );
+  }
+}
