@@ -7,12 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-// Import your providers - adjust path as needed
-import '../main.dart'; // আপনার আগের ইম্পোর্ট, যদি authProvider অন্য ফাইলে থাকে তবে পাথ ঠিক করে নেবেন
-
-// ==========================================
-// 1. Profile Data Model & API Provider
-// ==========================================
+import '../main.dart';
 
 class UserProfile {
   final String fullName;
@@ -34,7 +29,7 @@ class UserProfile {
   }
 }
 
-final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
+final drawerProfileProvider = FutureProvider<UserProfile?>((ref) async {
   const String baseUrl = "https://easy.ltcminematrix.com/api";
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('jwt_token');
@@ -63,10 +58,6 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   return null;
 });
 
-// ==========================================
-// 2. AppDrawer Widget
-// ==========================================
-
 class AppDrawer extends ConsumerWidget {
   final bool isLoggedIn;
   final bool isDesktop;
@@ -89,19 +80,15 @@ class AppDrawer extends ConsumerWidget {
             ? 280
             : MediaQuery.of(context).size.width * 0.78;
 
-    // ? DYNAMIC THEME COLORS
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final drawerBackground = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final dividerColor =
-        isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE);
+    final dividerColor = isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE);
     final avatarBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
-    final splashColor =
-        isDark ? skyBlue.withOpacity(0.15) : skyBlue.withOpacity(0.1);
+    final splashColor = isDark ? skyBlue.withOpacity(0.15) : skyBlue.withOpacity(0.1);
 
-    // API থেকে প্রোফাইল ডাটা রিড করা হচ্ছে
-    final profileAsync = ref.watch(userProfileProvider);
+    final profileAsync = ref.watch(drawerProfileProvider);
 
     return SizedBox(
       width: drawerWidth,
@@ -109,7 +96,7 @@ class AppDrawer extends ConsumerWidget {
         backgroundColor: drawerBackground,
         child: Column(
           children: [
-            // Header with Profile Info
+            // Header
             Container(
               width: double.infinity,
               padding: EdgeInsets.only(
@@ -126,10 +113,8 @@ class AppDrawer extends ConsumerWidget {
               ),
               child: isLoggedIn
                   ? profileAsync.when(
-                      data: (user) => _buildProfileHeader(
-                          context, user, avatarBgColor, isDark),
-                      loading: () => const Center(
-                          child: CircularProgressIndicator(color: Colors.white)),
+                      data: (user) => _buildProfileHeader(context, user, avatarBgColor, isDark),
+                      loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
                       error: (err, stack) => _buildGuestHeader(context),
                     )
                   : _buildGuestHeader(context),
@@ -141,7 +126,7 @@ class AppDrawer extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  // 1. Voucher Balance
+                  // 1. Voucher Balance ✅
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -152,7 +137,9 @@ class AppDrawer extends ConsumerWidget {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        context.go('/voucher-balance');
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Voucher Balance';
+                        context.push('/voucher-balance');
                       },
                     ),
 
@@ -187,8 +174,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
@@ -267,8 +253,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
@@ -317,13 +302,12 @@ class AppDrawer extends ConsumerWidget {
               ),
             ),
 
-            // 12. Logout Button
+            // 12. Logout
             if (isLoggedIn)
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 10, 15, 25),
                 child: ListTile(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   tileColor: Colors.red.withOpacity(0.1),
                   leading: const Icon(Icons.logout_rounded, color: Colors.red),
                   title: Text(
@@ -336,7 +320,6 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   onTap: () async {
                     Navigator.pop(context);
-                    // আপনার authProvider অনুযায়ী লগআউট লজিক
                     try {
                       await ref.read(authProvider.notifier).logout();
                       if (context.mounted) context.go('/registration');
@@ -352,12 +335,7 @@ class AppDrawer extends ConsumerWidget {
     );
   }
 
-  // ==========================================
-  // Helper Widgets & Methods
-  // ==========================================
-
-  Widget _buildProfileHeader(
-      BuildContext context, UserProfile? user, Color avatarBg, bool isDark) {
+  Widget _buildProfileHeader(BuildContext context, UserProfile? user, Color avatarBg, bool isDark) {
     final String name = user?.fullName ?? "No Name";
     final String id = user?.referralCode ?? "N/A";
     final String? img = user?.profilePicture;
@@ -372,11 +350,7 @@ class AppDrawer extends ConsumerWidget {
             color: avatarBg,
             border: Border.all(color: Colors.white, width: 3),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5)),
             ],
           ),
           child: ClipOval(
@@ -392,11 +366,7 @@ class AppDrawer extends ConsumerWidget {
         const SizedBox(height: 12),
         Text(
           name,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -418,11 +388,7 @@ class AppDrawer extends ConsumerWidget {
                 const SizedBox(width: 6),
                 Text(
                   'ID: $id',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -438,22 +404,11 @@ class AppDrawer extends ConsumerWidget {
         Container(
           width: 70,
           height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.2),
-          ),
-          child: const Icon(Icons.person_outline_rounded,
-              color: Colors.white, size: 40),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.2)),
+          child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 40),
         ),
         const SizedBox(height: 12),
-        Text(
-          'Welcome Guest',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text('Welcome Guest', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: () {
@@ -462,17 +417,10 @@ class AppDrawer extends ConsumerWidget {
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
             child: Text(
               'Login / Register',
-              style: GoogleFonts.poppins(
-                color: skyBlue,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+              style: GoogleFonts.poppins(color: skyBlue, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -486,11 +434,7 @@ class AppDrawer extends ConsumerWidget {
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: GoogleFonts.poppins(
-            color: isDark ? skyBlue : skyBlue,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.poppins(color: skyBlue, fontSize: 32, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -500,16 +444,11 @@ class AppDrawer extends ConsumerWidget {
     Clipboard.setData(ClipboardData(text: affiliateId));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          'Affiliate ID Copy করা হয়েছে!',
-          style: GoogleFonts.poppins(),
-        ),
+        content: Text('Affiliate ID কপি হয়েছে!', style: GoogleFonts.poppins()),
         backgroundColor: isDark ? const Color(0xFF29B6F6) : Colors.green,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -529,24 +468,15 @@ class AppDrawer extends ConsumerWidget {
       leading: Icon(icon, color: iconColor ?? skyBlue, size: 24),
       title: Text(
         title,
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: textColor,
-        ),
+        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: textColor),
       ),
-      trailing: Icon(
-        Icons.arrow_forward_ios_rounded,
-        size: 13,
-        color: subTextColor,
-      ),
+      trailing: Icon(Icons.arrow_forward_ios_rounded, size: 13, color: subTextColor),
       onTap: onTap,
       splashColor: splashColor,
     );
   }
 
   void _launchURL(String url) async {
-    // url_launcher implement করবেন এখানে
     debugPrint("Launching $url");
   }
 }
