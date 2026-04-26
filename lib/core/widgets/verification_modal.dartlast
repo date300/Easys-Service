@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // রিভারপড ইমপোর্ট
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // ??????? ???????
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
-import 'package:go_router/go_router.dart'; // GoRouter ইমপোর্ট
+import 'package:go_router/go_router.dart'; // GoRouter ???????
 
-// আপনার প্রোজেক্টের পাথ অনুযায়ী main.dart ইমপোর্ট করুন (যেখানে প্রোভাইডার আছে)
+// ????? ??????????? ??? ??????? main.dart ??????? ???? (?????? ?????????? ???)
 import '../../main.dart'; 
 
 class VerificationModal {
-  /// Bottom Sheet দেখানোর মেথড
+  /// Bottom Sheet ??????? ????
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onVerified,
-    double amount = 199.00,
+    double amount = 300.00,
     String purpose = 'Account Verification Fee',
   }) async {
     await showModalBottomSheet(
@@ -28,11 +28,11 @@ class VerificationModal {
     );
   }
 
-  /// Dialog দেখানোর মেথড
+  /// Dialog ??????? ????
   static Future<void> showDialog(
     BuildContext context, {
     VoidCallback? onVerified,
-    double amount = 199.00,
+    double amount = 300.00,
     String purpose = 'Account Verification Fee',
   }) async {
     await showGeneralDialog(
@@ -57,7 +57,7 @@ class VerificationModal {
 }
 
 // ============================================
-//  Bottom Sheet UI (ConsumerWidget ব্যবহার করা হয়েছে)
+//  Bottom Sheet UI (ConsumerWidget ??????? ??? ?????)
 // ============================================
 class _VerificationBottomSheet extends ConsumerWidget {
   final double amount;
@@ -112,7 +112,7 @@ class _VerificationBottomSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'To access all features, please complete account verification by paying a fee of \$$amount.',
+                'To access all features, please complete account verification by paying a fee of ৳$amount.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   color: Colors.black54,
@@ -135,7 +135,7 @@ class _VerificationBottomSheet extends ConsumerWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF9B59B6)],
+                      colors: [Color(0xFF29B6F6), Color(0xFF0288D1)],
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -144,19 +144,19 @@ class _VerificationBottomSheet extends ConsumerWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
-                        // ১. স্টেট আপডেট (ডিটেইল ভিউ অন করা)
+                        // ?. ????? ????? (?????? ??? ?? ???)
                         ref.read(isDetailViewProvider.notifier).state = true;
                         ref.read(detailViewTitleProvider.notifier).state = 'Payment';
 
-                        // ২. মোডাল বন্ধ করা
+                        // ?. ????? ???? ???
                         Navigator.pop(context);
 
-                        // ৩. GoRouter ব্যবহার করে নেভিগেট করা
+                        // ?. GoRouter ??????? ??? ??????? ???
                         context.push('/payment'); 
                       },
                       child: Center(
                         child: Text(
-                          'Verify Now ? \$$amount',
+                          'Verify Now ➤ ৳$amount',
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontSize: 15,
@@ -188,7 +188,7 @@ class _VerificationBottomSheet extends ConsumerWidget {
 }
 
 // ============================================
-//  Dialog UI (ConsumerWidget ব্যবহার করা হয়েছে)
+//  Dialog UI (ConsumerWidget ??????? ??? ?????)
 // ============================================
 class _VerificationDialog extends ConsumerWidget {
   final double amount;
@@ -249,24 +249,24 @@ class _VerificationDialog extends ConsumerWidget {
                   height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C63FF),
+                      backgroundColor: const Color(0xFF29B6F6),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     onPressed: () {
-                      // ১. স্টেট আপডেট
+                      // ?. ????? ?????
                       ref.read(isDetailViewProvider.notifier).state = true;
                       ref.read(detailViewTitleProvider.notifier).state = 'Payment';
 
-                      // ২. ডায়ালগ বন্ধ করা
+                      // ?. ?????? ???? ???
                       Navigator.pop(context);
 
-                      // ৩. নেভিগেট করা
+                      // ?. ??????? ???
                       context.push('/payment');
                     },
                     child: Text(
-                      'Verify Now ? \$$amount',
+                      'Verify Now ➤ ৳$amount',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
