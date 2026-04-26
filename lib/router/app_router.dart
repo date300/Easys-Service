@@ -104,10 +104,13 @@ final GoRouter appRouter = GoRouter(
   builder: (context, state) {
     final extra = state.extra as Map<String, dynamic>?;
     return PaymentGatewayScreen(
+      amount: extra?['amount'] ?? 300.00, // ডিফল্ট ৩০০ টাকা রাখা হয়েছে
+      purpose: extra?['purpose'] ?? 'Account Verification Fee',
       onPaymentSuccess: extra?['onSuccess'],
-            );
-          },
-        ),
+    );
+  },
+),
+
       ],
     ),
   ],
