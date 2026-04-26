@@ -16,7 +16,7 @@ import '../features/auth/login_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
 import '../modules/notifications/notification_screen.dart';
 import '../main.dart';
-
+import '../features/voucher_balance/voucher_balance_page.dart';
 // ==================== HELPERS ====================
 
 Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
@@ -95,6 +95,10 @@ final GoRouter appRouter = GoRouter(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
+        GoRoute(
+  path: '/voucher-balance',
+  builder: (context, state) => const VoucherBalancePage(),
+),
         GoRoute(
           path: '/payment',
           builder: (context, state) {
