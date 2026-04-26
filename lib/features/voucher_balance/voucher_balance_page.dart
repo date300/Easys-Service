@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 // ==========================================
-// 1. Data Models
+// 1. Demo Data Models
 // ==========================================
 
 class VoucherBalance {
@@ -22,16 +18,6 @@ class VoucherBalance {
     required this.availableBalance,
     required this.transactions,
   });
-
-  factory VoucherBalance.fromJson(Map<String, dynamic> json) {
-    final List txList = json['transactions'] ?? [];
-    return VoucherBalance(
-      totalBalance: (json['total_balance'] ?? 0).toDouble(),
-      usedBalance: (json['used_balance'] ?? 0).toDouble(),
-      availableBalance: (json['available_balance'] ?? 0).toDouble(),
-      transactions: txList.map((e) => VoucherTransaction.fromJson(e)).toList(),
-    );
-  }
 }
 
 class VoucherTransaction {
@@ -50,67 +36,126 @@ class VoucherTransaction {
     required this.date,
     required this.status,
   });
-
-  factory VoucherTransaction.fromJson(Map<String, dynamic> json) {
-    return VoucherTransaction(
-      id: json['id']?.toString() ?? '',
-      description: json['description'] ?? 'Voucher Transaction',
-      amount: (json['amount'] ?? 0).toDouble(),
-      type: json['type'] ?? 'credit',
-      date: json['date'] ?? '',
-      status: json['status'] ?? 'completed',
-    );
-  }
 }
 
+// ── Demo Data ─────────────────────────────────────────────────────────────────
+
+final VoucherBalance demoVoucherBalance = VoucherBalance(
+  totalBalance: 5000.00,
+  usedBalance: 1850.00,
+  availableBalance: 3150.00,
+  transactions: [
+    VoucherTransaction(
+      id: '1',
+      description: 'Referral Bonus',
+      amount: 500.00,
+      type: 'credit',
+      date: '26 Apr 2026, 10:30 AM',
+      status: 'completed',
+    ),
+    VoucherTransaction(
+      id: '2',
+      description: 'Voucher Redeemed',
+      amount: 250.00,
+      type: 'debit',
+      date: '25 Apr 2026, 03:15 PM',
+      status: 'completed',
+    ),
+    VoucherTransaction(
+      id: '3',
+      description: 'Daily Login Reward',
+      amount: 50.00,
+      type: 'credit',
+      date: '25 Apr 2026, 09:00 AM',
+      status: 'completed',
+    ),
+    VoucherTransaction(
+      id: '4',
+      description: 'Withdrawal Request',
+      amount: 1000.00,
+      type: 'debit',
+      date: '24 Apr 2026, 06:45 PM',
+      status: 'pending',
+    ),
+    VoucherTransaction(
+      id: '5',
+      description: 'Team Bonus Reward',
+      amount: 750.00,
+      type: 'credit',
+      date: '23 Apr 2026, 11:20 AM',
+      status: 'completed',
+    ),
+    VoucherTransaction(
+      id: '6',
+      description: 'Purchase Voucher',
+      amount: 200.00,
+      type: 'debit',
+      date: '22 Apr 2026, 02:10 PM',
+      status: 'failed',
+    ),
+    VoucherTransaction(
+      id: '7',
+      description: 'Royalty Salary',
+      amount: 1200.00,
+      type: 'credit',
+      date: '21 Apr 2026, 08:00 AM',
+      status: 'completed',
+    ),
+    VoucherTransaction(
+      id: '8',
+      description: 'Special Event Bonus',
+      amount: 400.00,
+      type: 'credit',
+      date: '20 Apr 2026, 05:30 PM',
+      status: 'pending',
+    ),
+    VoucherTransaction(
+      id: '9',
+      description: 'Voucher Used at Shop',
+      amount: 400.00,
+      type: 'debit',
+      date: '19 Apr 2026, 01:00 PM',
+      status: 'completed',
+    ),
+    VoucherTransaction(
+      id: '10',
+      description: 'Welcome Bonus',
+      amount: 300.00,
+      type: 'credit',
+      date: '18 Apr 2026, 10:00 AM',
+      status: 'completed',
+    ),
+  ],
+);
+
 // ==========================================
-// 2. Provider
+// 2. VoucherBalancePage
 // ==========================================
 
-final voucherBalanceProvider = FutureProvider<VoucherBalance?>((ref) async {
-  const String baseUrl = "https://easy.ltcminematrix.com/api";
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('jwt_token');
-
-  if (token == null) return null;
-
-  try {
-    final response = await http.get(
-      Uri.parse("$baseUrl/user/voucher-balance"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    ).timeout(const Duration(seconds: 15));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['status'] == 'success') {
-        return VoucherBalance.fromJson(data['data']);
-      }
-    }
-  } catch (e) {
-    debugPrint("Voucher Balance Error: $e");
-    return null;
-  }
-  return null;
-});
-
-// ==========================================
-// 3. VoucherBalancePage
-// ==========================================
-
-class VoucherBalancePage extends ConsumerStatefulWidget {
+class VoucherBalancePage extends StatefulWidget {
   const VoucherBalancePage({super.key});
 
   @override
-  ConsumerState<VoucherBalancePage> createState() => _VoucherBalancePageState();
+  State<VoucherBalancePage> createState() => _VoucherBalancePageState();
 }
 
-class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
+class _VoucherBalancePageState extends State<VoucherBalancePage> {
   static const Color skyBlue = Color(0xFF29B6F6);
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Credit', 'Debit', 'Pending'];
+
+  List<VoucherTransaction> _getFiltered(List<VoucherTransaction> all) {
+    switch (_selectedFilter) {
+      case 'Credit':
+        return all.where((t) => t.type == 'credit').toList();
+      case 'Debit':
+        return all.where((t) => t.type == 'debit').toList();
+      case 'Pending':
+        return all.where((t) => t.status == 'pending').toList();
+      default:
+        return all;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,146 +164,122 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final dividerColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFEEEEEE);
 
-    final voucherAsync = ref.watch(voucherBalanceProvider);
+    final voucher = demoVoucherBalance;
+    final filtered = _getFiltered(voucher.transactions);
 
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
-        child: voucherAsync.when(
-          data: (voucher) {
-            if (voucher == null) {
-              return _buildErrorState(isDark, textColor, subTextColor, 'No data found');
-            }
-            return _buildContent(
-              voucher, isDark, cardColor, textColor, subTextColor, dividerColor,
-            );
+        child: RefreshIndicator(
+          color: skyBlue,
+          backgroundColor: cardColor,
+          onRefresh: () async {
+            await Future.delayed(const Duration(seconds: 1));
           },
-          loading: () => _buildLoadingState(isDark),
-          error: (err, _) =>
-              _buildErrorState(isDark, textColor, subTextColor, err.toString()),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 30),
+            physics: const BouncingScrollPhysics(),
+            children: [
+              // ── Title ──────────────────────────────────────────────────────
+              Text(
+                'Voucher Balance',
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Track your voucher earnings & usage',
+                style: GoogleFonts.poppins(fontSize: 13, color: subTextColor),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Balance Card ───────────────────────────────────────────────
+              _buildBalanceCard(voucher),
+
+              const SizedBox(height: 16),
+
+              // ── Stats Row ──────────────────────────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      icon: Icons.add_circle_rounded,
+                      iconColor: Colors.green,
+                      label: 'Total Earned',
+                      amount: '৳${voucher.totalBalance.toStringAsFixed(2)}',
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      isDark: isDark,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatCard(
+                      icon: Icons.remove_circle_rounded,
+                      iconColor: Colors.orange,
+                      label: 'Total Used',
+                      amount: '৳${voucher.usedBalance.toStringAsFixed(2)}',
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      isDark: isDark,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Transaction Header ─────────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Transactions',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  Text(
+                    '${filtered.length} records',
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, color: subTextColor),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // ── Filter Chips ───────────────────────────────────────────────
+              _buildFilterChips(isDark, subTextColor),
+
+              const SizedBox(height: 14),
+
+              // ── Transaction List ───────────────────────────────────────────
+              if (filtered.isEmpty)
+                _buildEmptyState(subTextColor)
+              else
+                ...filtered.asMap().entries.map(
+                  (e) => _buildTransactionCard(
+                    e.value, isDark, cardColor, textColor, subTextColor,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ── Main Content ──────────────────────────────────────────────────────────────
-
-  Widget _buildContent(
-    VoucherBalance voucher,
-    bool isDark,
-    Color cardColor,
-    Color textColor,
-    Color subTextColor,
-    Color dividerColor,
-  ) {
-    final filtered = _getFiltered(voucher.transactions);
-
-    return RefreshIndicator(
-      color: skyBlue,
-      backgroundColor: cardColor,
-      onRefresh: () async => ref.refresh(voucherBalanceProvider),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 30),
-        physics: const BouncingScrollPhysics(),
-        children: [
-          // Page Title
-          Text(
-            'Voucher Balance',
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Track your voucher earnings & usage',
-            style: GoogleFonts.poppins(fontSize: 13, color: subTextColor),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Balance Card
-          _buildBalanceCard(voucher),
-
-          const SizedBox(height: 16),
-
-          // Stats Row
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.add_circle_rounded,
-                  iconColor: Colors.green,
-                  label: 'Total Earned',
-                  amount: '৳${voucher.totalBalance.toStringAsFixed(2)}',
-                  cardColor: cardColor,
-                  textColor: textColor,
-                  subTextColor: subTextColor,
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.remove_circle_rounded,
-                  iconColor: Colors.orange,
-                  label: 'Total Used',
-                  amount: '৳${voucher.usedBalance.toStringAsFixed(2)}',
-                  cardColor: cardColor,
-                  textColor: textColor,
-                  subTextColor: subTextColor,
-                  isDark: isDark,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Transaction Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Transactions',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              Text(
-                '${filtered.length} records',
-                style: GoogleFonts.poppins(fontSize: 12, color: subTextColor),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Filter Chips
-          _buildFilterChips(isDark, subTextColor),
-
-          const SizedBox(height: 14),
-
-          // Transactions
-          if (filtered.isEmpty)
-            _buildEmptyState(subTextColor)
-          else
-            ...filtered.asMap().entries.map(
-              (e) => _buildTransactionCard(
-                e.value, isDark, cardColor, textColor, subTextColor, e.key,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // ── Balance Card ──────────────────────────────────────────────────────────────
+  // ── Balance Card ────────────────────────────────────────────────────────────
 
   Widget _buildBalanceCard(VoucherBalance voucher) {
     final usedPercent = voucher.totalBalance > 0
@@ -286,19 +307,20 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Label + Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Available Balance',
                 style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -311,10 +333,9 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
                     Text(
                       'Voucher',
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -324,17 +345,15 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
 
           const SizedBox(height: 10),
 
+          // Amount
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '৳',
-                style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text('৳',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600)),
               const SizedBox(width: 4),
               Text(
                 voucher.availableBalance.toStringAsFixed(2),
@@ -350,17 +369,16 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
 
           const SizedBox(height: 20),
 
+          // Progress labels
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Used: ৳${voucher.usedBalance.toStringAsFixed(2)}',
-                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 11),
-              ),
-              Text(
-                'Total: ৳${voucher.totalBalance.toStringAsFixed(2)}',
-                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 11),
-              ),
+              Text('Used: ৳${voucher.usedBalance.toStringAsFixed(2)}',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white70, fontSize: 11)),
+              Text('Total: ৳${voucher.totalBalance.toStringAsFixed(2)}',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white70, fontSize: 11)),
             ],
           ),
           const SizedBox(height: 6),
@@ -369,20 +387,23 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
             child: LinearProgressIndicator(
               value: usedPercent,
               backgroundColor: Colors.white.withOpacity(0.25),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Colors.white),
               minHeight: 7,
             ),
           ),
 
           const SizedBox(height: 16),
 
+          // Copy button
           GestureDetector(
             onTap: () {
               Clipboard.setData(ClipboardData(
                   text: voucher.availableBalance.toStringAsFixed(2)));
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Balance copied!', style: GoogleFonts.poppins()),
+                  content:
+                      Text('Balance copied!', style: GoogleFonts.poppins()),
                   backgroundColor: const Color(0xFF0288D1),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
@@ -392,7 +413,8 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
               );
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
@@ -401,15 +423,15 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.copy_rounded, color: Colors.white, size: 14),
+                  const Icon(Icons.copy_rounded,
+                      color: Colors.white, size: 14),
                   const SizedBox(width: 6),
                   Text(
                     'Copy Balance',
                     style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -420,7 +442,7 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
     );
   }
 
-  // ── Stat Card ─────────────────────────────────────────────────────────────────
+  // ── Stat Card ────────────────────────────────────────────────────────────────
 
   Widget _buildStatCard({
     required IconData icon,
@@ -459,7 +481,8 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
           ),
           const SizedBox(height: 10),
           Text(label,
-              style: GoogleFonts.poppins(fontSize: 11, color: subTextColor)),
+              style:
+                  GoogleFonts.poppins(fontSize: 11, color: subTextColor)),
           const SizedBox(height: 2),
           Text(
             amount,
@@ -474,7 +497,7 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
     );
   }
 
-  // ── Filter Chips ──────────────────────────────────────────────────────────────
+  // ── Filter Chips ─────────────────────────────────────────────────────────────
 
   Widget _buildFilterChips(bool isDark, Color subTextColor) {
     return SizedBox(
@@ -491,18 +514,22 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
             onTap: () => setState(() => _selectedFilter = f),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
               decoration: BoxDecoration(
                 color: selected
                     ? skyBlue
-                    : (isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100),
+                    : (isDark
+                        ? const Color(0xFF2A2A2A)
+                        : Colors.grey.shade100),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 f,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight:
+                      selected ? FontWeight.w600 : FontWeight.w500,
                   color: selected ? Colors.white : subTextColor,
                 ),
               ),
@@ -521,12 +548,12 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
     Color cardColor,
     Color textColor,
     Color subTextColor,
-    int index,
   ) {
     final isCredit = tx.type == 'credit';
     final amountColor = isCredit ? Colors.green : Colors.orange;
-    final iconData =
-        isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded;
+    final iconData = isCredit
+        ? Icons.arrow_downward_rounded
+        : Icons.arrow_upward_rounded;
     final amountPrefix = isCredit ? '+' : '-';
 
     Color statusColor;
@@ -565,6 +592,7 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
       ),
       child: Row(
         children: [
+          // Icon
           Container(
             width: 46,
             height: 46,
@@ -575,6 +603,8 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
             child: Icon(iconData, color: amountColor, size: 22),
           ),
           const SizedBox(width: 14),
+
+          // Description + Date
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,6 +635,8 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
               ],
             ),
           ),
+
+          // Amount + Status
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -618,7 +650,8 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
               ),
               const SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
@@ -662,107 +695,5 @@ class _VoucherBalancePageState extends ConsumerState<VoucherBalancePage> {
         ),
       ),
     );
-  }
-
-  // ── Loading State ─────────────────────────────────────────────────────────────
-
-  Widget _buildLoadingState(bool isDark) {
-    final base = isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade200;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 30),
-      children: [
-        _shimmer(200, 24, base),
-        const SizedBox(height: 16),
-        Row(children: [
-          Expanded(child: _shimmer(100, 18, base)),
-          const SizedBox(width: 12),
-          Expanded(child: _shimmer(100, 18, base)),
-        ]),
-        const SizedBox(height: 20),
-        ...List.generate(
-          5,
-          (_) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _shimmer(72, 18, base),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _shimmer(double height, double radius, Color base) {
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: base,
-        borderRadius: BorderRadius.circular(radius),
-      ),
-    );
-  }
-
-  // ── Error State ───────────────────────────────────────────────────────────────
-
-  Widget _buildErrorState(
-      bool isDark, Color textColor, Color subTextColor, String msg) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cloud_off_rounded,
-                size: 72, color: subTextColor.withOpacity(0.5)),
-            const SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: GoogleFonts.poppins(
-                color: textColor,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              msg,
-              style: GoogleFonts.poppins(color: subTextColor, fontSize: 12),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: skyBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 13),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: Text('Try Again',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-              onPressed: () => ref.refresh(voucherBalanceProvider),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Filter Helper ─────────────────────────────────────────────────────────────
-
-  List<VoucherTransaction> _getFiltered(List<VoucherTransaction> all) {
-    switch (_selectedFilter) {
-      case 'Credit':
-        return all.where((t) => t.type == 'credit').toList();
-      case 'Debit':
-        return all.where((t) => t.type == 'debit').toList();
-      case 'Pending':
-        return all.where((t) => t.status == 'pending').toList();
-      default:
-        return all;
-    }
   }
 }
