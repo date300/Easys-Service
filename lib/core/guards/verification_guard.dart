@@ -3,7 +3,28 @@ import '../services/auth_service.dart';
 import '../widgets/auto_notice.dart';
 
 class VerificationGuard {
-  /// অটো চেক — বাটন ক্লিক ছাড়াই উপরে নোটিস আসবে, ম্যানুয়ালি ক্লোজ করতে হবে
+  /// পুরোনো check মেথড — home_screen.dart থেকে যেভাবে কল করে সেভাবেই কাজ করবে
+  static Future<void> check(
+    BuildContext context, {
+    required VoidCallback onVerified,
+    double amount = 300.00,
+    String purpose = 'Account Verification Fee',
+    bool useDialog = false,
+  }) async {
+    final verified = await AuthService.isVerified();
+    if (!context.mounted) return;
+
+    if (verified) {
+      onVerified();
+    } else {
+      AutoNotice.warning(
+        context,
+        'Please complete $purpose by paying ৳$amount to unlock this feature.',
+      );
+    }
+  }
+
+  /// পেজ লোডে অটো চেক — বাটন ক্লিক ছাড়াই নোটিস আসবে
   static Future<void> autoCheck(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -21,7 +42,7 @@ class VerificationGuard {
     }
   }
 
-  /// পেজ লোড হলেই অটো চেক
+  /// initState এ কল করতে হবে
   static void checkOnLoad(
     BuildContext context, {
     VoidCallback? onVerified,
@@ -31,13 +52,21 @@ class VerificationGuard {
     });
   }
 
+  /// পুরোনো wrap মেথড
   static Widget wrap({
     required BuildContext context,
     required Widget child,
     required VoidCallback onVerified,
+    double amount = 300.00,
+    String purpose = 'Account Verification Fee',
   }) {
     return GestureDetector(
-      onTap: () => autoCheck(context, onVerified: onVerified),
+      onTap: () => check(
+        context,
+        onVerified: onVerified,
+        amount: amount,
+        purpose: purpose,
+      ),
       child: child,
     );
   }
