@@ -100,13 +100,11 @@ final GoRouter appRouter = GoRouter(
   builder: (context, state) => const VoucherBalancePage(),
 ),
         GoRoute(
-          path: '/payment',
-          builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>?;
-            return PaymentGatewayScreen(
-              amount: extra?['amount'] ?? 300.00,
-              purpose: extra?['purpose'] ?? 'Account Verification Fee',
-              onPaymentSuccess: extra?['onSuccess'],
+  path: '/payment',
+  builder: (context, state) {
+    final extra = state.extra as Map<String, dynamic>?;
+    return PaymentGatewayScreen(
+      onPaymentSuccess: extra?['onSuccess'],
             );
           },
         ),

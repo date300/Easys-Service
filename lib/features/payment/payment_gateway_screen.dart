@@ -142,7 +142,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // ? AppBar ??? ? MainWrapper ?? AppTopBar back arrow ??????
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SlideTransition(
@@ -150,8 +149,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
           child: SafeArea(
             child: Column(
               children: [
-                AmountCard(amount: widget.amount, purpose: widget.purpose),
-                const SizedBox(height: 28),
+                // Top margin added for spacing after removing AmountCard
+                const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Align(
@@ -166,7 +165,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
