@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import '../features/vendor_apply/vendor_apply_page.dart';
 import '../screens/splash/splash_screen.dart';
 import '../features/recharge/recharge_screen.dart';
 import '../features/drive/drive_screen.dart';
@@ -91,6 +91,11 @@ final GoRouter appRouter = GoRouter(
           path: '/edit-profile',
           builder: (context, state) => const EditProfileScreen(),
         ),
+        
+_detailRoute(
+  path: '/vendor-apply',
+  builder: (context, state) => const VendorApplyPage(),
+),
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),

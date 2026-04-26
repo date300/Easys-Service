@@ -126,7 +126,7 @@ class AppDrawer extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  // 1. Voucher Balance ✅
+                  // 1. Voucher Balance
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -143,7 +143,25 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 2. Royalty Salary
+                  // 2. Vendor Apply  ← NEW
+                  if (isLoggedIn)
+                    _drawerItem(
+                      context,
+                      Icons.storefront_rounded,
+                      "Vendor Apply",
+                      iconColor: Colors.orange,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      splashColor: splashColor,
+                      onTap: () {
+                        Navigator.pop(context);
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Vendor Apply';
+                        context.push('/vendor-apply');
+                      },
+                    ),
+
+                  // 3. Royalty Salary
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -158,7 +176,7 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 3. Leaderboard
+                  // 4. Leaderboard
                   _drawerItem(
                     context,
                     Icons.emoji_events_rounded,
@@ -178,7 +196,7 @@ class AppDrawer extends ConsumerWidget {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 4. Support Center
+                  // 5. Support Center
                   _drawerItem(
                     context,
                     Icons.support_agent_rounded,
@@ -192,7 +210,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 5. Facebook
+                  // 6. Facebook
                   _drawerItem(
                     context,
                     Icons.facebook_rounded,
@@ -207,7 +225,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 6. YouTube
+                  // 7. YouTube
                   _drawerItem(
                     context,
                     Icons.smart_display_rounded,
@@ -222,7 +240,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 7. Telegram
+                  // 8. Telegram
                   _drawerItem(
                     context,
                     Icons.telegram_rounded,
@@ -237,7 +255,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 8. Website
+                  // 9. Website
                   _drawerItem(
                     context,
                     Icons.language_rounded,
@@ -257,7 +275,7 @@ class AppDrawer extends ConsumerWidget {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 9. Privacy Policy
+                  // 10. Privacy Policy
                   _drawerItem(
                     context,
                     Icons.privacy_tip_rounded,
@@ -271,7 +289,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 10. Terms & Conditions
+                  // 11. Terms & Conditions
                   _drawerItem(
                     context,
                     Icons.description_rounded,
@@ -285,7 +303,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 11. About Us
+                  // 12. About Us
                   _drawerItem(
                     context,
                     Icons.info_rounded,
@@ -302,7 +320,7 @@ class AppDrawer extends ConsumerWidget {
               ),
             ),
 
-            // 12. Logout
+            // Logout
             if (isLoggedIn)
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 10, 15, 25),
@@ -444,7 +462,7 @@ class AppDrawer extends ConsumerWidget {
     Clipboard.setData(ClipboardData(text: affiliateId));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Affiliate ID কপি হয়েছে!', style: GoogleFonts.poppins()),
+        content: Text('Affiliate ID copied!', style: GoogleFonts.poppins()),
         backgroundColor: isDark ? const Color(0xFF29B6F6) : Colors.green,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
