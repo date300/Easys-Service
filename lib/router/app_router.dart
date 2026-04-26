@@ -95,7 +95,7 @@ final GoRouter appRouter = GoRouter(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
-        GoRoute(
+        _detailRoute(
   path: '/voucher-balance',
   builder: (context, state) => const VoucherBalancePage(),
 ),
