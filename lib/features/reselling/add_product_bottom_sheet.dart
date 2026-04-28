@@ -10,7 +10,6 @@ import 'product_model.dart';
 
 class AddProductBottomSheet extends StatefulWidget {
   final Function(ProductModel) onProductAdded;
-
   const AddProductBottomSheet({super.key, required this.onProductAdded});
 
   @override
@@ -29,11 +28,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
   final _brandController         = TextEditingController(text: 'Generic');
   final _skuController           = TextEditingController();
 
-  bool    _isLoading    = false;
-  bool    _isLoadingBiz = true;
-  int?    _businessId;
-  String? _bizError;
-
+  bool _isLoading = false;
   String _selectedCategory = 'Electronics';
 
   final Map<String, int> _categoryMap = {
@@ -51,7 +46,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
   void initState() {
     super.initState();
     _skuController.text = 'SKU-${DateTime.now().millisecondsSinceEpoch}';
-    _loadBusinessId();
   }
 
   @override
@@ -67,75 +61,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     super.dispose();
   }
 
-  // ✅ Database থেকে /business/my endpoint দিয়ে business_id আনো
-  Future<void> _loadBusinessId() async {
-    setState(() { _isLoadingBiz = true; _bizError = null; });
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
-
-      if (token == null || token.isEmpty) {
-        setState(() {
-          _bizError     = 'Please login first. Token not found.';
-          _isLoadingBiz = false;
-        });
-        return;
-      }
-
-      // ✅ Database থেকে সরাসরি business আনো
-      final response = await http.get(
-        Uri.parse('$_baseUrl/business/my'),
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 10));
-
-      if (!mounted) return;
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data['status'] == 'success') {
-        final bizId     = data['data']['id'];
-        final bizStatus = data['data']['status'] as String?;
-
-        // ✅ Business approved কিনা check করো
-        if (bizStatus != 'approved') {
-          setState(() {
-            _bizError     = 'Your business is "${bizStatus ?? 'pending'}".\nWait for admin approval.';
-            _isLoadingBiz = false;
-          });
-          return;
-        }
-
-        // ✅ SharedPreferences এ cache করো
-        final id = bizId is int ? bizId : int.parse(bizId.toString());
-        await prefs.setInt('business_id', id);
-
-        setState(() { _businessId = id; _isLoadingBiz = false; });
-
-      } else if (response.statusCode == 404) {
-        setState(() {
-          _bizError     = 'No business found.\nPlease apply as a vendor first.';
-          _isLoadingBiz = false;
-        });
-      } else {
-        setState(() {
-          _bizError     = data['message'] ?? 'Failed to load business info.';
-          _isLoadingBiz = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _bizError     = 'Connection error. Check your internet.';
-          _isLoadingBiz = false;
-        });
-      }
-    }
-  }
-
   Future<void> _submitProduct() async {
     final name = _titleController.text.trim();
     if (name.length < 2) {
@@ -149,7 +74,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
       return;
     }
 
-    // ✅ Backend validate করে discount_price < price
     double? discountPrice;
     if (_discountPriceController.text.trim().isNotEmpty) {
       discountPrice = double.tryParse(_discountPriceController.text.trim());
@@ -163,11 +87,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
       }
     }
 
-    if (_businessId == null) {
-      _showSnackBar('Business not found. Apply as vendor first.', isError: true);
-      return;
-    }
-
     setState(() => _isLoading = true);
 
     try {
@@ -175,7 +94,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
       final token = prefs.getString('jwt_token');
 
       if (token == null || token.isEmpty) {
-        _showSnackBar('Please login first. Token not found.', isError: true);
+        _showSnackBar('Please login first.', isError: true);
         return;
       }
 
@@ -183,12 +102,11 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
           ? _imageController.text.trim()
           : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30';
 
+      // business_id লাগবে না, backend নিজেই user_id দিয়ে খুঁজে নেবে
       final Map<String, dynamic> requestBody = {
-        'business_id':      _businessId,
         'product_name':     name,
         'brand':            _brandController.text.trim().isNotEmpty
-                              ? _brandController.text.trim()
-                              : 'Generic',
+                              ? _brandController.text.trim() : 'Generic',
         'price':            price,
         'discount_price':   discountPrice,
         'category_id':      _categoryMap[_selectedCategory] ?? 1,
@@ -237,7 +155,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
       } else if (response.statusCode == 403) {
         _showSnackBar(
-          responseData['message'] ?? 'Business not approved. Contact support.',
+          responseData['message'] ?? 'No approved business found.',
           isError: true,
         );
       } else if (response.statusCode == 400) {
@@ -280,9 +198,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
       child: SingleChildScrollView(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          left:   20.w,
-          right:  20.w,
-          top:    20.h,
+          left: 20.w, right: 20.w, top: 20.h,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,7 +214,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
               ),
             ),
             SizedBox(height: 20.h),
-
             Text(
               'Add New Product',
               style: GoogleFonts.poppins(
@@ -307,29 +222,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                 color: isDark ? Colors.white : Colors.black87,
               ),
             ),
-            SizedBox(height: 12.h),
-
-            // ✅ Business status banner
-            if (_isLoadingBiz)
-              _infoBanner(
-                icon: CupertinoIcons.clock,
-                message: 'Loading your business info...',
-                color: Colors.orange,
-              )
-            else if (_bizError != null)
-              _infoBanner(
-                icon: CupertinoIcons.exclamationmark_circle,
-                message: _bizError!,
-                color: Colors.red,
-                onRetry: _loadBusinessId,
-              )
-            else
-              _infoBanner(
-                icon: CupertinoIcons.checkmark_shield,
-                message: 'Business verified (ID: $_businessId). Product will be reviewed by admin.',
-                color: Colors.green,
-              ),
-
             SizedBox(height: 20.h),
 
             _buildTextField(_titleController, 'Product Name *', Icons.title),
@@ -340,14 +232,9 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             SizedBox(height: 16.h),
             _buildTextField(_imageController, 'Image URL (optional)', Icons.image),
             SizedBox(height: 16.h),
-            _buildTextField(_priceController, 'Price * (৳)', Icons.attach_money, isNumber: true),
+            _buildTextField(_priceController, 'Price *', Icons.attach_money, isNumber: true),
             SizedBox(height: 16.h),
-            _buildTextField(
-              _discountPriceController,
-              'Discount Price (must be less than price)',
-              Icons.local_offer,
-              isNumber: true,
-            ),
+            _buildTextField(_discountPriceController, 'Discount Price', Icons.local_offer, isNumber: true),
             SizedBox(height: 16.h),
             _buildTextField(_stockController, 'Stock Quantity', Icons.inventory, isNumber: true),
             SizedBox(height: 16.h),
@@ -378,13 +265,10 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                   items: _categoryMap.keys.map((cat) {
                     return DropdownMenuItem(
                       value: cat,
-                      child: Text(
-                        cat,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13.sp,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
+                      child: Text(cat, style: GoogleFonts.poppins(
+                        fontSize: 13.sp,
+                        color: isDark ? Colors.white : Colors.black87,
+                      )),
                     );
                   }).toList(),
                   onChanged: (val) => setState(() => _selectedCategory = val!),
@@ -394,18 +278,14 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             SizedBox(height: 24.h),
 
             GestureDetector(
-              onTap: (_isLoading || _isLoadingBiz || _bizError != null)
-                  ? null
-                  : _submitProduct,
+              onTap: _isLoading ? null : _submitProduct,
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
-                  color: (_isLoading || _isLoadingBiz || _bizError != null)
-                      ? Colors.grey
-                      : const Color(0xFF29B6F6),
+                  color: _isLoading ? Colors.grey : const Color(0xFF29B6F6),
                   borderRadius: BorderRadius.circular(14.r),
-                  boxShadow: (_isLoading || _bizError != null) ? [] : [
+                  boxShadow: _isLoading ? [] : [
                     BoxShadow(
                       color: const Color(0xFF29B6F6).withOpacity(0.3),
                       blurRadius: 14,
@@ -426,43 +306,9 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                       ),
               ),
             ),
+            SizedBox(height: 10.h),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _infoBanner({
-    required IconData icon,
-    required String message,
-    required Color color,
-    VoidCallback? onRetry,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 18.sp),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Text(
-              message,
-              style: GoogleFonts.poppins(fontSize: 12.sp, color: color, height: 1.4),
-            ),
-          ),
-          if (onRetry != null) ...[
-            SizedBox(width: 8.w),
-            GestureDetector(
-              onTap: onRetry,
-              child: Icon(CupertinoIcons.refresh, color: color, size: 18.sp),
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -471,21 +317,18 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     TextEditingController controller,
     String hint,
     IconData icon, {
-    int maxLines  = 1,
+    int maxLines = 1,
     bool isNumber = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          hint,
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: isDark ? Colors.white70 : Colors.grey.shade700,
-          ),
-        ),
+        Text(hint, style: GoogleFonts.poppins(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w500,
+          color: isDark ? Colors.white70 : Colors.grey.shade700,
+        )),
         SizedBox(height: 8.h),
         TextField(
           controller: controller,
