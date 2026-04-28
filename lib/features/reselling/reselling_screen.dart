@@ -142,29 +142,27 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     _searchFocusNode.dispose();
     super.dispose();
   }
+List<ProductModel> _filterProducts(List<ProductModel> all) {
+  return all.where((p) {
+    final matchCat = _selectedCategory == 'All' || p.category == _selectedCategory;
+    final matchSearch = p.title.toLowerCase().contains(_searchQuery.toLowerCase());
+    return matchCat && matchSearch;
+  }).toList();
+}
 
-  List<ProductModel> _filterProducts(List<ProductModel> all) {
-    return all.where((p) {
-      final matchCat = _selectedCategory == 'All' || p.category == _selectedCategory;
-      final matchSearch = p.title.toLowerCase().contains(_searchQuery.toLowerCase());
-      return matchCat && matchSearch;
-    }).toList();
-  }
-
-  void _showAddProductSheet() {
-    HapticFeedback.mediumImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => AddProductBottomSheet(
-        onProductAdded: () {
-          ref.read(productListProvider.notifier).addProduct(product);
-        },
-      ),
-    );
-  }
-
+void _showAddProductSheet() {
+  HapticFeedback.mediumImpact();
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => AddProductBottomSheet(
+      onProductAdded: (ProductModel newProduct) {
+        ref.read(productListProvider.notifier).addProduct(newProduct);
+      },
+    ),
+  );
+}
   @override
   Widget build(BuildContext context) {
     final allProducts = ref.watch(productListProvider);
