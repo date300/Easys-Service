@@ -5,11 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-// ─── State Providers ──────────────────────────────────────────────────────────
+// ==================== State Providers ====================
 
 final vendorApplyLoadingProvider = StateProvider<bool>((ref) => false);
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ==================== Page ====================
 
 class VendorApplyPage extends ConsumerStatefulWidget {
   const VendorApplyPage({super.key});
@@ -29,18 +29,23 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
   final _phoneCtrl        = TextEditingController();
   final _addressCtrl      = TextEditingController();
   final _descriptionCtrl  = TextEditingController();
+  final _countryCtrl      = TextEditingController();
 
   String? _selectedCategory;
 
+  // API অনুযায়ী ১১টি ক্যাটাগরি
   final List<String> _categories = [
-    'Food & Beverage',
-    'Electronics',
-    'Clothing & Fashion',
-    'Health & Beauty',
-    'Home & Garden',
-    'Sports & Outdoors',
-    'Books & Education',
-    'Other',
+    "Fashion & Clothing",
+    "Electronics",
+    "Mobile & Accessories",
+    "Home & Kitchen",
+    "Beauty & Cosmetics",
+    "Sports & Fitness",
+    "Groceries",
+    "Digital Products",
+    "Books & Education",
+    "Automotive",
+    "Health & Pharmacy",
   ];
 
   @override
@@ -50,9 +55,11 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
     _descriptionCtrl.dispose();
+    _countryCtrl.dispose();
     super.dispose();
   }
 
+  // ==================== API: Create Business ====================
   Future<void> _submitApplication() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -60,21 +67,27 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
+      final token = prefs.getString('token'); // আপনার app এ 'token' নামে থাকলে
+
+      if (token == null || token.isEmpty) {
+        _showResultDialog(success: false, message: 'Please login first. Token not found.');
+        return;
+      }
 
       final response = await http.post(
-        Uri.parse("$baseUrl/vendor/apply"),
+        Uri.parse("$baseUrl/business/create"), // ← API URL ঠিক করা
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
         body: jsonEncode({
-          "business_name": _businessNameCtrl.text.trim(),
-          "business_type": _businessTypeCtrl.text.trim(),
-          "category":      _selectedCategory,
-          "phone":         _phoneCtrl.text.trim(),
-          "address":       _addressCtrl.text.trim(),
-          "description":   _descriptionCtrl.text.trim(),
+          "business_name":      _businessNameCtrl.text.trim(),
+          "business_type":      _businessTypeCtrl.text.trim(),
+          "category":           _selectedCategory,
+          "mobile_number":      _phoneCtrl.text.trim(),      // ← API অনুযায়ী
+          "business_address":   _addressCtrl.text.trim(),    // ← API অনুযায়ী
+          "business_description": _descriptionCtrl.text.trim(), // ← API অনুযায়ী
+          "country":            _countryCtrl.text.trim(),    // ← নতুন ফিল্ড
         }),
       ).timeout(const Duration(seconds: 15));
 
@@ -82,20 +95,44 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data['status'] == 'success') {
-        _showResultDialog(success: true, message: data['message'] ?? 'Application submitted successfully!');
+      if (response.statusCode == 201 && data['status'] == 'success') {
+        _showResultDialog(
+          success: true, 
+          message: "${data['message']}\n\nBusiness ID: ${data['data']['id']}\nVoucher Deducted: ৳${data['data']['voucher_deducted']}\nRemaining Balance: ৳${data['data']['remaining_balance']}",
+        );
       } else {
-        _showResultDialog(success: false, message: data['message'] ?? 'Something went wrong. Please try again.');
+        _showResultDialog(success: false, message: data['message'] ?? 'Something went wrong.');
       }
     } catch (e) {
       if (mounted) {
-        _showResultDialog(success: false, message: 'Network error. Please check your connection.');
+        _showResultDialog(success: false, message: 'Network error: $e');
       }
     } finally {
       ref.read(vendorApplyLoadingProvider.notifier).state = false;
     }
   }
 
+  // ==================== API: Get My Businesses ====================
+  Future<void> _getMyBusinesses() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.get(
+        Uri.parse("$baseUrl/business"),
+        headers: {
+          "Authorization": "Bearer $token",
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      final data = jsonDecode(response.body);
+      print("My Businesses: ${jsonEncode(data)}");
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  // ==================== Dialog ====================
   void _showResultDialog({required bool success, required String message}) {
     showDialog(
       context: context,
@@ -131,8 +168,8 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // close dialog
-              if (success) Navigator.pop(context); // go back on success
+              Navigator.pop(context);
+              if (success) Navigator.pop(context);
             },
             child: Text(
               success ? 'Done' : 'Try Again',
@@ -144,8 +181,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
     );
   }
 
-  // ─── Build ─────────────────────────────────────────────────────────────────
-
+  // ==================== Build ====================
   @override
   Widget build(BuildContext context) {
     final isDark      = Theme.of(context).brightness == Brightness.dark;
@@ -158,14 +194,26 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
 
     return Scaffold(
       backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: bgColor,
+        elevation: 0,
+        title: Text(
+          'Apply for Vendor',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: textColor),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
           physics: const BouncingScrollPhysics(),
           children: [
 
-            // ── Info Banner ───────────────────────────────────────────────────
+            // Info Banner
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -183,7 +231,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Fill in your business details carefully. Our team will review your application within 2–3 business days.',
+                      'Application fee: ৳999 voucher balance. Fill in your business details carefully.',
                       style: GoogleFonts.poppins(fontSize: 12, color: isDark ? Colors.white70 : Colors.black54, height: 1.5),
                     ),
                   ),
@@ -193,7 +241,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
 
             const SizedBox(height: 20),
 
-            // ── Section: Business Info ────────────────────────────────────────
+            // Section: Business Info
             _sectionLabel('Business Information', isDark),
             const SizedBox(height: 12),
 
@@ -203,8 +251,8 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
               children: [
                 _inputField(
                   controller: _businessNameCtrl,
-                  label: 'Business Name',
-                  hint: 'e.g. ABC Traders',
+                  label: 'Business Name *',
+                  hint: 'e.g. ABC Electronics',
                   icon: Icons.store_rounded,
                   textColor: textColor,
                   hintColor: hintColor,
@@ -214,8 +262,8 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                 _divider(borderColor),
                 _inputField(
                   controller: _businessTypeCtrl,
-                  label: 'Business Type',
-                  hint: 'e.g. Sole Proprietorship, LLC',
+                  label: 'Business Type *',
+                  hint: 'e.g. Retail, Wholesale',
                   icon: Icons.business_center_rounded,
                   textColor: textColor,
                   hintColor: hintColor,
@@ -224,7 +272,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                 ),
                 _divider(borderColor),
                 _dropdownField(
-                  label: 'Category',
+                  label: 'Category *',
                   icon: Icons.category_rounded,
                   textColor: textColor,
                   hintColor: hintColor,
@@ -237,7 +285,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
 
             const SizedBox(height: 20),
 
-            // ── Section: Contact Info ─────────────────────────────────────────
+            // Section: Contact & Location
             _sectionLabel('Contact & Location', isDark),
             const SizedBox(height: 12),
 
@@ -247,24 +295,30 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
               children: [
                 _inputField(
                   controller: _phoneCtrl,
-                  label: 'Phone Number',
-                  hint: 'e.g. +880 1234 567890',
+                  label: 'Mobile Number *',
+                  hint: 'e.g. 01712345678 or +8801712345678',
                   icon: Icons.phone_rounded,
                   keyboardType: TextInputType.phone,
                   textColor: textColor,
                   hintColor: hintColor,
                   isDark: isDark,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Phone number is required';
-                    if (v.length < 8) return 'Enter a valid phone number';
+                    if (v == null || v.isEmpty) return 'Mobile number is required';
+                    // BD number check
+                    final clean = v.replaceAll(RegExp(r'[\s-]'), '');
+                    final bdRegex = RegExp(r'^(?:\+8801|01)[3-9]\d{8}$');
+                    final intlRegex = RegExp(r'^\+\d{10,15}$');
+                    if (!bdRegex.hasMatch(clean) && !intlRegex.hasMatch(clean)) {
+                      return 'Invalid mobile number format';
+                    }
                     return null;
                   },
                 ),
                 _divider(borderColor),
                 _inputField(
                   controller: _addressCtrl,
-                  label: 'Business Address',
-                  hint: 'Street, City, Country',
+                  label: 'Business Address *',
+                  hint: 'Full address: Street, City, Country',
                   icon: Icons.location_on_rounded,
                   maxLines: 2,
                   textColor: textColor,
@@ -272,12 +326,22 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                   isDark: isDark,
                   validator: (v) => v == null || v.isEmpty ? 'Address is required' : null,
                 ),
+                _divider(borderColor),
+                _inputField(
+                  controller: _countryCtrl,
+                  label: 'Country',
+                  hint: 'e.g. Bangladesh',
+                  icon: Icons.public_rounded,
+                  textColor: textColor,
+                  hintColor: hintColor,
+                  isDark: isDark,
+                ),
               ],
             ),
 
             const SizedBox(height: 20),
 
-            // ── Section: About Business ───────────────────────────────────────
+            // Section: About Business
             _sectionLabel('About Your Business', isDark),
             const SizedBox(height: 12),
 
@@ -288,24 +352,19 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                 _inputField(
                   controller: _descriptionCtrl,
                   label: 'Business Description',
-                  hint: 'Tell us what your business does, what products/services you offer...',
+                  hint: 'Tell us what your business does... (optional)',
                   icon: Icons.description_rounded,
-                  maxLines: 5,
+                  maxLines: 4,
                   textColor: textColor,
                   hintColor: hintColor,
                   isDark: isDark,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Description is required';
-                    if (v.length < 20) return 'Please write at least 20 characters';
-                    return null;
-                  },
                 ),
               ],
             ),
 
             const SizedBox(height: 30),
 
-            // ── Submit Button ─────────────────────────────────────────────────
+            // Submit Button
             SizedBox(
               height: 54,
               child: ElevatedButton(
@@ -329,11 +388,30 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                           const Icon(Icons.send_rounded, size: 20),
                           const SizedBox(width: 10),
                           Text(
-                            'Submit Application',
+                            'Submit (৳999)',
                             style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // View My Businesses Button
+            SizedBox(
+              height: 48,
+              child: OutlinedButton(
+                onPressed: _getMyBusinesses,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: skyBlue,
+                  side: BorderSide(color: skyBlue),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Text(
+                  'View My Businesses',
+                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
               ),
             ),
           ],
@@ -342,7 +420,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
     );
   }
 
-  // ─── Helper Widgets ────────────────────────────────────────────────────────
+  // ==================== Helper Widgets ====================
 
   Widget _sectionLabel(String label, bool isDark) {
     return Row(

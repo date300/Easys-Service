@@ -66,8 +66,9 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
     ref.read(vendorApplyLoadingProvider.notifier).state = true;
 
     try {
+      // ← ProfileScreen এর মতো: 'jwt_token' নামে পড়ুন
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token'); // আপনার app এ 'token' নামে থাকলে
+      final token = prefs.getString('jwt_token');
 
       if (token == null || token.isEmpty) {
         _showResultDialog(success: false, message: 'Please login first. Token not found.');
@@ -75,7 +76,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
       }
 
       final response = await http.post(
-        Uri.parse("$baseUrl/business/create"), // ← API URL ঠিক করা
+        Uri.parse("$baseUrl/business/create"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -84,10 +85,10 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
           "business_name":      _businessNameCtrl.text.trim(),
           "business_type":      _businessTypeCtrl.text.trim(),
           "category":           _selectedCategory,
-          "mobile_number":      _phoneCtrl.text.trim(),      // ← API অনুযায়ী
-          "business_address":   _addressCtrl.text.trim(),    // ← API অনুযায়ী
-          "business_description": _descriptionCtrl.text.trim(), // ← API অনুযায়ী
-          "country":            _countryCtrl.text.trim(),    // ← নতুন ফিল্ড
+          "mobile_number":      _phoneCtrl.text.trim(),
+          "business_address":   _addressCtrl.text.trim(),
+          "business_description": _descriptionCtrl.text.trim(),
+          "country":            _countryCtrl.text.trim(),
         }),
       ).timeout(const Duration(seconds: 15));
 
@@ -109,26 +110,6 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
       }
     } finally {
       ref.read(vendorApplyLoadingProvider.notifier).state = false;
-    }
-  }
-
-  // ==================== API: Get My Businesses ====================
-  Future<void> _getMyBusinesses() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-
-      final response = await http.get(
-        Uri.parse("$baseUrl/business"),
-        headers: {
-          "Authorization": "Bearer $token",
-        },
-      ).timeout(const Duration(seconds: 15));
-
-      final data = jsonDecode(response.body);
-      print("My Businesses: ${jsonEncode(data)}");
-    } catch (e) {
-      print("Error: $e");
     }
   }
 
@@ -295,24 +276,13 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
               children: [
                 _inputField(
                   controller: _phoneCtrl,
-                  label: 'Mobile Number *',
+                  label: 'Mobile Number',
                   hint: 'e.g. 01712345678 or +8801712345678',
                   icon: Icons.phone_rounded,
                   keyboardType: TextInputType.phone,
                   textColor: textColor,
                   hintColor: hintColor,
                   isDark: isDark,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Mobile number is required';
-                    // BD number check
-                    final clean = v.replaceAll(RegExp(r'[\s-]'), '');
-                    final bdRegex = RegExp(r'^(?:\+8801|01)[3-9]\d{8}$');
-                    final intlRegex = RegExp(r'^\+\d{10,15}$');
-                    if (!bdRegex.hasMatch(clean) && !intlRegex.hasMatch(clean)) {
-                      return 'Invalid mobile number format';
-                    }
-                    return null;
-                  },
                 ),
                 _divider(borderColor),
                 _inputField(
@@ -393,25 +363,6 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                           ),
                         ],
                       ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // View My Businesses Button
-            SizedBox(
-              height: 48,
-              child: OutlinedButton(
-                onPressed: _getMyBusinesses,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: skyBlue,
-                  side: BorderSide(color: skyBlue),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                child: Text(
-                  'View My Businesses',
-                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
               ),
             ),
           ],
