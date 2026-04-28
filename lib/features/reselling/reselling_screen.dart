@@ -158,7 +158,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => AddProductBottomSheet(
-        onProductAdded: (product) {
+        onProductAdded: () {
           ref.read(productListProvider.notifier).addProduct(product);
         },
       ),
