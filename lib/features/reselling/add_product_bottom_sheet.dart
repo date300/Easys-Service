@@ -36,7 +36,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
   String _selectedCategory = 'Electronics';
 
-  // ✅ Backend category_id এর সাথে match
   final Map<String, int> _categoryMap = {
     'Electronics': 1,
     'Smart Watch': 2,
@@ -68,7 +67,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     super.dispose();
   }
 
-  // ✅ SharedPreferences থেকে business_id লোড, না থাকলে API থেকে fetch
+  // ✅ Database থেকে /business/my endpoint দিয়ে business_id আনো
   Future<void> _loadBusinessId() async {
     setState(() { _isLoadingBiz = true; _bizError = null; });
 
@@ -78,22 +77,15 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
       if (token == null || token.isEmpty) {
         setState(() {
-          _bizError    = 'Please login first. Token not found.';
+          _bizError     = 'Please login first. Token not found.';
           _isLoadingBiz = false;
         });
         return;
       }
 
-      // আগে SharedPreferences এ saved আছে কিনা দেখো
-      final saved = prefs.getInt('business_id');
-      if (saved != null) {
-        setState(() { _businessId = saved; _isLoadingBiz = false; });
-        return;
-      }
-
-      // না থাকলে API থেকে vendor products নিয়ে business_id বের করো
+      // ✅ Database থেকে সরাসরি business আনো
       final response = await http.get(
-        Uri.parse('$_baseUrl/vendor/products?limit=1'),
+        Uri.parse('$_baseUrl/business/my'),
         headers: {
           'Content-Type':  'application/json',
           'Authorization': 'Bearer $token',
@@ -104,33 +96,46 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        final list = data['data'] as List?;
-        if (list != null && list.isNotEmpty) {
-          final bizId = list[0]['business_id'];
-          if (bizId != null) {
-            await prefs.setInt('business_id', bizId as int);
-            setState(() { _businessId = bizId; _isLoadingBiz = false; });
-            return;
-          }
-        }
-      }
+      if (response.statusCode == 200 && data['status'] == 'success') {
+        final bizId     = data['data']['id'];
+        final bizStatus = data['data']['status'] as String?;
 
-      setState(() {
-        _bizError    = 'No approved business found.\nPlease apply as a vendor first.';
-        _isLoadingBiz = false;
-      });
+        // ✅ Business approved কিনা check করো
+        if (bizStatus != 'approved') {
+          setState(() {
+            _bizError     = 'Your business is "${bizStatus ?? 'pending'}".\nWait for admin approval.';
+            _isLoadingBiz = false;
+          });
+          return;
+        }
+
+        // ✅ SharedPreferences এ cache করো
+        final id = bizId is int ? bizId : int.parse(bizId.toString());
+        await prefs.setInt('business_id', id);
+
+        setState(() { _businessId = id; _isLoadingBiz = false; });
+
+      } else if (response.statusCode == 404) {
+        setState(() {
+          _bizError     = 'No business found.\nPlease apply as a vendor first.';
+          _isLoadingBiz = false;
+        });
+      } else {
+        setState(() {
+          _bizError     = data['message'] ?? 'Failed to load business info.';
+          _isLoadingBiz = false;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _bizError    = 'Failed to load business info.\nCheck your connection.';
+          _bizError     = 'Connection error. Check your internet.';
           _isLoadingBiz = false;
         });
       }
     }
   }
 
-  // ✅ VendorApplyPage এর মতো token pattern
   Future<void> _submitProduct() async {
     final name = _titleController.text.trim();
     if (name.length < 2) {
@@ -144,7 +149,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
       return;
     }
 
-    // ✅ discount_price < price — backend validate করে, client-এও check করা হচ্ছে
+    // ✅ Backend validate করে discount_price < price
     double? discountPrice;
     if (_discountPriceController.text.trim().isNotEmpty) {
       discountPrice = double.tryParse(_discountPriceController.text.trim());
@@ -167,9 +172,9 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token'); // ✅ VendorApplyPage এর মতো
+      final token = prefs.getString('jwt_token');
 
-      if (token == null || token.isEmpty) { // ✅ VendorApplyPage এর মতো
+      if (token == null || token.isEmpty) {
         _showSnackBar('Please login first. Token not found.', isError: true);
         return;
       }
@@ -179,18 +184,18 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
           : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30';
 
       final Map<String, dynamic> requestBody = {
-        'business_id':      _businessId,                         // ✅ dynamic, hardcoded না
+        'business_id':      _businessId,
         'product_name':     name,
         'brand':            _brandController.text.trim().isNotEmpty
                               ? _brandController.text.trim()
                               : 'Generic',
         'price':            price,
-        'discount_price':   discountPrice,                       // null হলে backend skip করে
+        'discount_price':   discountPrice,
         'category_id':      _categoryMap[_selectedCategory] ?? 1,
         'description':      _descriptionController.text.trim(),
         'stock':            int.tryParse(_stockController.text.trim()) ?? 0,
         'sku':              _skuController.text.trim(),
-        'images':           [imageUrl],                          // ✅ array — backend এ array expect করে
+        'images':           [imageUrl],
         'meta_title':       name,
         'meta_description': _descriptionController.text.trim(),
       };
@@ -212,8 +217,8 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
         HapticFeedback.mediumImpact();
 
         final newProduct = ProductModel(
-          id: responseData['product_id']?.toString()  // ✅ backend 'product_id' return করে
-              ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          id:             responseData['product_id']?.toString()
+                          ?? DateTime.now().millisecondsSinceEpoch.toString(),
           title:          name,
           subtitle:       _descriptionController.text.trim(),
           image:          imageUrl,
@@ -231,13 +236,11 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
         Navigator.pop(context);
 
       } else if (response.statusCode == 403) {
-        // Business not approved অথবা not found
         _showSnackBar(
           responseData['message'] ?? 'Business not approved. Contact support.',
           isError: true,
         );
       } else if (response.statusCode == 400) {
-        // Validation error
         _showSnackBar(
           responseData['message'] ?? 'Invalid input. Check all fields.',
           isError: true,
@@ -277,15 +280,14 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
       child: SingleChildScrollView(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          left:  20.w,
-          right: 20.w,
-          top:   20.h,
+          left:   20.w,
+          right:  20.w,
+          top:    20.h,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag handle
             Center(
               child: Container(
                 width: 60.w, height: 4.h,
@@ -352,7 +354,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             _buildTextField(_skuController, 'SKU', Icons.qr_code),
             SizedBox(height: 16.h),
 
-            // Category Dropdown
             Text(
               'Category',
               style: GoogleFonts.poppins(
@@ -392,7 +393,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             ),
             SizedBox(height: 24.h),
 
-            // Submit Button
             GestureDetector(
               onTap: (_isLoading || _isLoadingBiz || _bizError != null)
                   ? null
