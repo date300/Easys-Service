@@ -99,7 +99,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
       if (response.statusCode == 201 && data['status'] == 'success') {
         _showResultDialog(
           success: true, 
-          message: "${data['message']}\n\nBusiness ID: ${data['data']['id']}\nVoucher Deducted: ৳${data['data']['voucher_deducted']}\nRemaining Balance: ৳${data['data']['remaining_balance']}",
+          message: "${data['message']}\n\nBusiness ID: ${data['data']['id']}\nVoucher Deducted: Voucher ${data['data']['voucher_deducted']}\nRemaining Balance: Voucher ${data['data']['remaining_balance']}",
         );
       } else {
         _showResultDialog(success: false, message: data['message'] ?? 'Something went wrong.');
@@ -118,7 +118,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -149,8 +149,12 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              if (success) Navigator.pop(context);
+              Navigator.of(dialogContext).pop();
+              if (success) {
+                Future.microtask(() {
+                  if (mounted) Navigator.of(context).pop();
+                });
+              }
             },
             child: Text(
               success ? 'Done' : 'Try Again',
@@ -175,22 +179,10 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: bgColor,
-        elevation: 0,
-        title: Text(
-          'Apply for Vendor',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: textColor),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 50, 16, 100),
           physics: const BouncingScrollPhysics(),
           children: [
 
@@ -212,7 +204,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Application fee: ৳999 voucher balance. Fill in your business details carefully.',
+                      'Application fee: Voucher 999. Fill in your business details carefully.',
                       style: GoogleFonts.poppins(fontSize: 12, color: isDark ? Colors.white70 : Colors.black54, height: 1.5),
                     ),
                   ),
@@ -358,7 +350,7 @@ class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
                           const Icon(Icons.send_rounded, size: 20),
                           const SizedBox(width: 10),
                           Text(
-                            'Submit (৳999)',
+                            'Submit (Voucher 999)',
                             style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ],
