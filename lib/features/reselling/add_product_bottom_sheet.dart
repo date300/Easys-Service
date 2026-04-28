@@ -1,4 +1,4 @@
-import 'dart:convert';
+, import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,12 +18,12 @@ class AddProductBottomSheet extends StatefulWidget {
 }
 
 class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _imageController = TextEditingController();
-  final _priceController = TextEditingController();
+  final _titleController        = TextEditingController();
+  final _descriptionController  = TextEditingController();
+  final _imageController        = TextEditingController();
+  final _priceController        = TextEditingController();
   final _discountPriceController = TextEditingController();
-  final _stockController = TextEditingController(text: "10");
+  final _stockController        = TextEditingController(text: "10");
 
   bool _isLoading = false;
   String _selectedCategory = 'Electronics';
@@ -48,9 +48,10 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('jwt_token');
-      if (token == null) {
-        _showSnackBar("Session expired. Please login again.", isError: true);
+      final token = prefs.getString('jwt_token'); // ✅ VendorApplyPage এর মতো
+
+      if (token == null || token.isEmpty) { // ✅ VendorApplyPage এর মতো
+        _showSnackBar("Please login first. Token not found.", isError: true);
         return;
       }
 
@@ -60,15 +61,15 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
         "product_name": _titleController.text.trim(),
         "brand": "Generic",
         "price": double.parse(_priceController.text),
-        "discount_price": _discountPriceController.text.isNotEmpty 
+        "discount_price": _discountPriceController.text.isNotEmpty
             ? double.parse(_discountPriceController.text) : null,
         "category_id": _categoryMap[_selectedCategory] ?? 1,
         "description": _descriptionController.text.trim(),
         "stock": int.tryParse(_stockController.text) ?? 0,
         "sku": "SKU-${DateTime.now().millisecondsSinceEpoch}",
         "images": [
-          _imageController.text.trim().isNotEmpty 
-              ? _imageController.text.trim() 
+          _imageController.text.trim().isNotEmpty
+              ? _imageController.text.trim()
               : "https://images.unsplash.com/photo-1523275335684-37898b6baf30"
         ],
         "meta_title": _titleController.text.trim(),
@@ -93,12 +94,12 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
           id: responseData['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
           title: _titleController.text.trim(),
           subtitle: _descriptionController.text.trim(),
-          image: _imageController.text.trim().isNotEmpty 
-              ? _imageController.text.trim() 
+          image: _imageController.text.trim().isNotEmpty
+              ? _imageController.text.trim()
               : "https://images.unsplash.com/photo-1523275335684-37898b6baf30",
           wholesalePrice: double.parse(_priceController.text),
-          originalPrice: _discountPriceController.text.isNotEmpty 
-              ? double.parse(_discountPriceController.text) 
+          originalPrice: _discountPriceController.text.isNotEmpty
+              ? double.parse(_discountPriceController.text)
               : double.parse(_priceController.text) + 200,
           maxResalePrice: double.parse(_priceController.text) * 1.5,
           category: _selectedCategory,
@@ -134,8 +135,8 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark 
-            ? const Color(0xFF1E1E1E) 
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
             : Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
@@ -166,35 +167,32 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
               style: GoogleFonts.poppins(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
               ),
             ),
             SizedBox(height: 20.h),
-            // Title
             _buildTextField(_titleController, 'Product Title', Icons.title),
             SizedBox(height: 16.h),
-            // Description
             _buildTextField(_descriptionController, 'Description', Icons.description, maxLines: 3),
             SizedBox(height: 16.h),
-            // Image URL
             _buildTextField(_imageController, 'Image URL (optional)', Icons.image),
             SizedBox(height: 16.h),
-            // Price
-            _buildTextField(_priceController, 'Price (৳)', Icons.attach_money, isNumber: true),
+            _buildTextField(_priceController, 'Price (?)', Icons.attach_money, isNumber: true),
             SizedBox(height: 16.h),
-            // Discount Price
             _buildTextField(_discountPriceController, 'Discount Price (optional)', Icons.local_offer, isNumber: true),
             SizedBox(height: 16.h),
-            // Stock
             _buildTextField(_stockController, 'Stock Quantity', Icons.inventory, isNumber: true),
             SizedBox(height: 16.h),
-            // Category dropdown
             Text(
               'Category',
               style: GoogleFonts.poppins(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.grey.shade700,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.grey.shade700,
               ),
             ),
             SizedBox(height: 8.h),
@@ -217,7 +215,6 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
               ),
             ),
             SizedBox(height: 24.h),
-            // Submit Button
             InkWell(
               onTap: _isLoading ? null : _submitProduct,
               child: Container(
@@ -235,16 +232,16 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                   ],
                 ),
                 child: _isLoading
-                  ? const Center(child: CupertinoActivityIndicator(color: Colors.white))
-                  : Text(
-                      'Add Product',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    ? const Center(child: CupertinoActivityIndicator(color: Colors.white))
+                    : Text(
+                        'Add Product',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
               ),
             ),
             SizedBox(height: 30.h),
@@ -264,7 +261,9 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
           style: GoogleFonts.poppins(
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.grey.shade700,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white70
+                : Colors.grey.shade700,
           ),
         ),
         SizedBox(height: 8.h),
@@ -289,8 +288,8 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
               borderSide: const BorderSide(color: Color(0xFF29B6F6), width: 1.5),
             ),
             filled: true,
-            fillColor: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.grey.shade800.withOpacity(0.3) 
+            fillColor: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey.shade800.withOpacity(0.3)
                 : Colors.grey.shade50,
           ),
         ),
@@ -298,3 +297,4 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     );
   }
 }
+
