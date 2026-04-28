@@ -6,27 +6,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 // ==================== State Providers ====================
-
-// লোডিং স্টেট ম্যানেজ করার জন্য
 final resellingLoadingProvider = StateProvider<bool>((ref) => false);
 
 // ==================== Page ====================
 
-class ResellingPage extends ConsumerStatefulWidget {
-  const ResellingPage({super.key});
+// এখানে নাম ResellingPage থেকে ResellingScreen করে দেওয়া হয়েছে
+class ResellingScreen extends ConsumerStatefulWidget {
+  const ResellingScreen({super.key});
 
   @override
-  ConsumerState<ResellingPage> createState() => _ResellingPageState();
+  ConsumerState<ResellingScreen> createState() => _ResellingScreenState();
 }
 
-class _ResellingPageState extends ConsumerState<ResellingPage> {
+class _ResellingScreenState extends ConsumerState<ResellingScreen> {
   @override
   Widget build(BuildContext context) {
-    // লোডিং স্টেট ওয়াচ করা হচ্ছে
     final isLoading = ref.watch(resellingLoadingProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // হালকা ব্যাকগ্রাউন্ড
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: Text(
           'Reselling Application',
@@ -43,7 +41,6 @@ class _ResellingPageState extends ConsumerState<ResellingPage> {
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
-                // এখানে আপনার ফর্মের ডিজাইন শুরু করতে পারেন
                 const SizedBox(height: 20),
                 _buildModernTextField(
                   label: "Shop Name",
@@ -56,13 +53,12 @@ class _ResellingPageState extends ConsumerState<ResellingPage> {
                 ),
                 const SizedBox(height: 30),
                 
-                // সাবমিট বাটন
                 SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
                     onPressed: () {
-                      // এখানে সাবমিট লজিক হবে
+                      // Submit logic here
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueAccent,
@@ -86,7 +82,6 @@ class _ResellingPageState extends ConsumerState<ResellingPage> {
     );
   }
 
-  // টেক্সট ফিল্ডের জন্য একটি ছোট মেথড
   Widget _buildModernTextField({required String label, required IconData icon}) {
     return TextField(
       decoration: InputDecoration(
