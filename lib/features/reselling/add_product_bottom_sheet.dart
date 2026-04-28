@@ -1,15 +1,15 @@
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'product_model.dart';
-
-// ==================== ADD PRODUCT BOTTOM SHEET ====================
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddProductBottomSheet extends StatefulWidget {
-  final Function(ProductModel product) onProductAdded;
+  final Function() onProductAdded;
 
   const AddProductBottomSheet({super.key, required this.onProductAdded});
 
@@ -19,286 +19,132 @@ class AddProductBottomSheet extends StatefulWidget {
 
 class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
   final _titleController = TextEditingController();
-  final _subtitleController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _imageController = TextEditingController();
   final _priceController = TextEditingController();
-  final _originalPriceController = TextEditingController();
-  final _maxPriceController = TextEditingController();
+  final _discountPriceController = TextEditingController();
+  final _stockController = TextEditingController(text: "10"); // Default stock
 
+  bool _isLoading = false;
   String _selectedCategory = 'Electronics';
+
+  // ক্যাটাগরি নাম থেকে আইডি ম্যাপ (তোমার DB অনুযায়ী আইডি সেট করো)
+  final Map<String, int> _categoryMap = {
+    'Electronics': 1, 'Smart Watch': 2, 'Neckband': 3, 'Airpods': 4,
+    'Power Bank': 5, 'Earphone': 6, 'Fashion': 7, 'Home': 8,
+  };
+
   final List<String> _availableCategories = [
     'Electronics', 'Smart Watch', 'Neckband', 'Airpods',
-    'Power Bank', 'Earphone', 'Fashion', 'Home',
-    'Sports', 'Beauty', 'Books', 'Toys',
+    'Power Bank', 'Earphone', 'Fashion', 'Home'
   ];
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _subtitleController.dispose();
-    _imageController.dispose();
-    _priceController.dispose();
-    _originalPriceController.dispose();
-    _maxPriceController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (_titleController.text.isEmpty || _priceController.text.isEmpty || _maxPriceController.text.isEmpty) {
-      HapticFeedback.heavyImpact();
+  // API কল করার মেইন ফাংশন
+  Future<void> _submitProduct() async {
+    // ১. বেসিক ভ্যালিডেশন
+    if (_titleController.text.isEmpty || _priceController.text.isEmpty) {
+      _showSnackBar("Product name and price are required!", isError: true);
       return;
     }
 
-    final wholesale = double.tryParse(_priceController.text) ?? 0;
-    final original = double.tryParse(_originalPriceController.text) ?? 0;
-    final maxResale = double.tryParse(_maxPriceController.text) ?? 0;
+    setState(() => _isLoading = true);
 
-    if (wholesale <= 0 || maxResale <= wholesale) return;
+    try {
+      // ২. SharedPreferences থেকে টোকেন নেওয়া
+      final prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('jwt_token');
 
-    final product = ProductModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: _titleController.text.trim(),
-      subtitle: _subtitleController.text.trim().isNotEmpty ? _subtitleController.text.trim() : null,
-      image: _imageController.text.trim().isNotEmpty
-          ? _imageController.text.trim()
-          : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
-      wholesalePrice: wholesale,
-      originalPrice: original > 0 ? original : null,
-      maxResalePrice: maxResale,
-      category: _selectedCategory,
-      rating: 4.5,
+      if (token == null) {
+        _showSnackBar("Session expired. Please login again.", isError: true);
+        return;
+      }
+
+      // ৩. ডাটা প্রিপারেশন (Backend-এর রিকোয়েস্ট বডি অনুযায়ী)
+      final String apiUrl = 'https://easy.ltcminematrix.com/api/vendor/product/create';
+      
+      final Map<String, dynamic> requestBody = {
+        "business_id": 1, // এটি তোমার ডাইনামিকলি নেওয়া উচিত (যেমন লগইন করার সময় পাওয়া আইডি)
+        "product_name": _titleController.text.trim(),
+        "brand": "Generic",
+        "price": double.parse(_priceController.text),
+        "discount_price": _discountPriceController.text.isNotEmpty 
+            ? double.parse(_discountPriceController.text) : null,
+        "category_id": _categoryMap[_selectedCategory] ?? 1,
+        "description": _descriptionController.text.trim(),
+        "stock": int.tryParse(_stockController.text) ?? 0,
+        "sku": "SKU-${DateTime.now().millisecondsSinceEpoch}",
+        "images": [
+          _imageController.text.trim().isNotEmpty 
+              ? _imageController.text.trim() 
+              : "https://images.unsplash.com/photo-1523275335684-37898b6baf30"
+        ],
+        "meta_title": _titleController.text.trim(),
+        "meta_description": _descriptionController.text.trim(),
+      };
+
+      // ৪. HTTP POST রিকোয়েস্ট পাঠানো
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        // সাকসেস
+        HapticFeedback.mediumImpact();
+        _showSnackBar("Product submitted for approval!");
+        widget.onProductAdded(); // লিস্ট রিফ্রেশ করার কলব্যাক
+        Navigator.pop(context);
+      } else {
+        // এরর মেসেজ হ্যান্ডলিং
+        _showSnackBar(responseData['message'] ?? "Failed to add product", isError: true);
+      }
+    } catch (e) {
+      _showSnackBar("Connection error: $e", isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.redAccent : Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
-
-    widget.onProductAdded(product);
-    HapticFeedback.mediumImpact();
-    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBackground = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
-    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
-    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
+    // ... আগের UI কোড ঠিক থাকবে, শুধু 'Add Product' বাটনের onPressed-এ _submitProduct দাও
+    // নিচে বাটনের অংশটি আপডেট করে দিচ্ছি:
 
     return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
-      ),
-      decoration: BoxDecoration(
-        color: cardBackground,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
+      // ... (তোমার বাকি কন্টেইনার ডেকোরেশন)
       child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                margin: EdgeInsets.only(top: 12.h),
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: borderColor,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-            ),
-            SizedBox(height: 24.h),
+            // ... (সব টেক্সট ফিল্ড)
+
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF29B6F6).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                    child: Icon(
-                      CupertinoIcons.add_circled,
-                      color: const Color(0xFF29B6F6),
-                      size: 24.sp,
-                    ),
-                  ),
-                  SizedBox(width: 14.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Add New Product',
-                          style: GoogleFonts.poppins(
-                            fontSize: 17.sp,
-                            fontWeight: FontWeight.bold,
-                            color: kTextDark,
-                          ),
-                        ),
-                        Text(
-                          'Fill the details to list your product',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.sp,
-                            color: kTextMid,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 24.h),
-            _buildTextField(
-              label: 'Product Title',
-              hint: 'e.g. Wireless Earbuds Pro',
-              controller: _titleController,
-              icon: CupertinoIcons.tag,
-              kTextDark: kTextDark,
-              kTextMid: kTextMid,
-              borderColor: borderColor,
-              isDark: isDark,
-            ),
-            SizedBox(height: 14.h),
-            _buildTextField(
-              label: 'Subtitle (with emoji)',
-              hint: 'e.g. Premium Quality',
-              controller: _subtitleController,
-              icon: CupertinoIcons.textformat,
-              kTextDark: kTextDark,
-              kTextMid: kTextMid,
-              borderColor: borderColor,
-              isDark: isDark,
-            ),
-            SizedBox(height: 14.h),
-            _buildTextField(
-              label: 'Image URL',
-              hint: 'Paste product image link (optional)',
-              controller: _imageController,
-              icon: CupertinoIcons.photo,
-              kTextDark: kTextDark,
-              kTextMid: kTextMid,
-              borderColor: borderColor,
-              isDark: isDark,
-            ),
-            SizedBox(height: 14.h),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    label: 'Wholesale Price',
-                    hint: 'Buying price',
-                    controller: _priceController,
-                    icon: CupertinoIcons.money_dollar_circle,
-                    keyboardType: TextInputType.number,
-                    kTextDark: kTextDark,
-                    kTextMid: kTextMid,
-                    borderColor: borderColor,
-                    isDark: isDark,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: _buildTextField(
-                    label: 'Original Price',
-                    hint: 'MRP (optional)',
-                    controller: _originalPriceController,
-                    icon: CupertinoIcons.tag_circle,
-                    keyboardType: TextInputType.number,
-                    kTextDark: kTextDark,
-                    kTextMid: kTextMid,
-                    borderColor: borderColor,
-                    isDark: isDark,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 14.h),
-            _buildTextField(
-              label: 'Max Resale Price',
-              hint: 'Maximum you can sell for',
-              controller: _maxPriceController,
-              icon: CupertinoIcons.arrow_up_circle,
-              keyboardType: TextInputType.number,
-              kTextDark: kTextDark,
-              kTextMid: kTextMid,
-              borderColor: borderColor,
-              isDark: isDark,
-            ),
-            SizedBox(height: 18.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Text(
-                'Select Category',
-                style: GoogleFonts.poppins(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.bold,
-                  color: kTextDark,
-                ),
-              ),
-            ),
-            SizedBox(height: 10.h),
-            SizedBox(
-              height: 44.h,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
-                itemCount: _availableCategories.length,
-                separatorBuilder: (_, __) => SizedBox(width: 8.w),
-                itemBuilder: (_, i) {
-                  final cat = _availableCategories[i];
-                  final selected = _selectedCategory == cat;
-                  final style = getCategoryStyle(cat);
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = cat),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
-                      decoration: BoxDecoration(
-                        color: selected ? style.color.withOpacity(0.15) : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9)),
-                        borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(
-                          color: selected ? style.color.withOpacity(0.5) : borderColor,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            style.icon,
-                            size: 15.sp,
-                            color: selected ? style.color : kTextMid,
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            cat,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.sp,
-                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                              color: selected ? style.color : kTextMid,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: 24.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: GestureDetector(
-                onTap: _submit,
+              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+              child: InkWell(
+                onTap: _isLoading ? null : _submitProduct,
                 child: Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 16.h),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF29B6F6),
+                    color: _isLoading ? Colors.grey : const Color(0xFF29B6F6),
                     borderRadius: BorderRadius.circular(14.r),
-                    boxShadow: [
+                    boxShadow: _isLoading ? [] : [
                       BoxShadow(
                         color: const Color(0xFF29B6F6).withOpacity(0.3),
                         blurRadius: 14,
@@ -306,76 +152,22 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                       ),
                     ],
                   ),
-                  child: Text(
-                    'Add Product',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: _isLoading 
+                    ? const Center(child: CupertinoActivityIndicator(color: Colors.white))
+                    : Text(
+                        'Add Product',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                 ),
               ),
             ),
-            SizedBox(height: 12.h),
           ],
         ),
-      ),
-    ).animate().slideY(begin: 0.15, duration: 300.ms, curve: Curves.easeOut);
-  }
-
-  Widget _buildTextField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required IconData icon,
-    required Color kTextDark,
-    required Color kTextMid,
-    required Color borderColor,
-    required bool isDark,
-    TextInputType? keyboardType,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: kTextDark,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: borderColor),
-            ),
-            child: TextField(
-              controller: controller,
-              keyboardType: keyboardType,
-              style: GoogleFonts.poppins(
-                fontSize: 14.sp,
-                color: kTextDark,
-              ),
-              decoration: InputDecoration(
-                prefixIcon: Icon(icon, color: kTextMid, size: 18.sp),
-                hintText: hint,
-                hintStyle: GoogleFonts.poppins(
-                  fontSize: 13.sp,
-                  color: kTextMid,
-                ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 14.h),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
