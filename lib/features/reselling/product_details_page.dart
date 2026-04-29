@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
 
+const Color kTextMid = Color(0xFF64748B);
+
 class ApiService {
   static const String baseUrl = 'https://easy.ltcminematrix.com/api';
   static String? authToken;
