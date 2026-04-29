@@ -38,8 +38,6 @@ class ProductModel {
         ? thumbnail
         : 'https://via.placeholder.com/400?text=No+Image';
 
-    // Use discount_price as wholesale price if available and lower than regular price,
-    // otherwise fall back to 85% of original price
     final wholesale = (discountPrice > 0 && discountPrice < price)
         ? discountPrice
         : (price > 0 ? price * 0.85 : 0.0);
@@ -86,4 +84,8 @@ class ProductModel {
       myMargin: myMargin ?? this.myMargin,
     );
   }
+
+  // 🔧 মিসিং getter যোগ করা হলো
+  double get myPrice => wholesalePrice + myMargin;
+  double get maxMargin => maxResalePrice - wholesalePrice;
 }
