@@ -147,7 +147,8 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
           rating:         0.0,
           isReselling:    false,
           myMargin:       0,
-        );
+          stock: int.tryParse(_stockController.text.trim()) ?? 0,
+          );
 
         _showSnackBar('Product submitted for approval!');
         widget.onProductAdded(newProduct);
