@@ -701,7 +701,32 @@ void _showAddProductSheet() {
         shadowColor: shadowColor,
         kTextDark: kTextDark,
         kTextMid: kTextMid,
-        ref: ref,
+        onResell: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ProductDetailsPage(
+                product: products[i],
+                onStartResell: (margin) {
+                  final updated = ProductModel(
+                    id: products[i].id,
+                    title: products[i].title,
+                    subtitle: products[i].subtitle,
+                    image: products[i].image,
+                    wholesalePrice: products[i].wholesalePrice,
+                    originalPrice: products[i].originalPrice,
+                    maxResalePrice: products[i].maxResalePrice,
+                    category: products[i].category,
+                    rating: products[i].rating,
+                    isReselling: true,
+                    myMargin: margin,
+                  );
+                  ref.read(productListProvider.notifier).updateProduct(updated);
+                },
+              ),
+            ),
+          );
+        },
       ).animate().fadeIn(delay: (i * 50).ms, duration: 300.ms).slideY(begin: 0.06, curve: Curves.easeOut),
     );
   }
@@ -859,7 +884,7 @@ class _ResellProductCard extends StatefulWidget {
   final Color shadowColor;
   final Color kTextDark;
   final Color kTextMid;
-  final WidgetRef ref;
+  final VoidCallback onResell;
 
   const _ResellProductCard({
     required this.product,
@@ -868,7 +893,7 @@ class _ResellProductCard extends StatefulWidget {
     required this.shadowColor,
     required this.kTextDark,
     required this.kTextMid,
-    required this.ref,
+    required this.onResell,
   });
 
   @override
@@ -878,41 +903,11 @@ class _ResellProductCard extends StatefulWidget {
 class _ResellProductCardState extends State<_ResellProductCard> {
   bool _pressed = false;
 
-  void _goToDetails() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProductDetailsPage(
-          product: widget.product,
-          onStartResell: (margin) {
-            final updated = ProductModel(
-              id: widget.product.id,
-              title: widget.product.title,
-              subtitle: widget.product.subtitle,
-              image: widget.product.image,
-              wholesalePrice: widget.product.wholesalePrice,
-              originalPrice: widget.product.originalPrice,
-              maxResalePrice: widget.product.maxResalePrice,
-              category: widget.product.category,
-              rating: widget.product.rating,
-              isReselling: true,
-              myMargin: margin,
-            );
-            widget.ref.read(productListProvider.notifier).updateProduct(updated);
-          },
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        _goToDetails();
-      },
+      onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1.0,
@@ -1070,7 +1065,33 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                             ),
                         ],
                       ),
-
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: widget.onResell,
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 8.h),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF29B6F6),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.add, color: Colors.white, size: 12.sp),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Resell',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10.5.sp,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
