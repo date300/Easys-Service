@@ -885,7 +885,7 @@ class _ResellProductCardState extends State<_ResellProductCard> {
       context,
       MaterialPageRoute(
         builder: (_) => ProductDetailsPage(
-          product: widget.product,
+          productId: widget.product.id,
           onStartResell: (margin) {
             final updated = ProductModel(
               id: widget.product.id,
