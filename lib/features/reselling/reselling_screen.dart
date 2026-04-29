@@ -5,86 +5,57 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
 import 'product_details_page.dart';
 import 'add_product_bottom_sheet.dart';
 
+// ==================== API CLIENT ====================
+
+class ProductApiService {
+  static const String baseUrl = 'https://easy.ltcminematrix.com/api';
+
+  Future<List<ProductModel>> fetchProducts({int page = 1, int limit = 50}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/products?page=$page&limit=$limit'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        if (json['status'] == 'success' && json['data'] is List) {
+          return (json['data'] as List)
+              .map((p) => ProductModel.fromJson(p))
+              .toList();
+        }
+        throw Exception('Invalid response format');
+      } else {
+        throw Exception('Failed to fetch products: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+}
+
 // ==================== RIVERPOD PROVIDERS ====================
 
-final productListProvider = StateNotifierProvider<ProductListNotifier, List<ProductModel>>((ref) {
-  return ProductListNotifier();
+final productApiProvider = Provider<ProductApiService>((ref) => ProductApiService());
+
+final productListProvider = FutureProvider<List<ProductModel>>((ref) async {
+  final api = ref.watch(productApiProvider);
+  return api.fetchProducts();
+});
+
+final productNotifierProvider = StateNotifierProvider<ProductListNotifier, List<ProductModel>>((ref) {
+  return ProductListNotifier([]);
 });
 
 class ProductListNotifier extends StateNotifier<List<ProductModel>> {
-  ProductListNotifier() : super([
-    ProductModel(
-      id: '1',
-      title: '3 Piece Exclusive',
-      subtitle: 'Exclusive Premium Collection',
-      image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
-      wholesalePrice: 1270,
-      originalPrice: 1590,
-      maxResalePrice: 1800,
-      category: 'Fashion',
-      rating: 4.8,
-    ),
-    ProductModel(
-      id: '2',
-      title: 'Smart Watch S2000',
-      subtitle: 'Latest Series',
-      image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400',
-      wholesalePrice: 950,
-      originalPrice: 1300,
-      maxResalePrice: 1500,
-      category: 'Smart Watch',
-      rating: 4.5,
-    ),
-    ProductModel(
-      id: '3',
-      title: 'Walar Mr Thin 6500',
-      subtitle: 'Premium Quality',
-      image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400',
-      wholesalePrice: 570,
-      originalPrice: 980,
-      maxResalePrice: 1200,
-      category: 'Fashion',
-      rating: 4.6,
-    ),
-    ProductModel(
-      id: '4',
-      title: 'Mini Portable Fan',
-      subtitle: 'Summer Essential',
-      image: 'https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=400',
-      wholesalePrice: 450,
-      originalPrice: 720,
-      maxResalePrice: 900,
-      category: 'Electronics',
-      rating: 4.3,
-    ),
-    ProductModel(
-      id: '5',
-      title: 'Leather Card Holder',
-      subtitle: 'Stylish & Compact',
-      image: 'https://images.unsplash.com/photo-1624114545437-f1b17c603a3a?w=400',
-      wholesalePrice: 380,
-      originalPrice: 650,
-      maxResalePrice: 800,
-      category: 'Fashion',
-      rating: 4.4,
-    ),
-    ProductModel(
-      id: '6',
-      title: 'Premium Wrist Watch',
-      subtitle: 'Classic Design',
-      image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400',
-      wholesalePrice: 1100,
-      originalPrice: 1600,
-      maxResalePrice: 2000,
-      category: 'Smart Watch',
-      rating: 4.7,
-    ),
-  ]);
+  ProductListNotifier(super.state);
 
   void addProduct(ProductModel product) {
     state = [...state, product];
@@ -94,8 +65,12 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
     state = state.map((p) => p.id == updated.id ? updated : p).toList();
   }
 
-  void removeProduct(String id) {
+  void removeProduct(int id) {
     state = state.where((p) => p.id != id).toList();
+  }
+
+  void setProducts(List<ProductModel> products) {
+    state = products;
   }
 
   List<String> get categories {
@@ -142,32 +117,33 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     _searchFocusNode.dispose();
     super.dispose();
   }
-List<ProductModel> _filterProducts(List<ProductModel> all) {
-  return all.where((p) {
-    final matchCat = _selectedCategory == 'All' || p.category == _selectedCategory;
-    final matchSearch = p.title.toLowerCase().contains(_searchQuery.toLowerCase());
-    return matchCat && matchSearch;
-  }).toList();
-}
 
-void _showAddProductSheet() {
-  HapticFeedback.mediumImpact();
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => AddProductBottomSheet(
-      onProductAdded: (ProductModel newProduct) {
-        ref.read(productListProvider.notifier).addProduct(newProduct);
-      },
-    ),
-  );
-}
+  List<ProductModel> _filterProducts(List<ProductModel> all) {
+    return all.where((p) {
+      final matchCat = _selectedCategory == 'All' || p.category == _selectedCategory;
+      final matchSearch = p.productName.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchCat && matchSearch;
+    }).toList();
+  }
+
+  void _showAddProductSheet() {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddProductBottomSheet(
+        onProductAdded: (ProductModel newProduct) {
+          ref.read(productNotifierProvider.notifier).addProduct(newProduct);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final allProducts = ref.watch(productListProvider);
-    final filtered = _filterProducts(allProducts);
-    final myResells = allProducts.where((p) => p.isReselling).toList();
+    final productAsyncValue = ref.watch(productListProvider);
+    final localProducts = ref.watch(productNotifierProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
@@ -188,42 +164,63 @@ void _showAddProductSheet() {
         backgroundColor: kBackground,
         body: SafeArea(
           bottom: false,
-          child: NestedScrollView(
-            physics: const BouncingScrollPhysics(),
-            headerSliverBuilder: (_, __) => [
-              SliverToBoxAdapter(child: _buildSearchBar(hPadding, isSmall, kTextDark, kTextMid, cardBackground, shadowColor, borderColor)),
-              SliverToBoxAdapter(child: _buildBannerSlider(isSmall, isTablet, isDesktop)),
-              SliverToBoxAdapter(child: _buildQuickActions(hPadding, isSmall, isDesktop, cardBackground, shadowColor, borderColor, kTextDark)),
-              SliverToBoxAdapter(child: _buildSectionHeader(hPadding, isSmall, isDesktop, kTextDark, kTextMid, title: 'Categories', subtitle: 'Browse by category', showViewAll: true)),
-              SliverToBoxAdapter(child: _buildCategoryFilter(allProducts, isSmall, isDesktop, cardBackground, shadowColor, borderColor, kTextDark)),
-              SliverToBoxAdapter(child: _buildSectionHeader(hPadding, isSmall, isDesktop, kTextDark, kTextMid, title: 'Most Popular Products', subtitle: 'Trending now', showViewAll: true)),
-              SliverToBoxAdapter(child: _buildCustomTabBar(filtered.length, myResells.length, hPadding, isSmall, cardBackground, borderColor, kTextDark, kTextMid)),
-            ],
-            body: TabBarView(
-              controller: _tabController,
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _buildProductsTab(filtered, isSmall, isDesktop, isTablet, cardBackground, shadowColor, kTextDark, kTextMid),
-                _buildMyResellsTab(myResells, isSmall, cardBackground, shadowColor, borderColor, kTextDark, kTextMid),
-              ],
-            ),
+          child: productAsyncValue.when(
+            loading: () => _buildLoadingState(kBackground),
+            error: (err, stack) => _buildErrorState(kBackground, kTextDark, kTextMid),
+            data: (apiProducts) {
+              // Combine API products with local additions
+              final allProducts = [...apiProducts, ...localProducts];
+              final filtered = _filterProducts(allProducts);
+              final myResells = allProducts.where((p) => p.isReselling).toList();
+
+              return NestedScrollView(
+                physics: const BouncingScrollPhysics(),
+                headerSliverBuilder: (_, __) => [
+                  SliverToBoxAdapter(
+                    child: _buildSearchBar(hPadding, isSmall, kTextDark, kTextMid, cardBackground, shadowColor, borderColor),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildBannerSlider(isSmall, isTablet, isDesktop),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildQuickActions(hPadding, isSmall, isDesktop, cardBackground, shadowColor, borderColor, kTextDark),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildSectionHeader(hPadding, isSmall, isDesktop, kTextDark, kTextMid, title: 'Products', subtitle: 'Browse all products', showViewAll: false),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildCategoryFilter(allProducts, isSmall, isDesktop, cardBackground, shadowColor, borderColor, kTextDark),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildSectionHeader(hPadding, isSmall, isDesktop, kTextDark, kTextMid, title: 'Popular Products', subtitle: 'Trending now', showViewAll: true),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildCustomTabBar(filtered.length, myResells.length, hPadding, isSmall, cardBackground, borderColor, kTextDark, kTextMid),
+                  ),
+                ],
+                body: TabBarView(
+                  controller: _tabController,
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    _buildProductsTab(filtered, isSmall, isDesktop, isTablet, cardBackground, shadowColor, kTextDark, kTextMid),
+                    _buildMyResellsTab(myResells, isSmall, cardBackground, shadowColor, borderColor, kTextDark, kTextMid),
+                  ],
+                ),
+              );
+            },
           ),
         ),
         floatingActionButton: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (myResells.isNotEmpty)
-              FloatingActionButton.small(
-                heroTag: 'sales',
-                onPressed: () => _tabController.animateTo(1),
-                backgroundColor: cardBackground,
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-                child: Badge(
-                  label: Text('${myResells.length}'),
-                  child: Icon(CupertinoIcons.chart_bar, color: const Color(0xFF29B6F6), size: 18.sp),
-                ),
-              ).animate().scale(delay: 100.ms),
+            FloatingActionButton.small(
+              heroTag: 'sales',
+              onPressed: () => _tabController.animateTo(1),
+              backgroundColor: cardBackground,
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+              child: Icon(CupertinoIcons.chart_bar, color: const Color(0xFF29B6F6), size: 18.sp),
+            ).animate().scale(delay: 100.ms),
             SizedBox(height: 8.h),
             FloatingActionButton.extended(
               heroTag: 'add',
@@ -242,6 +239,61 @@ void _showAddProductSheet() {
               ),
             ).animate().scale(delay: 150.ms),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ==================== LOADING STATE ====================
+  Widget _buildLoadingState(Color kBackground) {
+    return Scaffold(
+      backgroundColor: kBackground,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CupertinoActivityIndicator(radius: 16.r),
+            SizedBox(height: 16.h),
+            Text(
+              'Loading products...',
+              style: GoogleFonts.poppins(fontSize: 14.sp),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==================== ERROR STATE ====================
+  Widget _buildErrorState(Color kBackground, Color kTextDark, Color kTextMid) {
+    return Scaffold(
+      backgroundColor: kBackground,
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(CupertinoIcons.exclamationmark_circle, size: 48.sp, color: Colors.red),
+              SizedBox(height: 16.h),
+              Text(
+                'Failed to load products',
+                style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600, color: kTextDark),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'Please check your internet connection and try again',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(fontSize: 13.sp, color: kTextMid),
+              ),
+              SizedBox(height: 24.h),
+              CupertinoButton(
+                color: const Color(0xFF29B6F6),
+                onPressed: () => ref.refresh(productListProvider),
+                child: Text('Retry', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -525,785 +577,384 @@ void _showAddProductSheet() {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'See All',
+                    'View All',
                     style: GoogleFonts.poppins(
                       fontSize: isSmall ? 10.sp : 11.sp,
-                      color: const Color(0xFF29B6F6),
                       fontWeight: FontWeight.w600,
+                      color: const Color(0xFF29B6F6),
                     ),
                   ),
-                  SizedBox(width: 2.w),
-                  Icon(CupertinoIcons.chevron_right, size: isSmall ? 10.sp : 12.sp, color: const Color(0xFF29B6F6)),
+                  SizedBox(width: 4.w),
+                  Icon(CupertinoIcons.forward, size: 12.sp, color: const Color(0xFF29B6F6)),
                 ],
               ),
             ),
         ],
       ),
-    ).animate().fadeIn(duration: 400.ms);
+    );
   }
 
   // ==================== CATEGORY FILTER ====================
   Widget _buildCategoryFilter(List<ProductModel> allProducts, bool isSmall, bool isDesktop, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark) {
-    final categories = ref.read(productListProvider.notifier).categories;
+    final categories = ['All', ...allProducts.map((p) => p.category).toSet().toList()..sort()];
 
-    return SizedBox(
-      height: isSmall ? 90.h : 100.h,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => SizedBox(width: 12.w),
-        itemBuilder: (_, i) {
-          final cat = categories[i];
-          final selected = _selectedCategory == cat;
-          final style = getCategoryStyle(cat);
-          final iconSize = isSmall ? 20.sp : isDesktop ? 26.sp : 22.sp;
-          final containerSize = isSmall ? 44.w : isDesktop ? 56.w : 50.w;
-
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _selectedCategory = cat);
-            },
-            child: Column(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  width: containerSize,
-                  height: containerSize,
-                  decoration: BoxDecoration(
-                    color: selected ? style.color.withOpacity(0.15) : cardBackground,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: selected ? style.color.withOpacity(0.5) : borderColor,
-                      width: selected ? 2 : 0.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: shadowColor,
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      child: Row(
+        children: categories.map((cat) {
+          final isSelected = _selectedCategory == cat;
+          return Padding(
+            padding: EdgeInsets.only(right: 8.w),
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedCategory = cat),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(horizontal: isSmall ? 12.w : 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF29B6F6) : cardBackground,
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF29B6F6) : borderColor,
+                    width: 1,
                   ),
-                  child: Center(
-                    child: Icon(
-                      style.icon,
-                      color: selected ? style.color : kTextDark.withOpacity(0.6),
-                      size: iconSize,
-                    ),
-                  ),
+                  boxShadow: isSelected
+                      ? [BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                      : [BoxShadow(color: shadowColor, blurRadius: 4, offset: const Offset(0, 1))],
                 ),
-                SizedBox(height: 6.h),
-                Text(
+                child: Text(
                   cat,
                   style: GoogleFonts.poppins(
-                    fontSize: isSmall ? 9.sp : 10.sp,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? style.color : kTextDark,
+                    fontSize: isSmall ? 11.sp : 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : kTextDark,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
+              ),
             ),
           );
-        },
+        }).toList(),
       ),
-    ).animate().fadeIn(delay: 300.ms);
+    );
   }
 
   // ==================== CUSTOM TAB BAR ====================
-  Widget _buildCustomTabBar(int allCount, int myCount, double hPadding, bool isSmall, Color cardBackground, Color borderColor, Color kTextDark, Color kTextMid) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(hPadding, 16.h, hPadding, 4.h),
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: cardBackground,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _tabController.animateTo(0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: EdgeInsets.symmetric(vertical: 10.h),
-                decoration: BoxDecoration(
-                  color: _tabController.index == 0 ? const Color(0xFF29B6F6) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Text(
-                  'All Products ($allCount)',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: isSmall ? 11.sp : 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _tabController.index == 0 ? Colors.white : kTextMid,
-                  ),
-                ),
+  Widget _buildCustomTabBar(int productCount, int resellCount, double hPadding, bool isSmall, Color cardBackground, Color borderColor, Color kTextDark, Color kTextMid) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 12.h),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: TabBar(
+          controller: _tabController,
+          indicator: BoxDecoration(
+            color: const Color(0xFF29B6F6).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          labelColor: const Color(0xFF29B6F6),
+          unselectedLabelColor: kTextMid,
+          labelStyle: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600),
+          unselectedLabelStyle: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w500),
+          tabs: [
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.square_grid_2x2, size: 16.sp),
+                  SizedBox(width: 6.w),
+                  Text('All Products ($productCount)'),
+                ],
               ),
             ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _tabController.animateTo(1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: EdgeInsets.symmetric(vertical: 10.h),
-                decoration: BoxDecoration(
-                  color: _tabController.index == 1 ? const Color(0xFF29B6F6) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Text(
-                  'My Sales ($myCount)',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: isSmall ? 11.sp : 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _tabController.index == 1 ? Colors.white : kTextMid,
-                  ),
-                ),
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.bag, size: 16.sp),
+                  SizedBox(width: 6.w),
+                  Text('My Resells ($resellCount)'),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ).animate().fadeIn(delay: 350.ms);
+    );
   }
 
   // ==================== PRODUCTS TAB ====================
   Widget _buildProductsTab(List<ProductModel> products, bool isSmall, bool isDesktop, bool isTablet, Color cardBackground, Color shadowColor, Color kTextDark, Color kTextMid) {
-    if (products.isEmpty) return _buildEmptyState(kTextMid);
-
-    final crossAxisCount = isSmall ? 2 : (isTablet ? 3 : 2);
-    final childAspectRatio = isSmall ? 0.62 : 0.58;
-
-    return GridView.builder(
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 100.h),
-      physics: const BouncingScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 10.w,
-        mainAxisSpacing: 10.h,
-        childAspectRatio: childAspectRatio,
-      ),
-      itemCount: products.length,
-      itemBuilder: (_, i) => _ResellProductCard(
-        product: products[i],
-        isSmall: isSmall,
-        cardBackground: cardBackground,
-        shadowColor: shadowColor,
-        kTextDark: kTextDark,
-        kTextMid: kTextMid,
-        onResell: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ProductDetailsPage(
-                product: products[i],
-                onStartResell: (margin) {
-                  final updated = ProductModel(
-                    id: products[i].id,
-                    title: products[i].title,
-                    subtitle: products[i].subtitle,
-                    image: products[i].image,
-                    wholesalePrice: products[i].wholesalePrice,
-                    originalPrice: products[i].originalPrice,
-                    maxResalePrice: products[i].maxResalePrice,
-                    category: products[i].category,
-                    rating: products[i].rating,
-                    isReselling: true,
-                    myMargin: margin,
-                  );
-                  ref.read(productListProvider.notifier).updateProduct(updated);
-                },
-              ),
-            ),
-          );
-        },
-      ).animate().fadeIn(delay: (i * 50).ms, duration: 300.ms).slideY(begin: 0.06, curve: Curves.easeOut),
-    );
-  }
-
-  void _showResellSheet(ProductModel product) {
-    HapticFeedback.mediumImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ResellBottomSheet(
-        product: product,
-        onConfirm: (margin) {
-          final updated = ProductModel(
-            id: product.id,
-            title: product.title,
-            subtitle: product.subtitle,
-            image: product.image,
-            wholesalePrice: product.wholesalePrice,
-            originalPrice: product.originalPrice,
-            maxResalePrice: product.maxResalePrice,
-            category: product.category,
-            rating: product.rating,
-            isReselling: true,
-            myMargin: margin,
-          );
-          ref.read(productListProvider.notifier).updateProduct(updated);
-        },
-      ),
-    );
-  }
-
-  // ==================== MY RESELLS TAB ====================
-  Widget _buildMyResellsTab(List<ProductModel> myResells, bool isSmall, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark, Color kTextMid) {
-    if (myResells.isEmpty) {
+    if (products.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(
-                color: const Color(0xFF29B6F6).withOpacity(0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(CupertinoIcons.cube_box, size: 44.sp, color: const Color(0xFF29B6F6)),
-            ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+            Icon(CupertinoIcons.cube_box, size: 48.sp, color: kTextMid),
             SizedBox(height: 16.h),
-            Text(
-              'No active sales yet',
-              style: GoogleFonts.poppins(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: kTextDark,
-              ),
-            ),
-            SizedBox(height: 6.h),
-            Text(
-              'Pick a product and set your margin',
-              style: GoogleFonts.poppins(
-                fontSize: 13.sp,
-                color: kTextMid,
-              ),
-            ),
-            SizedBox(height: 20.h),
-            GestureDetector(
-              onTap: () => _tabController.animateTo(0),
+            Text('No products found', style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextDark)),
+          ],
+        ),
+      );
+    }
+
+    int crossAxisCount = isDesktop ? 4 : isTablet ? 3 : 2;
+    double childAspectRatio = isDesktop ? 0.75 : isTablet ? 0.7 : 0.65;
+
+    return GridView.builder(
+      padding: EdgeInsets.all(16.w),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        childAspectRatio: childAspectRatio,
+        crossAxisSpacing: 12.w,
+        mainAxisSpacing: 16.h,
+      ),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        return _buildProductCard(product, cardBackground, shadowColor, kTextDark, kTextMid, isSmall);
+      },
+    );
+  }
+
+  // ==================== PRODUCT CARD ====================
+  Widget _buildProductCard(ProductModel product, Color cardBackground, Color shadowColor, Color kTextDark, Color kTextMid, bool isSmall) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        CupertinoPageRoute(builder: (_) => ProductDetailsPage(product: product)),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image
+            Expanded(
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF29B6F6),
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF29B6F6).withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                  color: const Color(0xFF29B6F6).withOpacity(0.05),
                 ),
-                child: Text(
-                  'Browse Products',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14.sp,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                  child: Image.network(
+                    product.imageUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(child: CupertinoActivityIndicator(radius: 8.r));
+                    },
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Icon(CupertinoIcons.photo, size: 24.sp, color: kTextMid),
+                    ),
                   ),
                 ),
               ),
             ),
+            // Content
+            Padding(
+              padding: EdgeInsets.all(10.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.productName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: isSmall ? 10.sp : 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: kTextDark,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    product.brand,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 9.sp,
+                      color: kTextMid,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '৳${product.price.toStringAsFixed(0)}',
+                              style: GoogleFonts.poppins(
+                                fontSize: isSmall ? 10.sp : 11.sp,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF29B6F6),
+                              ),
+                            ),
+                            if (product.discountPrice != null)
+                              Text(
+                                '৳${product.discountPrice?.toStringAsFixed(0)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 8.sp,
+                                  decoration: TextDecoration.lineThrough,
+                                  color: kTextMid,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (product.avgRating > 0)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(CupertinoIcons.star_fill, size: 12.sp, color: Colors.amber),
+                            SizedBox(width: 2.w),
+                            Text(
+                              product.avgRating.toStringAsFixed(1),
+                              style: GoogleFonts.poppins(fontSize: 8.sp, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  if (!product.isInStock)
+                    Padding(
+                      padding: EdgeInsets.only(top: 6.h),
+                      child: Text(
+                        'Out of Stock',
+                        style: GoogleFonts.poppins(
+                          fontSize: 8.sp,
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.95, 0.95));
+  }
+
+  // ==================== MY RESELLS TAB ====================
+  Widget _buildMyResellsTab(List<ProductModel> products, bool isSmall, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark, Color kTextMid) {
+    if (products.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.cube_box, size: 48.sp, color: kTextMid),
+            SizedBox(height: 16.h),
+            Text('No resells yet', style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextDark)),
+            SizedBox(height: 8.h),
+            Text('Start adding products to resell', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
           ],
         ),
       );
     }
 
     return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 100.h),
-      physics: const BouncingScrollPhysics(),
-      itemCount: myResells.length,
-      itemBuilder: (_, i) => _ActiveResellCard(
-        product: myResells[i],
-        isSmall: isSmall,
-        cardBackground: cardBackground,
-        shadowColor: shadowColor,
-        borderColor: borderColor,
-        kTextDark: kTextDark,
-        kTextMid: kTextMid,
-        onStop: () {
-          final updated = ProductModel(
-            id: myResells[i].id,
-            title: myResells[i].title,
-            subtitle: myResells[i].subtitle,
-            image: myResells[i].image,
-            wholesalePrice: myResells[i].wholesalePrice,
-            originalPrice: myResells[i].originalPrice,
-            maxResalePrice: myResells[i].maxResalePrice,
-            category: myResells[i].category,
-            rating: myResells[i].rating,
-            isReselling: false,
-            myMargin: 0,
-          );
-          ref.read(productListProvider.notifier).updateProduct(updated);
-        },
-      ).animate().fadeIn(delay: (i * 60).ms, duration: 300.ms).slideX(begin: 0.05, curve: Curves.easeOut),
-    );
-  }
-
-  Widget _buildEmptyState(Color kTextMid) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(CupertinoIcons.search, size: 48.sp, color: kTextMid),
-          SizedBox(height: 12.h),
-          Text(
-            'No products found',
-            style: GoogleFonts.poppins(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w500,
-              color: kTextMid,
+      padding: EdgeInsets.all(16.w),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        return Padding(
+          padding: EdgeInsets.only(bottom: 12.h),
+          child: Container(
+            decoration: BoxDecoration(
+              color: cardBackground,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: borderColor, width: 1),
+              boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ==================== RESELL PRODUCT CARD ====================
-
-class _ResellProductCard extends StatefulWidget {
-  final ProductModel product;
-  final bool isSmall;
-  final Color cardBackground;
-  final Color shadowColor;
-  final Color kTextDark;
-  final Color kTextMid;
-  final VoidCallback onResell;
-
-  const _ResellProductCard({
-    required this.product,
-    required this.isSmall,
-    required this.cardBackground,
-    required this.shadowColor,
-    required this.kTextDark,
-    required this.kTextMid,
-    required this.onResell,
-  });
-
-  @override
-  State<_ResellProductCard> createState() => _ResellProductCardState();
-}
-
-class _ResellProductCardState extends State<_ResellProductCard> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        child: Container(
-          decoration: BoxDecoration(
-            color: widget.cardBackground,
-            borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [
-              BoxShadow(
-                color: widget.shadowColor,
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
+            child: Padding(
+              padding: EdgeInsets.all(12.w),
+              child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-                    child: SizedBox(
-                      height: widget.isSmall ? 110.h : 125.h,
-                      width: double.infinity,
-                      child: Image.network(
-                        widget.product.image,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: const Color(0xFF29B6F6).withOpacity(0.05),
-                            child: Center(child: CupertinoActivityIndicator(radius: 12.r)),
-                          );
-                        },
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade100,
-                          child: Center(
-                            child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400, size: 28.sp),
-                          ),
-                        ),
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Image.network(
+                      product.imageUrl,
+                      width: 80.w,
+                      height: 80.w,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 80.w,
+                        height: 80.w,
+                        color: const Color(0xFF29B6F6).withOpacity(0.1),
+                        child: Icon(CupertinoIcons.photo, color: kTextMid),
                       ),
                     ),
                   ),
-                  if (widget.product.isReselling)
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF34C759),
-                          borderRadius: BorderRadius.circular(6.r),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.productName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextDark),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        SizedBox(height: 4.h),
+                        Text(
+                          '৳${product.price.toStringAsFixed(0)}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF29B6F6),
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Row(
                           children: [
-                            Icon(CupertinoIcons.checkmark_alt, color: Colors.white, size: 9.sp),
-                            SizedBox(width: 2.w),
-                            Text(
-                              'Active',
-                              style: GoogleFonts.poppins(
-                                fontSize: 8.5.sp,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
+                            Expanded(
+                              child: Text(
+                                'Stock: ${product.stock}',
+                                style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid),
                               ),
+                            ),
+                            GestureDetector(
+                              onTap: () => showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => ResellBottomSheet(product: product),
+                              ),
+                              child: Icon(CupertinoIcons.arrow_up_right, size: 16.sp, color: const Color(0xFF29B6F6)),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
-                      decoration: BoxDecoration(
-                        color: widget.cardBackground.withOpacity(0.92),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(CupertinoIcons.star_fill, color: const Color(0xFFFFCC02), size: 10.sp),
-                          SizedBox(width: 2.w),
-                          Text(
-                            widget.product.rating.toString(),
-                            style: GoogleFonts.poppins(
-                              fontSize: 9.sp,
-                              fontWeight: FontWeight.w700,
-                              color: widget.kTextDark,
-                            ),
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(10.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.product.title,
-                        style: GoogleFonts.poppins(
-                          fontSize: widget.isSmall ? 10.sp : 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: widget.kTextDark,
-                          height: 1.3,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (widget.product.subtitle != null) ...[
-                        SizedBox(height: 2.h),
-                        Text(
-                          widget.product.subtitle!,
-                          style: GoogleFonts.poppins(
-                            fontSize: 9.sp,
-                            fontWeight: FontWeight.w400,
-                            color: widget.kTextMid,
-                            height: 1.2,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      SizedBox(height: 6.h),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '\u09F3${widget.product.wholesalePrice.toInt()}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF29B6F6),
-                            ),
-                          ),
-                          SizedBox(width: 5.w),
-                          if (widget.product.originalPrice != null)
-                            Text(
-                              '\u09F3${widget.product.originalPrice!.toInt()}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w500,
-                                color: widget.kTextMid,
-                                decoration: TextDecoration.lineThrough,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: widget.onResell,
-                        child: Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF29B6F6),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(CupertinoIcons.add, color: Colors.white, size: 12.sp),
-                              SizedBox(width: 4.w),
-                              Text(
-                                'Resell',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10.5.sp,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        ).animate().fadeIn(delay: (index * 50).ms);
+      },
     );
   }
 }
 
-// ==================== ACTIVE RESELL CARD ====================
-
-class _ActiveResellCard extends StatelessWidget {
-  final ProductModel product;
-  final bool isSmall;
-  final Color cardBackground;
-  final Color shadowColor;
-  final Color borderColor;
-  final Color kTextDark;
-  final Color kTextMid;
-  final VoidCallback onStop;
-
-  const _ActiveResellCard({
-    required this.product,
-    required this.isSmall,
-    required this.cardBackground,
-    required this.shadowColor,
-    required this.borderColor,
-    required this.kTextDark,
-    required this.kTextMid,
-    required this.onStop,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: cardBackground,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10.r),
-            child: SizedBox(
-              width: 60.w,
-              height: 60.w,
-              child: Image.network(
-                product.image,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(child: CupertinoActivityIndicator(radius: 10.r));
-                },
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey.shade100,
-                  child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400, size: 22.sp),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: kTextDark,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4.h),
-                Row(
-                  children: [
-                    Text(
-                      'Sell: ',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.sp,
-                        color: kTextMid,
-                      ),
-                    ),
-                    Text(
-                      '\u09F3${product.myPrice.toInt()}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF29B6F6),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF34C759).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Text(
-                    'Profit \u09F3${product.myMargin.toInt()}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 9.5.sp,
-                      color: const Color(0xFF34C759),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Row(
-                  children: [
-                    _MiniButton(
-                      icon: CupertinoIcons.stop_circle,
-                      label: 'Stop',
-                      color: const Color(0xFFFF3B30),
-                      onTap: onStop,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ==================== HELPER CLASSES & WIDGETS ====================
-
+// ==================== QUICK ACTION DATA ====================
 class _QuickActionData {
   final IconData icon;
   final String label;
   final Color color;
 
   _QuickActionData({required this.icon, required this.label, required this.color});
-}
-
-class _MiniButton extends StatefulWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _MiniButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  State<_MiniButton> createState() => _MiniButtonState();
-}
-
-class _MiniButtonState extends State<_MiniButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        HapticFeedback.lightImpact();
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.93 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-          decoration: BoxDecoration(
-            color: widget.color.withOpacity(_pressed ? 0.18 : 0.1),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(widget.icon, size: 12.sp, color: widget.color),
-              SizedBox(width: 4.w),
-              Text(
-                widget.label,
-                style: GoogleFonts.poppins(
-                  fontSize: 10.sp,
-                  color: widget.color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

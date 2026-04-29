@@ -1,71 +1,100 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-
-class CategoryStyle {
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  CategoryStyle({
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-}
-
-final Map<String, CategoryStyle> _categoryStyles = {
-  'All': CategoryStyle(label: 'All', icon: CupertinoIcons.square_grid_2x2, color: const Color(0xFF29B6F6)),
-  'Smart Watch': CategoryStyle(label: 'Smart Watch', icon: CupertinoIcons.clock, color: const Color(0xFF6366F1)),
-  'Neckband': CategoryStyle(label: 'Neckband', icon: CupertinoIcons.headphones, color: const Color(0xFFEC4899)),
-  'Airpods': CategoryStyle(label: 'Airpods', icon: CupertinoIcons.music_note, color: const Color(0xFF10B981)),
-  'Power Bank': CategoryStyle(label: 'Power Bank', icon: CupertinoIcons.battery_100, color: const Color(0xFFF59E0B)),
-  'Earphone': CategoryStyle(label: 'Earphone', icon: CupertinoIcons.mic, color: const Color(0xFF3B82F6)),
-  'Electronics': CategoryStyle(label: 'Electronics', icon: CupertinoIcons.device_phone_portrait, color: const Color(0xFF6366F1)),
-  'Fashion': CategoryStyle(label: 'Fashion', icon: CupertinoIcons.bag, color: const Color(0xFF10B981)),
-  'Audio': CategoryStyle(label: 'Audio', icon: CupertinoIcons.volume_up, color: const Color(0xFFEC4899)),
-  'Watches': CategoryStyle(label: 'Watches', icon: CupertinoIcons.clock, color: const Color(0xFFF59E0B)),
-  'Home': CategoryStyle(label: 'Home', icon: CupertinoIcons.house, color: const Color(0xFF3B82F6)),
-  'Sports': CategoryStyle(label: 'Sports', icon: CupertinoIcons.bolt, color: const Color(0xFFEF4444)),
-  'Beauty': CategoryStyle(label: 'Beauty', icon: CupertinoIcons.heart, color: const Color(0xFFD946EF)),
-  'Books': CategoryStyle(label: 'Books', icon: CupertinoIcons.book, color: const Color(0xFF8B5CF6)),
-  'Toys': CategoryStyle(label: 'Toys', icon: CupertinoIcons.gift, color: const Color(0xFF06B6D4)),
-};
-
-CategoryStyle getCategoryStyle(String category) {
-  return _categoryStyles[category] ?? CategoryStyle(
-    label: category,
-    icon: CupertinoIcons.tag,
-    color: const Color(0xFF29B6F6),
-  );
-}
-
 class ProductModel {
-  final String id;
-  final String title;
-  final String? subtitle;
-  final String image;
-  final double wholesalePrice;
-  final double? originalPrice;
-  final double maxResalePrice;
-  final String category;
-  final double rating;
+  final int id;
+  final int userId;
+  final int businessId;
+  final String productName;
+  final String slug;
+  final String brand;
+  final double price;
+  final double? discountPrice;
+  final int categoryId;
+  final String description;
+  final int stock;
+  final String sku;
+  final String status;
+  final String? thumbnail;
+  final double avgRating;
+  final int reviewCount;
+  final int viewCount;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   bool isReselling;
-  double myMargin;
 
   ProductModel({
     required this.id,
-    required this.title,
-    this.subtitle,
-    required this.image,
-    required this.wholesalePrice,
-    this.originalPrice,
-    required this.maxResalePrice,
-    required this.category,
-    required this.rating,
+    required this.userId,
+    required this.businessId,
+    required this.productName,
+    required this.slug,
+    required this.brand,
+    required this.price,
+    this.discountPrice,
+    required this.categoryId,
+    required this.description,
+    required this.stock,
+    required this.sku,
+    required this.status,
+    this.thumbnail,
+    required this.avgRating,
+    required this.reviewCount,
+    required this.viewCount,
+    required this.createdAt,
+    required this.updatedAt,
     this.isReselling = false,
-    this.myMargin = 0,
   });
 
-  double get myPrice => wholesalePrice + myMargin;
-  double get maxMargin => maxResalePrice - wholesalePrice;
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    return ProductModel(
+      id: json['id'] ?? 0,
+      userId: json['user_id'] ?? 0,
+      businessId: json['business_id'] ?? 0,
+      productName: json['product_name'] ?? 'Unknown',
+      slug: json['slug'] ?? '',
+      brand: json['brand'] ?? 'Generic',
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      discountPrice: json['discount_price'] != null ? double.tryParse(json['discount_price'].toString()) : null,
+      categoryId: json['category_id'] ?? 0,
+      description: json['description'] ?? '',
+      stock: json['stock'] ?? 0,
+      sku: json['sku'] ?? '',
+      status: json['status'] ?? 'active',
+      thumbnail: json['thumbnail'],
+      avgRating: double.tryParse(json['avg_rating'].toString()) ?? 0.0,
+      reviewCount: json['review_count'] ?? 0,
+      viewCount: json['view_count'] ?? 0,
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updated_at'] ?? '') ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'business_id': businessId,
+      'product_name': productName,
+      'slug': slug,
+      'brand': brand,
+      'price': price,
+      'discount_price': discountPrice,
+      'category_id': categoryId,
+      'description': description,
+      'stock': stock,
+      'sku': sku,
+      'status': status,
+      'thumbnail': thumbnail,
+      'avg_rating': avgRating,
+      'review_count': reviewCount,
+      'view_count': viewCount,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  // Helper getters
+  String get imageUrl => thumbnail ?? 'https://via.placeholder.com/300?text=No+Image';
+  String get category => 'Products';
+  double get rating => avgRating;
+  double get discountPercentage => discountPrice != null ? ((price - discountPrice!) / price * 100) : 0;
+  bool get isInStock => stock > 0;
 }
