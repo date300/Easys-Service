@@ -56,7 +56,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
   }
 
   List<String> get categories {
-    final cats = state.map((p) => p.category).toSet().toList();
+    final cats = state.map((p) => p.category).whereType<String>().toSet().toList();
     cats.sort();
     return ['All', ...cats];
   }
@@ -727,6 +727,7 @@ void _showAddProductSheet() {
             rating: product.rating,
             isReselling: true,
             myMargin: margin,
+            stock: product.stock,
           );
           ref.read(productListProvider.notifier).updateProduct(updated);
         },
@@ -822,6 +823,7 @@ void _showAddProductSheet() {
             rating: myResells[i].rating,
             isReselling: false,
             myMargin: 0,
+            stock: myResells[i].stock,
           );
           ref.read(productListProvider.notifier).updateProduct(updated);
         },
@@ -897,6 +899,7 @@ class _ResellProductCardState extends State<_ResellProductCard> {
               rating: widget.product.rating,
               isReselling: true,
               myMargin: margin,
+              stock: widget.product.stock,
             );
             widget.ref.read(productListProvider.notifier).updateProduct(updated);
           },
