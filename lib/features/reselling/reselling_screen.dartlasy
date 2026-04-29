@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:http/http.dart' as http;
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
 import 'product_details_page.dart';
@@ -19,29 +17,74 @@ final productListProvider = StateNotifierProvider<ProductListNotifier, List<Prod
 });
 
 class ProductListNotifier extends StateNotifier<List<ProductModel>> {
-  ProductListNotifier() : super([]);
-
-  Future<void> fetchProducts() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://easy.ltcminematrix.com/api/products'),
-      );
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        if (json['status'] == 'success' && json['data'] is List) {
-          final products = (json['data'] as List)
-              .map((item) => ProductModel.fromJson(item))
-              .toList();
-          state = products;
-        }
-      } else {
-        debugPrint('API Error: ${response.statusCode}');
-      }
-    } catch (e, stack) {
-      debugPrint('Error fetching products: $e');
-      debugPrint(stack.toString());
-    }
-  }
+  ProductListNotifier() : super([
+    ProductModel(
+      id: '1',
+      title: '3 Piece Exclusive',
+      subtitle: 'Exclusive Premium Collection',
+      image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
+      wholesalePrice: 1270,
+      originalPrice: 1590,
+      maxResalePrice: 1800,
+      category: 'Fashion',
+      rating: 4.8,
+    ),
+    ProductModel(
+      id: '2',
+      title: 'Smart Watch S2000',
+      subtitle: 'Latest Series',
+      image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400',
+      wholesalePrice: 950,
+      originalPrice: 1300,
+      maxResalePrice: 1500,
+      category: 'Smart Watch',
+      rating: 4.5,
+    ),
+    ProductModel(
+      id: '3',
+      title: 'Walar Mr Thin 6500',
+      subtitle: 'Premium Quality',
+      image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400',
+      wholesalePrice: 570,
+      originalPrice: 980,
+      maxResalePrice: 1200,
+      category: 'Fashion',
+      rating: 4.6,
+    ),
+    ProductModel(
+      id: '4',
+      title: 'Mini Portable Fan',
+      subtitle: 'Summer Essential',
+      image: 'https://images.unsplash.com/photo-1618941716939-553df3c6c278?w=400',
+      wholesalePrice: 450,
+      originalPrice: 720,
+      maxResalePrice: 900,
+      category: 'Electronics',
+      rating: 4.3,
+    ),
+    ProductModel(
+      id: '5',
+      title: 'Leather Card Holder',
+      subtitle: 'Stylish & Compact',
+      image: 'https://images.unsplash.com/photo-1624114545437-f1b17c603a3a?w=400',
+      wholesalePrice: 380,
+      originalPrice: 650,
+      maxResalePrice: 800,
+      category: 'Fashion',
+      rating: 4.4,
+    ),
+    ProductModel(
+      id: '6',
+      title: 'Premium Wrist Watch',
+      subtitle: 'Classic Design',
+      image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400',
+      wholesalePrice: 1100,
+      originalPrice: 1600,
+      maxResalePrice: 2000,
+      category: 'Smart Watch',
+      rating: 4.7,
+    ),
+  ]);
 
   void addProduct(ProductModel product) {
     state = [...state, product];
@@ -89,10 +132,6 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     });
     _searchFocusNode.addListener(() {
       if (mounted) setState(() => _isSearchFocused = _searchFocusNode.hasFocus);
-    });
-    // Load products from API on startup
-    Future.microtask(() {
-      ref.read(productListProvider.notifier).fetchProducts();
     });
   }
 
