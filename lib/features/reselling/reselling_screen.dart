@@ -71,6 +71,15 @@ class ResellingScreen extends ConsumerStatefulWidget {
   ConsumerState<ResellingScreen> createState() => _ResellingScreenState();
 }
 
+// ==================== CATEGORY STYLE HELPER ====================
+
+class CategoryStyle {
+  final Color color;
+  final IconData icon;
+
+  const CategoryStyle({required this.color, required this.icon});
+}
+
 class _ResellingScreenState extends ConsumerState<ResellingScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
@@ -103,6 +112,35 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     _searchFocusNode.dispose();
     super.dispose();
   }
+
+  // ==================== CATEGORY STYLE ====================
+  CategoryStyle getCategoryStyle(String category) {
+    switch (category.toLowerCase()) {
+      case 'electronics':
+        return const CategoryStyle(color: Color(0xFF29B6F6), icon: CupertinoIcons.tv);
+      case 'fashion':
+        return const CategoryStyle(color: Color(0xFFFF4081), icon: CupertinoIcons.tag);
+      case 'home':
+        return const CategoryStyle(color: Color(0xFF66BB6A), icon: CupertinoIcons.house);
+      case 'automotive':
+        return const CategoryStyle(color: Color(0xFFFFA726), icon: CupertinoIcons.car);
+      case 'sports':
+        return const CategoryStyle(color: Color(0xFFAB47BC), icon: CupertinoIcons.sportscourt);
+      case 'books':
+        return const CategoryStyle(color: Color(0xFF8D6E63), icon: CupertinoIcons.book);
+      case 'toys':
+        return const CategoryStyle(color: Color(0xFFEF5350), icon: CupertinoIcons.gamecontroller);
+      case 'beauty':
+        return const CategoryStyle(color: Color(0xFFEC407A), icon: CupertinoIcons.heart);
+      case 'food':
+        return const CategoryStyle(color: Color(0xFF66BB6A), icon: CupertinoIcons.cart);
+      case 'all':
+        return const CategoryStyle(color: Color(0xFF29B6F6), icon: CupertinoIcons.circle_grid_3x3);
+      default:
+        return const CategoryStyle(color: Color(0xFF78909C), icon: CupertinoIcons.cube_box);
+    }
+  }
+
 List<ProductModel> _filterProducts(List<ProductModel> all) {
   return all.where((p) {
     final matchCat = _selectedCategory == 'All' || p.category == _selectedCategory;
