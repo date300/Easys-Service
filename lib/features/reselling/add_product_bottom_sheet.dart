@@ -1,13 +1,14 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'product_model.dart';
 
 class AddProductBottomSheet extends StatefulWidget {
@@ -31,7 +32,12 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
   bool _isLoading = false;
   String _selectedCategory = 'Electronics';
-  List<File> _selectedImages = [];  // <-- মাল্টিপল ইমেজ
+
+  // ক্রস-প্ল্যাটফর্ম ইমেজ সংরক্ষণ
+  List<Uint8List> _imageBytes = [];
+  List<String> _imageNames = [];
+
+  final Dio _dio = Dio();
 
   final Map<String, int> _categoryMap = {
     'Electronics': 1,
@@ -62,17 +68,26 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     super.dispose();
   }
 
-  // ============= ইমেজ পিকার =============
+  // ============= ইমেজ পিকার (ওয়েব ও মোবাইল – দুই-ই সাপোর্ট) =============
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     try {
       final pickedFiles = await picker.pickMultiImage(
-        imageQuality: 85,   // সামান্য কম্প্রেস (ফাইল সাইজ কমানো)
-        limit: 4,           // সর্বোচ্চ ৪টি
+        imageQuality: 85,
+        limit: 4,
       );
       if (pickedFiles.isNotEmpty) {
+        // সবগুলো ফাইল থেকে বাইট ও নাম রেখে দিচ্ছি
+        List<Uint8List> bytesList = [];
+        List<String> namesList = [];
+        for (var xfile in pickedFiles) {
+          final bytes = await xfile.readAsBytes();
+          bytesList.add(bytes);
+          namesList.add(xfile.name);
+        }
         setState(() {
-          _selectedImages = pickedFiles.map((e) => File(e.path)).toList();
+          _imageBytes = bytesList;
+          _imageNames = namesList;
         });
       }
     } catch (e) {
@@ -82,11 +97,12 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
 
   void _removeImage(int index) {
     setState(() {
-      _selectedImages.removeAt(index);
+      _imageBytes.removeAt(index);
+      _imageNames.removeAt(index);
     });
   }
 
-  // ============= সাবমিট মাল্টিপার্ট =============
+  // ============= সাবমিট (Dio মাল্টিপার্ট) =============
   Future<void> _submitProduct() async {
     final name = _titleController.text.trim();
     if (name.length < 2) {
@@ -113,7 +129,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
       }
     }
 
-    if (_selectedImages.length > 4) {
+    if (_imageBytes.length > 4) {
       _showSnackBar('Maximum 4 images allowed', isError: true);
       return;
     }
@@ -129,48 +145,50 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
         return;
       }
 
-      // ======== মাল্টিপার্ট রিকোয়েস্ট ========
-      final uri = Uri.parse('$_baseUrl/vendor/product/create');
-      final request = http.MultipartRequest('POST', uri)
-        ..headers['Authorization'] = 'Bearer $token'
-        ..fields['product_name'] = name
-        ..fields['brand'] = _brandController.text.trim().isNotEmpty
-            ? _brandController.text.trim()
-            : 'Easy Service'
-        ..fields['price'] = price.toString()
-        ..fields['category_id'] = (_categoryMap[_selectedCategory] ?? 1).toString()
-        ..fields['description'] = _descriptionController.text.trim()
-        ..fields['stock'] = _stockController.text.trim()
-        ..fields['sku'] = _skuController.text.trim()
-        ..fields['meta_title'] = name
-        ..fields['meta_description'] = _descriptionController.text.trim();
+      // মাল্টিপার্ট ফর্ম তৈরি (সকল প্ল্যাটফর্মের জন্য)
+      final formData = FormData.fromMap({
+        'product_name':     name,
+        'brand':            _brandController.text.trim().isNotEmpty
+                              ? _brandController.text.trim() : 'Easy Service',
+        'price':            price,
+        'category_id':      (_categoryMap[_selectedCategory] ?? 1).toString(),
+        'description':      _descriptionController.text.trim(),
+        'stock':            _stockController.text.trim(),
+        'sku':              _skuController.text.trim(),
+        'meta_title':       name,
+        'meta_description': _descriptionController.text.trim(),
+        if (discountPrice != null) 'discount_price': discountPrice,
+        // ইমেজগুলো বাইট থেকে যোগ
+        'images': List.generate(
+          _imageBytes.length,
+          (i) => MultipartFile.fromBytes(
+            _imageBytes[i],
+            filename: _imageNames[i],
+          ),
+        ),
+      });
 
-      if (discountPrice != null) {
-        request.fields['discount_price'] = discountPrice.toString();
-      }
-
-      // ইমেজ ফাইল যুক্ত করো
-      for (final img in _selectedImages) {
-        request.files.add(await http.MultipartFile.fromPath('images', img.path));
-      }
-
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await _dio.post(
+        '$_baseUrl/vendor/product/create',
+        data: formData,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
 
       if (!mounted) return;
 
-      final responseData = jsonDecode(response.body);
+      final responseData = response.data;
 
       if (response.statusCode == 201) {
         HapticFeedback.mediumImpact();
 
-        // নতুন প্রোডাক্ট মডেল (ছবি এখনও সার্ভার থেকে আসেনি, placeholder দিচ্ছি)
         final newProduct = ProductModel(
           id: responseData['product_id']?.toString()
               ?? DateTime.now().millisecondsSinceEpoch.toString(),
           title: name,
           subtitle: _descriptionController.text.trim(),
-          image: '',   // প্রথমবার ফাঁকা, পরে লিস্ট রিফ্রেশ হলে URL চলে আসবে
+          image: '',   // পরে সঠিক URL আসবে API থেকে
           wholesalePrice: price,
           originalPrice: discountPrice ?? price + 200,
           maxResalePrice: price * 1.5,
@@ -190,8 +208,11 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
           isError: true,
         );
       }
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'Connection error: ${e.message}';
+      if (mounted) _showSnackBar(msg, isError: true);
     } catch (e) {
-      if (mounted) _showSnackBar('Connection error: $e', isError: true);
+      if (mounted) _showSnackBar('Unexpected error: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -207,7 +228,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     );
   }
 
-  // ============= ইমেজ সিলেক্টর UI =============
+  // ============= ইমেজ সিলেক্টর UI (Image.memory দিয়ে প্রিভিউ) =============
   Widget _buildImagePickerSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
@@ -222,24 +243,22 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
           ),
         ),
         SizedBox(height: 10.h),
-        // ইমেজ প্রিভিউ
-        if (_selectedImages.isNotEmpty)
+        if (_imageBytes.isNotEmpty)
           SizedBox(
             height: 90.h,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: _selectedImages.length + (_selectedImages.length < 4 ? 1 : 0),
+              itemCount: _imageBytes.length + (_imageBytes.length < 4 ? 1 : 0),
               separatorBuilder: (_, __) => SizedBox(width: 10.w),
               itemBuilder: (context, index) {
                 // শেষে অ্যাড বাটন
-                if (index == _selectedImages.length) {
+                if (index == _imageBytes.length) {
                   return GestureDetector(
                     onTap: _pickImages,
                     child: Container(
-                      width: 80.w,
-                      height: 80.h,
+                      width: 80.w, height: 80.h,
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid),
+                        border: Border.all(color: Colors.grey.shade400),
                         borderRadius: BorderRadius.circular(10.r),
                         color: Colors.grey.shade200.withOpacity(0.5),
                       ),
@@ -247,28 +266,24 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                     ),
                   );
                 }
-
-                // ইমেজ প্রিভিউ
+                // ইমেজ প্রিভিউ (Image.memory)
                 return Stack(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10.r),
-                      child: Image.file(
-                        _selectedImages[index],
-                        width: 80.w,
-                        height: 80.h,
+                      child: Image.memory(
+                        _imageBytes[index],
+                        width: 80.w, height: 80.h,
                         fit: BoxFit.cover,
                       ),
                     ),
                     Positioned(
-                      top: 2.h,
-                      right: 2.w,
+                      top: 2.h, right: 2.w,
                       child: GestureDetector(
                         onTap: () => _removeImage(index),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
+                            color: Colors.black54, shape: BoxShape.circle,
                           ),
                           padding: EdgeInsets.all(2.sp),
                           child: Icon(Icons.close, size: 16.sp, color: Colors.white),
@@ -281,14 +296,12 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             ),
           )
         else
-          // কোনো ইমেজ না থাকলে শুধু অ্যাড বাটন
           GestureDetector(
             onTap: _pickImages,
             child: Container(
-              width: 80.w,
-              height: 80.h,
+              width: 80.w, height: 80.h,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid),
+                border: Border.all(color: Colors.grey.shade400),
                 borderRadius: BorderRadius.circular(10.r),
                 color: Colors.grey.shade200.withOpacity(0.5),
               ),
@@ -299,6 +312,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     );
   }
 
+  // ============= বাকি UI (আগের মতোই) =============
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -330,8 +344,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             Text(
               'Add New Product',
               style: GoogleFonts.poppins(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
+                fontSize: 20.sp, fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black87,
               ),
             ),
@@ -343,7 +356,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             SizedBox(height: 16.h),
             _buildTextField(_descriptionController, 'Description', Icons.description, maxLines: 3),
             SizedBox(height: 16.h),
-            _buildImagePickerSection(),     // <-- নতুন ইমেজ সিলেক্টর
+            _buildImagePickerSection(),
             SizedBox(height: 16.h),
             _buildTextField(_priceController, 'Price *', Icons.attach_money, isNumber: true),
             SizedBox(height: 16.h),
@@ -354,14 +367,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
             _buildTextField(_skuController, 'SKU', Icons.qr_code),
             SizedBox(height: 16.h),
 
-            Text(
-              'Category',
-              style: GoogleFonts.poppins(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white70 : Colors.grey.shade700,
-              ),
-            ),
+            Text('Category', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w500, color: isDark ? Colors.white70 : Colors.grey.shade700)),
             SizedBox(height: 8.h),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -378,10 +384,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                   items: _categoryMap.keys.map((cat) {
                     return DropdownMenuItem(
                       value: cat,
-                      child: Text(cat, style: GoogleFonts.poppins(
-                        fontSize: 13.sp,
-                        color: isDark ? Colors.white : Colors.black87,
-                      )),
+                      child: Text(cat, style: GoogleFonts.poppins(fontSize: 13.sp, color: isDark ? Colors.white : Colors.black87)),
                     );
                   }).toList(),
                   onChanged: (val) => setState(() => _selectedCategory = val!),
@@ -399,24 +402,12 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
                   color: _isLoading ? Colors.grey : const Color(0xFF29B6F6),
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: _isLoading ? [] : [
-                    BoxShadow(
-                      color: const Color(0xFF29B6F6).withOpacity(0.3),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
+                    BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.3), blurRadius: 14, offset: Offset(0, 5)),
                   ],
                 ),
                 child: _isLoading
                     ? const Center(child: CupertinoActivityIndicator(color: Colors.white))
-                    : Text(
-                        'Submit for Approval',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                    : Text('Submit for Approval', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
             SizedBox(height: 10.h),
@@ -426,51 +417,27 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
     );
   }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hint,
-    IconData icon, {
-    int maxLines = 1,
-    bool isNumber = false,
-  }) {
+  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {int maxLines = 1, bool isNumber = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(hint, style: GoogleFonts.poppins(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w500,
-          color: isDark ? Colors.white70 : Colors.grey.shade700,
-        )),
+        Text(hint, style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w500, color: isDark ? Colors.white70 : Colors.grey.shade700)),
         SizedBox(height: 8.h),
         TextField(
           controller: controller,
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           maxLines: maxLines,
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
+          style: GoogleFonts.poppins(fontSize: 14.sp, color: isDark ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey.shade400),
             prefixIcon: Icon(icon, size: 20.sp, color: Colors.grey.shade500),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: Color(0xFF29B6F6), width: 1.5),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide(color: Colors.grey.shade300)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide(color: Colors.grey.shade300)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: const BorderSide(color: Color(0xFF29B6F6), width: 1.5)),
             filled: true,
-            fillColor: isDark
-                ? Colors.grey.shade800.withOpacity(0.3)
-                : Colors.grey.shade50,
+            fillColor: isDark ? Colors.grey.shade800.withOpacity(0.3) : Colors.grey.shade50,
           ),
         ),
       ],
