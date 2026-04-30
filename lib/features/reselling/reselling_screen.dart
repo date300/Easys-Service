@@ -6,12 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
+import 'product_details_page.dart';
 import 'add_product_bottom_sheet.dart';
-import '../../main.dart';
 
 // ==================== RIVERPOD PROVIDERS ====================
 
@@ -100,6 +99,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     _searchFocusNode.addListener(() {
       if (mounted) setState(() => _isSearchFocused = _searchFocusNode.hasFocus);
     });
+    // Load products from API on startup
     Future.microtask(() {
       ref.read(productListProvider.notifier).fetchProducts();
     });
@@ -113,6 +113,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     super.dispose();
   }
 
+  // ==================== CATEGORY STYLE ====================
   CategoryStyle getCategoryStyle(String category) {
     switch (category.toLowerCase()) {
       case 'electronics':
@@ -158,6 +159,63 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
         onProductAdded: (ProductModel newProduct) {
           ref.read(productListProvider.notifier).addProduct(newProduct);
         },
+      ),
+    );
+  }
+
+  void _showResellSheet(ProductModel product) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ResellBottomSheet(
+        product: product,
+        onConfirm: (margin) {
+          final updated = ProductModel(
+            id: product.id,
+            title: product.title,
+            subtitle: product.subtitle,
+            image: product.image,
+            wholesalePrice: product.wholesalePrice,
+            originalPrice: product.originalPrice,
+            maxResalePrice: product.maxResalePrice,
+            category: product.category,
+            rating: product.rating,
+            isReselling: true,
+            myMargin: margin,
+            stock: product.stock,
+          );
+          ref.read(productListProvider.notifier).updateProduct(updated);
+        },
+      ),
+    );
+  }
+
+  void _goToDetails(ProductModel product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailsPage(
+          productId: product.id,
+          onStartResell: (margin) {
+            final updated = ProductModel(
+              id: product.id,
+              title: product.title,
+              subtitle: product.subtitle,
+              image: product.image,
+              wholesalePrice: product.wholesalePrice,
+              originalPrice: product.originalPrice,
+              maxResalePrice: product.maxResalePrice,
+              category: product.category,
+              rating: product.rating,
+              isReselling: true,
+              myMargin: margin,
+              stock: product.stock,
+            );
+            ref.read(productListProvider.notifier).updateProduct(updated);
+          },
+        ),
       ),
     );
   }
@@ -233,7 +291,11 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
               icon: Icon(CupertinoIcons.add, size: 18.sp, color: Colors.white),
               label: Text(
                 'Add Product',
-                style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: Colors.white),
+                style: GoogleFonts.poppins(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ).animate().scale(delay: 150.ms),
           ],
@@ -242,6 +304,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     );
   }
 
+  // ==================== SEARCH BAR ====================
   Widget _buildSearchBar(double hPadding, bool isSmall, Color kTextDark, Color kTextMid, Color cardBackground, Color shadowColor, Color borderColor) {
     return Padding(
       padding: EdgeInsets.fromLTRB(hPadding, 12.h, hPadding, 0),
@@ -254,17 +317,33 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
             color: _isSearchFocused ? const Color(0xFF29B6F6).withOpacity(0.5) : borderColor,
             width: _isSearchFocused ? 1.5 : 1,
           ),
-          boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: TextField(
           controller: _searchController,
           focusNode: _searchFocusNode,
           onChanged: (val) => setState(() => _searchQuery = val),
-          style: GoogleFonts.poppins(fontSize: isSmall ? 12.sp : 13.sp, color: kTextDark),
+          style: GoogleFonts.poppins(
+            fontSize: isSmall ? 12.sp : 13.sp,
+            color: kTextDark,
+          ),
           decoration: InputDecoration(
             hintText: 'Search Products...',
-            hintStyle: GoogleFonts.poppins(fontSize: isSmall ? 12.sp : 13.sp, color: kTextMid),
-            prefixIcon: Icon(CupertinoIcons.search, color: _isSearchFocused ? const Color(0xFF29B6F6) : kTextMid, size: isSmall ? 18.sp : 20.sp),
+            hintStyle: GoogleFonts.poppins(
+              fontSize: isSmall ? 12.sp : 13.sp,
+              color: kTextMid,
+            ),
+            prefixIcon: Icon(
+              CupertinoIcons.search,
+              color: _isSearchFocused ? const Color(0xFF29B6F6) : kTextMid,
+              size: isSmall ? 18.sp : 20.sp,
+            ),
             suffixIcon: _searchQuery.isNotEmpty
                 ? GestureDetector(
                     onTap: () {
@@ -273,8 +352,15 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                     },
                     child: Container(
                       margin: EdgeInsets.all(10.w),
-                      decoration: BoxDecoration(color: borderColor, shape: BoxShape.circle),
-                      child: Icon(CupertinoIcons.xmark, color: kTextMid, size: 12.sp),
+                      decoration: BoxDecoration(
+                        color: borderColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        CupertinoIcons.xmark,
+                        color: kTextMid,
+                        size: 12.sp,
+                      ),
                     ),
                   )
                 : null,
@@ -287,6 +373,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(delay: 200.ms);
   }
 
+  // ==================== BANNER SLIDER ====================
   Widget _buildBannerSlider(bool isSmall, bool isTablet, bool isDesktop) {
     final banners = [
       'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600',
@@ -300,7 +387,13 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
       margin: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 3))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
@@ -323,7 +416,14 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                   errorBuilder: (_, __, ___) => Container(
                     color: const Color(0xFF29B6F6).withOpacity(0.1),
                     child: Center(
-                      child: Text('Banner Image', style: GoogleFonts.poppins(fontSize: 22.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
+                      child: Text(
+                        'Banner Image',
+                        style: GoogleFonts.poppins(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF29B6F6),
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -334,7 +434,11 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                 gradient: LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-                  colors: [Colors.black.withOpacity(0.3), Colors.transparent, Colors.transparent],
+                  colors: [
+                    Colors.black.withOpacity(0.3),
+                    Colors.transparent,
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
@@ -346,8 +450,18 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                 children: [
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                    decoration: BoxDecoration(color: const Color(0xFF29B6F6), borderRadius: BorderRadius.circular(8.r)),
-                    child: Text('Special Offer', style: GoogleFonts.poppins(fontSize: 10.sp, fontWeight: FontWeight.bold, color: Colors.white)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF29B6F6),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Text(
+                      'Special Offer',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
@@ -356,7 +470,9 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                       fontSize: 20.sp,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      shadows: [Shadow(color: Colors.black.withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 2))],
+                      shadows: [
+                        Shadow(color: Colors.black.withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 2)),
+                      ],
                     ),
                   ),
                 ],
@@ -368,6 +484,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.05);
   }
 
+  // ==================== QUICK ACTIONS ====================
   Widget _buildQuickActions(double hPadding, bool isSmall, bool isDesktop, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark) {
     final actions = [
       _QuickActionData(icon: CupertinoIcons.doc_text, label: 'Orders', color: const Color(0xFF6366F1)),
@@ -395,24 +512,37 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                     color: cardBackground,
                     shape: BoxShape.circle,
                     border: Border.all(color: borderColor, width: 0.5),
-                    boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))],
+                    boxShadow: [
+                      BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2)),
+                    ],
                   ),
-                  child: Center(child: Icon(action.icon, color: action.color, size: iconSize)),
+                  child: Center(
+                    child: Icon(action.icon, color: action.color, size: iconSize),
+                  ),
                 ),
                 SizedBox(height: 6.h),
                 Text(
                   action.label,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, fontWeight: FontWeight.w500, color: kTextDark, height: 1.2),
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 9.sp : 10.sp,
+                    fontWeight: FontWeight.w500,
+                    color: kTextDark,
+                    height: 1.2,
+                  ),
                 ),
               ],
             ),
-          ).animate().fadeIn(delay: (actions.indexOf(action) * 80).ms).scale(begin: const Offset(0.85, 0.85), curve: Curves.easeOutBack);
+          ).animate().fadeIn(delay: (actions.indexOf(action) * 80).ms).scale(
+            begin: const Offset(0.85, 0.85),
+            curve: Curves.easeOutBack,
+          );
         }).toList(),
       ),
     );
   }
 
+  // ==================== SECTION HEADER ====================
   Widget _buildSectionHeader(double hPadding, bool isSmall, bool isDesktop, Color kTextDark, Color kTextMid, {required String title, required String subtitle, bool showViewAll = false}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(hPadding, 24.h, hPadding, 0),
@@ -423,18 +553,42 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: GoogleFonts.poppins(fontSize: isSmall ? 14.sp : isDesktop ? 18.sp : 16.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-              Text(subtitle, style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : isDesktop ? 12.sp : 11.sp, color: kTextMid)),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: isSmall ? 14.sp : isDesktop ? 18.sp : 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: kTextDark,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.poppins(
+                  fontSize: isSmall ? 10.sp : isDesktop ? 12.sp : 11.sp,
+                  color: kTextMid,
+                ),
+              ),
             ],
           ),
           if (showViewAll)
             TextButton(
               onPressed: () {},
-              style: TextButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('See All', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 11.sp, color: const Color(0xFF29B6F6), fontWeight: FontWeight.w600)),
+                  Text(
+                    'See All',
+                    style: GoogleFonts.poppins(
+                      fontSize: isSmall ? 10.sp : 11.sp,
+                      color: const Color(0xFF29B6F6),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   SizedBox(width: 2.w),
                   Icon(CupertinoIcons.chevron_right, size: isSmall ? 10.sp : 12.sp, color: const Color(0xFF29B6F6)),
                 ],
@@ -445,6 +599,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(duration: 400.ms);
   }
 
+  // ==================== CATEGORY FILTER ====================
   Widget _buildCategoryFilter(List<ProductModel> allProducts, bool isSmall, bool isDesktop, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark) {
     final categories = ref.read(productListProvider.notifier).categories;
 
@@ -477,15 +632,34 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                   decoration: BoxDecoration(
                     color: selected ? style.color.withOpacity(0.15) : cardBackground,
                     shape: BoxShape.circle,
-                    border: Border.all(color: selected ? style.color.withOpacity(0.5) : borderColor, width: selected ? 2 : 0.5),
-                    boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))],
+                    border: Border.all(
+                      color: selected ? style.color.withOpacity(0.5) : borderColor,
+                      width: selected ? 2 : 0.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: shadowColor,
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Center(child: Icon(style.icon, color: selected ? style.color : kTextDark.withOpacity(0.6), size: iconSize)),
+                  child: Center(
+                    child: Icon(
+                      style.icon,
+                      color: selected ? style.color : kTextDark.withOpacity(0.6),
+                      size: iconSize,
+                    ),
+                  ),
                 ),
                 SizedBox(height: 6.h),
                 Text(
                   cat,
-                  style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: selected ? style.color : kTextDark),
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 9.sp : 10.sp,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? style.color : kTextDark,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -497,6 +671,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(delay: 300.ms);
   }
 
+  // ==================== CUSTOM TAB BAR ====================
   Widget _buildCustomTabBar(int allCount, int myCount, double hPadding, bool isSmall, Color cardBackground, Color borderColor, Color kTextDark, Color kTextMid) {
     return Container(
       margin: EdgeInsets.fromLTRB(hPadding, 16.h, hPadding, 4.h),
@@ -505,7 +680,9 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
         color: cardBackground,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: borderColor),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
       ),
       child: Row(
         children: [
@@ -522,7 +699,11 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                 child: Text(
                   'All Products ($allCount)',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.w600, color: _tabController.index == 0 ? Colors.white : kTextMid),
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 11.sp : 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _tabController.index == 0 ? Colors.white : kTextMid,
+                  ),
                 ),
               ),
             ),
@@ -540,7 +721,11 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                 child: Text(
                   'My Sales ($myCount)',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.w600, color: _tabController.index == 1 ? Colors.white : kTextMid),
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 11.sp : 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _tabController.index == 1 ? Colors.white : kTextMid,
+                  ),
                 ),
               ),
             ),
@@ -550,6 +735,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(delay: 350.ms);
   }
 
+  // ==================== PRODUCTS TAB ====================
   Widget _buildProductsTab(List<ProductModel> products, bool isSmall, bool isDesktop, bool isTablet, Color cardBackground, Color shadowColor, Color kTextDark, Color kTextMid) {
     if (products.isEmpty) return _buildEmptyState(kTextMid);
 
@@ -573,40 +759,13 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
         shadowColor: shadowColor,
         kTextDark: kTextDark,
         kTextMid: kTextMid,
-        ref: ref,
+        onTap: () => _goToDetails(products[i]),
+        onResell: () => _showResellSheet(products[i]),
       ).animate().fadeIn(delay: (i * 50).ms, duration: 300.ms).slideY(begin: 0.06, curve: Curves.easeOut),
     );
   }
 
-  void _showResellSheet(ProductModel product) {
-    HapticFeedback.mediumImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ResellBottomSheet(
-        product: product,
-        onConfirm: (margin) {
-          final updated = ProductModel(
-            id: product.id,
-            title: product.title,
-            subtitle: product.subtitle,
-            image: product.image,
-            wholesalePrice: product.wholesalePrice,
-            originalPrice: product.originalPrice,
-            maxResalePrice: product.maxResalePrice,
-            category: product.category,
-            rating: product.rating,
-            isReselling: true,
-            myMargin: margin,
-            stock: product.stock,
-          );
-          ref.read(productListProvider.notifier).updateProduct(updated);
-        },
-      ),
-    );
-  }
-
+  // ==================== MY RESELLS TAB ====================
   Widget _buildMyResellsTab(List<ProductModel> myResells, bool isSmall, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark, Color kTextMid) {
     if (myResells.isEmpty) {
       return Center(
@@ -615,13 +774,29 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
           children: [
             Container(
               padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(color: const Color(0xFF29B6F6).withOpacity(0.08), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: const Color(0xFF29B6F6).withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
               child: Icon(CupertinoIcons.cube_box, size: 44.sp, color: const Color(0xFF29B6F6)),
             ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
             SizedBox(height: 16.h),
-            Text('No active sales yet', style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.bold, color: kTextDark)),
+            Text(
+              'No active sales yet',
+              style: GoogleFonts.poppins(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: kTextDark,
+              ),
+            ),
             SizedBox(height: 6.h),
-            Text('Pick a product and set your margin', style: GoogleFonts.poppins(fontSize: 13.sp, color: kTextMid)),
+            Text(
+              'Pick a product and set your margin',
+              style: GoogleFonts.poppins(
+                fontSize: 13.sp,
+                color: kTextMid,
+              ),
+            ),
             SizedBox(height: 20.h),
             GestureDetector(
               onTap: () => _tabController.animateTo(0),
@@ -630,9 +805,22 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
                 decoration: BoxDecoration(
                   color: const Color(0xFF29B6F6),
                   borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF29B6F6).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Text('Browse Products', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14.sp)),
+                child: Text(
+                  'Browse Products',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.sp,
+                  ),
+                ),
               ),
             ),
           ],
@@ -680,7 +868,14 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
         children: [
           Icon(CupertinoIcons.search, size: 48.sp, color: kTextMid),
           SizedBox(height: 12.h),
-          Text('No products found', style: GoogleFonts.poppins(fontSize: 15.sp, fontWeight: FontWeight.w500, color: kTextMid)),
+          Text(
+            'No products found',
+            style: GoogleFonts.poppins(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w500,
+              color: kTextMid,
+            ),
+          ),
         ],
       ),
     );
@@ -696,7 +891,8 @@ class _ResellProductCard extends StatefulWidget {
   final Color shadowColor;
   final Color kTextDark;
   final Color kTextMid;
-  final WidgetRef ref;
+  final VoidCallback onTap;
+  final VoidCallback onResell;
 
   const _ResellProductCard({
     required this.product,
@@ -705,7 +901,8 @@ class _ResellProductCard extends StatefulWidget {
     required this.shadowColor,
     required this.kTextDark,
     required this.kTextMid,
-    required this.ref,
+    required this.onTap,
+    required this.onResell,
   });
 
   @override
@@ -715,22 +912,16 @@ class _ResellProductCard extends StatefulWidget {
 class _ResellProductCardState extends State<_ResellProductCard> {
   bool _pressed = false;
 
-  // ✅ সঠিক জায়গায় — GoRouter + isDetailViewProvider
-  void _goToDetails() {
-    widget.ref.read(isDetailViewProvider.notifier).state = true;
-    widget.ref.read(detailViewTitleProvider.notifier).state = widget.product.title;
-    context.push('/product/${widget.product.id}');
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) {
         setState(() => _pressed = false);
-        _goToDetails();
+        widget.onTap();
       },
       onTapCancel: () => setState(() => _pressed = false),
+      onLongPress: widget.onResell,
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1.0,
         duration: const Duration(milliseconds: 120),
@@ -738,7 +929,14 @@ class _ResellProductCardState extends State<_ResellProductCard> {
           decoration: BoxDecoration(
             color: widget.cardBackground,
             borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [BoxShadow(color: widget.shadowColor, blurRadius: 6, offset: const Offset(0, 2), spreadRadius: 0)],
+            boxShadow: [
+              BoxShadow(
+                color: widget.shadowColor,
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -762,7 +960,9 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                         },
                         errorBuilder: (_, __, ___) => Container(
                           color: Colors.grey.shade100,
-                          child: Center(child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400, size: 28.sp)),
+                          child: Center(
+                            child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400, size: 28.sp),
+                          ),
                         ),
                       ),
                     ),
@@ -773,13 +973,23 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                       left: 8,
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
-                        decoration: BoxDecoration(color: const Color(0xFF34C759), borderRadius: BorderRadius.circular(6.r)),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF34C759),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(CupertinoIcons.checkmark_alt, color: Colors.white, size: 9.sp),
                             SizedBox(width: 2.w),
-                            Text('Active', style: GoogleFonts.poppins(fontSize: 8.5.sp, color: Colors.white, fontWeight: FontWeight.w700)),
+                            Text(
+                              'Active',
+                              style: GoogleFonts.poppins(
+                                fontSize: 8.5.sp,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -789,13 +999,23 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                     right: 8,
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
-                      decoration: BoxDecoration(color: widget.cardBackground.withOpacity(0.92), borderRadius: BorderRadius.circular(8.r)),
+                      decoration: BoxDecoration(
+                        color: widget.cardBackground.withOpacity(0.92),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(CupertinoIcons.star_fill, color: const Color(0xFFFFCC02), size: 10.sp),
                           SizedBox(width: 2.w),
-                          Text(widget.product.rating.toString(), style: GoogleFonts.poppins(fontSize: 9.sp, fontWeight: FontWeight.w700, color: widget.kTextDark)),
+                          Text(
+                            widget.product.rating.toString(),
+                            style: GoogleFonts.poppins(
+                              fontSize: 9.sp,
+                              fontWeight: FontWeight.w700,
+                              color: widget.kTextDark,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -810,7 +1030,12 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                     children: [
                       Text(
                         widget.product.title,
-                        style: GoogleFonts.poppins(fontSize: widget.isSmall ? 10.sp : 11.sp, fontWeight: FontWeight.w600, color: widget.kTextDark, height: 1.3),
+                        style: GoogleFonts.poppins(
+                          fontSize: widget.isSmall ? 10.sp : 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: widget.kTextDark,
+                          height: 1.3,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -818,7 +1043,12 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                         SizedBox(height: 2.h),
                         Text(
                           widget.product.subtitle!,
-                          style: GoogleFonts.poppins(fontSize: 9.sp, fontWeight: FontWeight.w400, color: widget.kTextMid, height: 1.2),
+                          style: GoogleFonts.poppins(
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.w400,
+                            color: widget.kTextMid,
+                            height: 1.2,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -829,13 +1059,22 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                         children: [
                           Text(
                             '\u09F3${widget.product.wholesalePrice.toInt()}',
-                            style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6)),
+                            style: GoogleFonts.poppins(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF29B6F6),
+                            ),
                           ),
                           SizedBox(width: 5.w),
                           if (widget.product.originalPrice != null)
                             Text(
                               '\u09F3${widget.product.originalPrice!.toInt()}',
-                              style: GoogleFonts.poppins(fontSize: 10.sp, fontWeight: FontWeight.w500, color: widget.kTextMid, decoration: TextDecoration.lineThrough),
+                              style: GoogleFonts.poppins(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w500,
+                                color: widget.kTextMid,
+                                decoration: TextDecoration.lineThrough,
+                              ),
                             ),
                         ],
                       ),
@@ -882,7 +1121,14 @@ class _ActiveResellCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBackground,
         borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2), spreadRadius: 0)],
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -911,24 +1157,61 @@ class _ActiveResellCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(product.title, style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w600, color: kTextDark), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  product.title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: kTextDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 SizedBox(height: 4.h),
                 Row(
                   children: [
-                    Text('Sell: ', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
-                    Text('\u09F3${product.myPrice.toInt()}', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
+                    Text(
+                      'Sell: ',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.sp,
+                        color: kTextMid,
+                      ),
+                    ),
+                    Text(
+                      '\u09F3${product.myPrice.toInt()}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF29B6F6),
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 4.h),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
-                  decoration: BoxDecoration(color: const Color(0xFF34C759).withOpacity(0.1), borderRadius: BorderRadius.circular(6.r)),
-                  child: Text('Profit \u09F3${product.myMargin.toInt()}', style: GoogleFonts.poppins(fontSize: 9.5.sp, color: const Color(0xFF34C759), fontWeight: FontWeight.w700)),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF34C759).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    'Profit \u09F3${product.myMargin.toInt()}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 9.5.sp,
+                      color: const Color(0xFF34C759),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
                 SizedBox(height: 8.h),
                 Row(
                   children: [
-                    _MiniButton(icon: CupertinoIcons.stop_circle, label: 'Stop', color: const Color(0xFFFF3B30), onTap: onStop),
+                    _MiniButton(
+                      icon: CupertinoIcons.stop_circle,
+                      label: 'Stop',
+                      color: const Color(0xFFFF3B30),
+                      onTap: onStop,
+                    ),
                   ],
                 ),
               ],
@@ -956,7 +1239,12 @@ class _MiniButton extends StatefulWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _MiniButton({required this.icon, required this.label, required this.color, required this.onTap});
+  const _MiniButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   State<_MiniButton> createState() => _MiniButtonState();
@@ -989,7 +1277,14 @@ class _MiniButtonState extends State<_MiniButton> {
             children: [
               Icon(widget.icon, size: 12.sp, color: widget.color),
               SizedBox(width: 4.w),
-              Text(widget.label, style: GoogleFonts.poppins(fontSize: 10.sp, color: widget.color, fontWeight: FontWeight.w600)),
+              Text(
+                widget.label,
+                style: GoogleFonts.poppins(
+                  fontSize: 10.sp,
+                  color: widget.color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
