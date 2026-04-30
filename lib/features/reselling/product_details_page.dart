@@ -339,17 +339,22 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   SizedBox(height: vPadding),
                   _buildImageSlider(isDark, cardBackground, shadowColor, borderColor, isDesktop, isTablet, isSmall),
                   SizedBox(height: isDesktop ? 24.h : 16.h),
-                  _buildPriceSection(isDark, kTextDark, kTextMid, cardBackground, borderColor, shadowColor, discount, isDesktop, isTablet, isSmall),
+                  _buildSectionHeader('Price', 'Wholesale & discount', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                  _buildPriceSection(isDark, kTextDark, kTextMid, borderColor, discount, isDesktop, isTablet, isSmall),
                   SizedBox(height: isDesktop ? 20.h : 12.h),
                   if (product.variants.isNotEmpty) ...[
-                    _buildVariantSelector(isDark, cardBackground, kTextDark, kTextMid, borderColor, shadowColor, isDesktop, isTablet, isSmall),
+                    _buildSectionHeader('Select Variant', 'Choose your preference', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                    _buildVariantSelector(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
                     SizedBox(height: isDesktop ? 20.h : 12.h),
                   ],
-                  _buildStockBadge(isDark, cardBackground, kTextDark, borderColor, shadowColor, isDesktop, isTablet, isSmall),
+                  _buildSectionHeader('Stock', 'Availability', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                  _buildStockBadge(isDark, kTextDark, borderColor, isDesktop, isTablet, isSmall),
                   SizedBox(height: isDesktop ? 20.h : 12.h),
-                  _buildDescription(isDark, cardBackground, kTextDark, kTextMid, borderColor, shadowColor, isDesktop, isTablet, isSmall),
+                  _buildSectionHeader('Product Description', 'Details & Specifications', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                  _buildDescription(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
                   SizedBox(height: isDesktop ? 20.h : 12.h),
-                  _buildRatings(isDark, cardBackground, kTextDark, kTextMid, borderColor, shadowColor, isDesktop, isTablet, isSmall),
+                  _buildSectionHeader('Ratings & Reviews', 'See what others say', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                  _buildRatings(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
                   SizedBox(height: 100.h + vPadding),
                 ],
               ),
@@ -561,16 +566,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     ).animate().fadeIn(duration: 500.ms);
   }
 
-  Widget _buildPriceSection(bool isDark, Color kTextDark, Color kTextMid, Color cardBackground, Color borderColor, Color shadowColor, String? discount, bool isDesktop, bool isTablet, bool isSmall) {
+  Widget _buildPriceSection(bool isDark, Color kTextDark, Color kTextMid, Color borderColor, String? discount, bool isDesktop, bool isTablet, bool isSmall) {
     final product = _product!;
-    return Container(
-      padding: EdgeInsets.all(isSmall ? 12.w : 16.w),
-      decoration: BoxDecoration(
-        color: cardBackground,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
+    return Padding(
+      padding: EdgeInsets.only(top: isSmall ? 8.h : 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -661,22 +660,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildVariantSelector(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor, bool isDesktop, bool isTablet, bool isSmall) {
+  Widget _buildVariantSelector(bool isDark, Color kTextDark, Color kTextMid, Color borderColor, bool isDesktop, bool isTablet, bool isSmall) {
     final colors = _availableColors;
     final sizes = _availableSizes;
-    return Container(
-      padding: EdgeInsets.all(isSmall ? 12.w : 16.w),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
+    return Padding(
+      padding: EdgeInsets.only(top: isSmall ? 8.h : 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader('Select Variant', 'Choose your preference', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
-          SizedBox(height: 14.h),
           if (colors.isNotEmpty) ...[
             Text('Color', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.w600, color: kTextDark)),
             SizedBox(height: 8.h),
@@ -757,17 +748,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     ).animate().fadeIn(delay: 250.ms);
   }
 
-  Widget _buildStockBadge(bool isDark, Color cardBg, Color kTextDark, Color borderColor, Color shadowColor, bool isDesktop, bool isTablet, bool isSmall) {
+  Widget _buildStockBadge(bool isDark, Color kTextDark, Color borderColor, bool isDesktop, bool isTablet, bool isSmall) {
     final stock = _currentStock;
     final bool inStock = stock > 0;
     final bool lowStock = stock > 0 && stock <= 10;
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isSmall ? 12.w : 16.w, vertical: isSmall ? 10.h : 12.h),
-      decoration: BoxDecoration(
-        color: inStock ? (lowStock ? const Color(0xFFFF9500).withOpacity(0.1) : const Color(0xFF34C759).withOpacity(0.1)) : const Color(0xFFFF3B30).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: inStock ? (lowStock ? const Color(0xFFFF9500).withOpacity(0.3) : const Color(0xFF34C759).withOpacity(0.3)) : const Color(0xFFFF3B30).withOpacity(0.3)),
-      ),
+    return Padding(
+      padding: EdgeInsets.only(top: isSmall ? 8.h : 12.h),
       child: Row(
         children: [
           Icon(
@@ -784,7 +770,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   inStock ? (lowStock ? 'Low Stock - Only $stock left!' : 'In Stock ($stock available)') : 'Out of Stock',
                   style: GoogleFonts.poppins(fontSize: isSmall ? 12.sp : 13.sp, fontWeight: FontWeight.w600, color: inStock ? (lowStock ? const Color(0xFFFF9500) : const Color(0xFF34C759)) : const Color(0xFFFF3B30)),
                 ),
-                if (lowStock) Text('Hurry up! Limited quantity available', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 11.sp, color: kTextMid)),
+                if (lowStock) Text('Hurry up! Limited quantity available', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 11.sp, color: kTextDark.withOpacity(0.6))),
               ],
             ),
           ),
@@ -793,24 +779,16 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     ).animate().fadeIn(delay: 275.ms);
   }
 
-  Widget _buildDescription(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor, bool isDesktop, bool isTablet, bool isSmall) {
+  Widget _buildDescription(bool isDark, Color kTextDark, Color kTextMid, Color borderColor, bool isDesktop, bool isTablet, bool isSmall) {
     final description = _product?.description;
     if (description == null || description.isEmpty) return const SizedBox.shrink();
     final hasMore = description.length > 120;
     final shortDesc = hasMore ? '${description.substring(0, 120)}...' : description;
-    return Container(
-      padding: EdgeInsets.all(isSmall ? 12.w : 16.w),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
+    return Padding(
+      padding: EdgeInsets.only(top: isSmall ? 8.h : 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader('Product Description', 'Details & Specifications', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
-          SizedBox(height: 14.h),
           if (hasMore)
             AnimatedCrossFade(
               firstChild: Text(shortDesc, style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.5.sp, color: kTextDark.withOpacity(0.8), height: 1.7)),
@@ -842,25 +820,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     ).animate().fadeIn(delay: 400.ms);
   }
 
-  Widget _buildRatings(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor, bool isDesktop, bool isTablet, bool isSmall) {
+  Widget _buildRatings(bool isDark, Color kTextDark, Color kTextMid, Color borderColor, bool isDesktop, bool isTablet, bool isSmall) {
     final product = _product!;
     final reviews = _reviews;
     final isLoading = _isLoadingReviews;
     final List<double> ratingWidths = [0.75, 0.15, 0.05, 0.03, 0.02];
 
-    return Container(
-      padding: EdgeInsets.all(isSmall ? 12.w : 16.w),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
+    return Padding(
+      padding: EdgeInsets.only(top: isSmall ? 8.h : 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader('Ratings & Reviews', 'See what others say', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall, showViewAll: reviews.isNotEmpty, onViewAll: () {}),
-          SizedBox(height: 16.h),
+          SizedBox(height: 8.h),
           Row(
             children: [
               Column(
@@ -916,14 +887,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               final rating = int.tryParse(r['rating']?.toString() ?? '') ?? 5;
               final comment = r['comment']?.toString() ?? '';
               final createdAt = r['created_at']?.toString() ?? '';
-              return Container(
-                margin: EdgeInsets.only(bottom: 12.h),
-                padding: EdgeInsets.all(isSmall ? 10.w : 14.w),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: borderColor),
-                ),
+              return Padding(
+                padding: EdgeInsets.only(bottom: 12.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
