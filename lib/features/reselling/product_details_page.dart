@@ -7,7 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ Added
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
 
@@ -17,6 +17,7 @@ class ApiService {
   static const String baseUrl = 'https://easy.ltcminematrix.com/api';
   static String? authToken;
 
+  // ✅ SharedPreferences থেকে jwt_token লোড করো (AppDrawer এর মতো)
   static Future<void> loadAuthToken() async {
     final prefs = await SharedPreferences.getInstance();
     authToken = prefs.getString('jwt_token');
@@ -151,6 +152,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       _error = null;
     });
 
+    // ✅ প্রথমে SharedPreferences থেকে token লোড করো, তারপর product fetch করো
     await ApiService.loadAuthToken();
 
     final product = await ApiService.fetchProductDetail(widget.productId);
@@ -296,16 +298,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
-    final kTextMidColor = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
+    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF64748B);
     final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
+    final borderColor = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8EDF2);
     final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.04);
-    final lockBgColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
 
     if (_isLoading) {
       return Scaffold(
         backgroundColor: kBackground,
-        appBar: _buildAppBar(isDark, shadowColor, borderColor),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -314,7 +314,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               SizedBox(height: 16.h),
               Text(
                 'Loading product...',
-                style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextMidColor),
+                style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextMid),
               ),
             ],
           ),
@@ -325,42 +325,21 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     if (_error != null || _product == null) {
       return Scaffold(
         backgroundColor: kBackground,
-        appBar: _buildAppBar(isDark, shadowColor, borderColor),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(CupertinoIcons.exclamationmark_triangle, size: 52.sp, color: const Color(0xFFFF9500)),
+              Icon(CupertinoIcons.exclamationmark_triangle, size: 48.sp, color: Colors.orange),
               SizedBox(height: 16.h),
               Text(
                 _error ?? 'Product not found',
-                style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600, color: kTextDark),
+                style: GoogleFonts.poppins(fontSize: 16.sp, color: kTextDark),
               ),
               SizedBox(height: 24.h),
-              GestureDetector(
-                onTap: _loadProduct,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF29B6F6).withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    'Retry',
-                    style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white),
-                  ),
-                ),
+              CupertinoButton(
+                onPressed: _loadProduct,
+                color: const Color(0xFF29B6F6),
+                child: Text('Retry', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -376,7 +355,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
     return Scaffold(
       backgroundColor: kBackground,
-      appBar: _buildAppBar(isDark, shadowColor, borderColor),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -384,21 +362,21 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 8.h),
-                _buildImageSlider(isDark, cardBg, shadowColor, borderColor, lockBgColor),
                 SizedBox(height: 16.h),
-                _buildPriceSection(isDark, kTextDark, kTextMidColor, cardBg, borderColor, shadowColor, discount),
-                SizedBox(height: 16.h),
+                _buildImageSlider(isDark, cardBg, shadowColor, borderColor),
+                SizedBox(height: 12.h),
+                _buildPriceSection(isDark, kTextDark, kTextMid, cardBg, borderColor, shadowColor, discount),
+                SizedBox(height: 12.h),
                 if (product.variants.isNotEmpty) ...[
-                  _buildVariantSelector(isDark, cardBg, kTextDark, kTextMidColor, borderColor, shadowColor),
-                  SizedBox(height: 16.h),
+                  _buildVariantSelector(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
+                  SizedBox(height: 12.h),
                 ],
-                _buildStockBadge(isDark, cardBg, kTextDark, kTextMidColor, borderColor, shadowColor),
-                SizedBox(height: 16.h),
-                _buildDescription(isDark, cardBg, kTextDark, kTextMidColor, borderColor, shadowColor),
-                SizedBox(height: 16.h),
-                _buildRatings(isDark, cardBg, kTextDark, kTextMidColor, borderColor, shadowColor),
-                SizedBox(height: 120.h),
+                _buildStockBadge(isDark, cardBg, kTextDark, borderColor, shadowColor),
+                SizedBox(height: 12.h),
+                _buildDescription(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
+                SizedBox(height: 12.h),
+                _buildRatings(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
+                SizedBox(height: 100.h),
               ],
             ),
           ),
@@ -406,84 +384,38 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             bottom: 0,
             left: 0,
             right: 0,
-            child: _buildBottomBar(isDark, cardBg, kTextDark, kTextMidColor, borderColor, shadowColor),
+            child: _buildBottomBar(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
           ),
         ],
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isDark, Color shadowColor, Color borderColor) {
-    return AppBar(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
-      elevation: 0,
-      centerTitle: true,
-      leadingWidth: 56.w,
-      leading: Padding(
-        padding: EdgeInsets.only(left: 12.w),
-        child: GestureDetector(
-          onTap: () => context.pop(),
-          child: Container(
-            margin: EdgeInsets.symmetric(vertical: 8.h),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: 0.5),
-              boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2))],
-            ),
-            child: Icon(
-              CupertinoIcons.back,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-              size: 18.sp,
-            ),
-          ),
-        ),
-      ),
-      title: Text(
-        'Product Details',
-        style: GoogleFonts.poppins(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w600,
-          color: isDark ? Colors.white : const Color(0xFF0F172A),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageSlider(bool isDark, Color cardBg, Color shadowColor, Color borderColor, Color lockBgColor) {
+  Widget _buildImageSlider(bool isDark, Color cardBg, Color shadowColor, Color borderColor) {
     final images = _productImages;
 
     if (images.isEmpty) {
       return Container(
         height: 320.h,
-        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 0),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
           borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4))],
-          border: Border.all(color: borderColor, width: 0.5),
+          boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3))],
         ),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(CupertinoIcons.photo, color: Colors.grey.shade300, size: 60.sp),
-              SizedBox(height: 12.h),
-              Text('No images available', style: GoogleFonts.poppins(fontSize: 13.sp, color: kTextMid)),
-            ],
-          ),
+          child: Icon(CupertinoIcons.photo, color: Colors.grey.shade300, size: 60.sp),
         ),
-      ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.04);
+      );
     }
 
     return Container(
       height: 320.h,
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 0),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4))],
-        border: Border.all(color: borderColor, width: 0.5),
+        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16.r),
@@ -530,11 +462,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         margin: EdgeInsets.symmetric(vertical: 4.h),
-                        width: selected ? 48.w : 44.w,
-                        height: selected ? 48.w : 44.w,
+                        width: selected ? 46.w : 42.w,
+                        height: selected ? 46.w : 42.w,
                         decoration: BoxDecoration(
                           color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(10.r),
                           border: Border.all(
                             color: selected ? const Color(0xFF29B6F6) : borderColor,
                             width: selected ? 2.5 : 1,
@@ -544,7 +476,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                               : [BoxShadow(color: shadowColor, blurRadius: 4, offset: const Offset(0, 1))],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10.r),
+                          borderRadius: BorderRadius.circular(8.r),
                           child: Image.network(
                             images[i],
                             fit: BoxFit.cover,
@@ -608,24 +540,19 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   GestureDetector(
                     onTap: _toggleWishlist,
                     child: Container(
-                      padding: EdgeInsets.all(9.w),
+                      padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.95) : Colors.white.withOpacity(0.95),
                         shape: BoxShape.circle,
                         boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
                       ),
-                      child: ScaleTransition(
-                        scale: Tween(begin: 1.0, end: 1.25).animate(
-                          CurvedAnimation(parent: _heartAnimController, curve: Curves.easeOut),
-                        ),
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: Icon(
-                            _isWishlisted ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-                            key: ValueKey(_isWishlisted),
-                            color: _isWishlisted ? const Color(0xFFFF3B30) : Colors.grey,
-                            size: 18.sp,
-                          ),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Icon(
+                          _isWishlisted ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                          key: ValueKey(_isWishlisted),
+                          color: _isWishlisted ? const Color(0xFFFF3B30) : Colors.grey,
+                          size: 18.sp,
                         ),
                       ),
                     ),
@@ -634,7 +561,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   GestureDetector(
                     onTap: () {},
                     child: Container(
-                      padding: EdgeInsets.all(9.w),
+                      padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.95) : Colors.white.withOpacity(0.95),
                         shape: BoxShape.circle,
@@ -649,39 +576,24 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.04);
+    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05);
   }
 
-  Widget _buildPriceSection(bool isDark, Color kTextDark, Color kTextMidColor, Color cardBg, Color borderColor, Color shadowColor, String? discount) {
+  Widget _buildPriceSection(bool isDark, Color kTextDark, Color kTextMid, Color cardBg, Color borderColor, Color shadowColor, String? discount) {
     final product = _product!;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
         border: Border.all(color: borderColor, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF29B6F6).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(CupertinoIcons.tag_fill, color: const Color(0xFF29B6F6), size: 18.sp),
-              ),
-              SizedBox(width: 10.w),
-              Text('Price & Details', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-            ],
-          ),
-          SizedBox(height: 14.h),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -693,7 +605,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               if (product.originalPrice > 0) ...[
                 Text(
                   '\u09F3${product.originalPrice.toInt()}',
-                  style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextMidColor, decoration: TextDecoration.lineThrough),
+                  style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextMid, decoration: TextDecoration.lineThrough),
                 ),
                 SizedBox(width: 8.w),
                 Container(
@@ -718,7 +630,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
           ).animate().fadeIn(delay: 200.ms),
           if (product.subtitle != null && product.subtitle!.isNotEmpty) ...[
             SizedBox(height: 4.h),
-            Text(product.subtitle!, style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMidColor)),
+            Text(product.subtitle!, style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
           ],
           SizedBox(height: 14.h),
           Divider(color: borderColor, height: 1),
@@ -745,11 +657,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 ),
               ),
               SizedBox(width: 10.w),
-              Text('(${product.reviewCount} reviews)', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMidColor)),
+              Text('(${product.reviewCount} reviews)', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
               SizedBox(width: 8.w),
-              Container(width: 4.w, height: 4.w, decoration: BoxDecoration(color: kTextMidColor.withOpacity(0.4), shape: BoxShape.circle)),
+              Container(width: 4.w, height: 4.w, decoration: BoxDecoration(color: kTextMid.withOpacity(0.4), shape: BoxShape.circle)),
               SizedBox(width: 8.w),
-              Text('${product.viewCount} views', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMidColor)),
+              Text('${product.viewCount} views', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
             ],
           ).animate().fadeIn(delay: 250.ms),
           SizedBox(height: 12.h),
@@ -772,10 +684,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             ),
         ],
       ),
-    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.03);
+    ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildVariantSelector(bool isDark, Color cardBg, Color kTextDark, Color kTextMidColor, Color borderColor, Color shadowColor) {
+  Widget _buildVariantSelector(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
     final colors = _availableColors;
     final sizes = _availableSizes;
 
@@ -785,7 +697,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
         border: Border.all(color: borderColor, width: 0.5),
       ),
       child: Column(
@@ -874,7 +786,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Selected Price:', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMidColor)),
+                Text('Selected Price:', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
                 Text('\u09F3${_selectedVariant!.price.toInt()}', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
               ],
             ),
@@ -882,7 +794,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Stock:', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMidColor)),
+                Text('Stock:', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
                 Text(
                   '${_selectedVariant!.stock} available',
                   style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: _selectedVariant!.stock > 0 ? const Color(0xFF34C759) : const Color(0xFFFF3B30)),
@@ -892,89 +804,59 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
           ],
         ],
       ),
-    ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.03);
+    ).animate().fadeIn(delay: 250.ms);
   }
 
-  Widget _buildStockBadge(bool isDark, Color cardBg, Color kTextDark, Color kTextMidColor, Color borderColor, Color shadowColor) {
+  Widget _buildStockBadge(bool isDark, Color cardBg, Color kTextDark, Color borderColor, Color shadowColor) {
     final stock = _currentStock;
     final bool inStock = stock > 0;
     final bool lowStock = stock > 0 && stock <= 10;
-    final Color statusColor = inStock
-        ? (lowStock ? const Color(0xFFFF9500) : const Color(0xFF34C759))
-        : const Color(0xFFFF3B30);
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4))],
-        border: Border.all(color: borderColor, width: 0.5),
+        color: inStock
+            ? (lowStock ? const Color(0xFFFF9500).withOpacity(0.1) : const Color(0xFF34C759).withOpacity(0.1))
+            : const Color(0xFFFF3B30).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: inStock
+              ? (lowStock ? const Color(0xFFFF9500).withOpacity(0.3) : const Color(0xFF34C759).withOpacity(0.3))
+              : const Color(0xFFFF3B30).withOpacity(0.3),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(
-                  inStock ? (lowStock ? CupertinoIcons.cube_box : CupertinoIcons.cube_box_fill) : CupertinoIcons.xmark_circle,
-                  color: statusColor,
-                  size: 18.sp,
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Text('Stock Status', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-            ],
+          Icon(
+            inStock ? (lowStock ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.checkmark_circle) : CupertinoIcons.xmark_circle,
+            color: inStock ? (lowStock ? const Color(0xFFFF9500) : const Color(0xFF34C759)) : const Color(0xFFFF3B30),
+            size: 20.sp,
           ),
-          SizedBox(height: 14.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: statusColor.withOpacity(0.25)),
-            ),
-            child: Row(
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  inStock ? (lowStock ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.checkmark_circle) : CupertinoIcons.xmark_circle,
-                  color: statusColor,
-                  size: 22.sp,
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        inStock ? (lowStock ? 'Low Stock - Only $stock left!' : 'In Stock ($stock available)') : 'Out of Stock',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: statusColor,
-                        ),
-                      ),
-                      if (lowStock)
-                        Text('Hurry up! Limited quantity available', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMidColor)),
-                    ],
+                Text(
+                  inStock ? (lowStock ? 'Low Stock - Only $stock left!' : 'In Stock ($stock available)') : 'Out of Stock',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: inStock ? (lowStock ? const Color(0xFFFF9500) : const Color(0xFF34C759)) : const Color(0xFFFF3B30),
                   ),
                 ),
+                if (lowStock)
+                  Text('Hurry up! Limited quantity available', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
               ],
             ),
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.03);
+    ).animate().fadeIn(delay: 275.ms);
   }
 
-  Widget _buildDescription(bool isDark, Color cardBg, Color kTextDark, Color kTextMidColor, Color borderColor, Color shadowColor) {
+  Widget _buildDescription(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
     final description = _product?.description;
     if (description == null || description.isEmpty) return const SizedBox.shrink();
 
@@ -987,7 +869,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
         border: Border.all(color: borderColor, width: 0.5),
       ),
       child: Column(
@@ -1036,10 +918,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
           ],
         ],
       ),
-    ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.03);
+    ).animate().fadeIn(delay: 400.ms);
   }
 
-  Widget _buildRatings(bool isDark, Color cardBg, Color kTextDark, Color kTextMidColor, Color borderColor, Color shadowColor) {
+  Widget _buildRatings(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
     final product = _product!;
     final reviews = _reviews;
     final isLoading = _isLoadingReviews;
@@ -1051,7 +933,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
         border: Border.all(color: borderColor, width: 0.5),
       ),
       child: Column(
@@ -1094,7 +976,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   Text(product.rating.toStringAsFixed(1), style: GoogleFonts.poppins(fontSize: 40.sp, fontWeight: FontWeight.bold, color: kTextDark)),
                   Row(children: List.generate(5, (i) => Icon(i < product.rating.floor() ? CupertinoIcons.star_fill : CupertinoIcons.star, color: const Color(0xFFFFCC02), size: 14.sp))),
                   SizedBox(height: 4.h),
-                  Text('${product.reviewCount} reviews', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMidColor)),
+                  Text('${product.reviewCount} reviews', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
                 ],
               ),
               SizedBox(width: 20.w),
@@ -1105,7 +987,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                       padding: EdgeInsets.symmetric(vertical: 2.h),
                       child: Row(
                         children: [
-                          Text('$star', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMidColor)),
+                          Text('$star', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
                           SizedBox(width: 4.w),
                           Icon(CupertinoIcons.star_fill, color: const Color(0xFFFFCC02), size: 10.sp),
                           SizedBox(width: 8.w),
@@ -1134,12 +1016,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
           Divider(color: borderColor, height: 1),
           SizedBox(height: 12.h),
           if (isLoading)
-            Center(child: CupertinoActivityIndicator(radius: 14.r, color: const Color(0xFF29B6F6)))
+            Center(child: CupertinoActivityIndicator(radius: 12.r, color: const Color(0xFF29B6F6)))
           else if (reviews.isEmpty)
             Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 20.h),
-                child: Text('No reviews yet', style: GoogleFonts.poppins(fontSize: 13.sp, color: kTextMidColor)),
+                child: Text('No reviews yet', style: GoogleFonts.poppins(fontSize: 13.sp, color: kTextMid)),
               ),
             )
           else
@@ -1187,7 +1069,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                                 children: [
                                   ...List.generate(5, (i) => Icon(i < rating ? CupertinoIcons.star_fill : CupertinoIcons.star, color: const Color(0xFFFFCC02), size: 11.sp)),
                                   SizedBox(width: 6.w),
-                                  Text(createdAt, style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMidColor)),
+                                  Text(createdAt, style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid)),
                                 ],
                               ),
                             ],
@@ -1197,17 +1079,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                     ),
                     SizedBox(height: 10.h),
                     if (comment.isNotEmpty)
-                      Text(comment, style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMidColor, height: 1.5)),
+                      Text(comment, style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid, height: 1.5)),
                   ],
                 ),
               ).animate().fadeIn(delay: (entry.key * 80 + 550).ms);
             }),
         ],
       ),
-    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.03);
+    ).animate().fadeIn(delay: 550.ms);
   }
 
-  Widget _buildBottomBar(bool isDark, Color cardBg, Color kTextDark, Color kTextMidColor, Color borderColor, Color shadowColor) {
+  Widget _buildBottomBar(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
     final inStock = _currentStock > 0;
 
     return Container(
@@ -1217,83 +1099,83 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, -3))],
         border: Border(top: BorderSide(color: borderColor, width: 0.8)),
       ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Wholesale',
-                  style: GoogleFonts.poppins(fontSize: 9.sp, color: kTextMidColor, letterSpacing: 0.3),
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '\u09F3${_currentPrice.toInt()}',
-                      style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6), height: 1.1),
+      child: Row(
+        children: [
+          // Price section
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Wholesale',
+                style: GoogleFonts.poppins(fontSize: 9.sp, color: kTextMid, letterSpacing: 0.3),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '\u09F3${_currentPrice.toInt()}',
+                    style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6), height: 1.1),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(width: 12.w),
+          // Divider
+          Container(height: 36.h, width: 1, color: borderColor),
+          SizedBox(width: 12.w),
+          // Order Now button
+          Expanded(
+            child: GestureDetector(
+              onTap: inStock ? _showResellSheet : null,
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                decoration: BoxDecoration(
+                  gradient: inStock
+                      ? const LinearGradient(
+                          colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        )
+                      : LinearGradient(
+                          colors: [Colors.grey.shade400, Colors.grey.shade500],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: inStock ? const Color(0xFF29B6F6).withOpacity(0.28) : Colors.transparent,
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-              ],
-            ),
-            SizedBox(width: 12.w),
-            Container(height: 36.h, width: 1, color: borderColor),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: GestureDetector(
-                onTap: inStock ? _showResellSheet : null,
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  decoration: BoxDecoration(
-                    gradient: inStock
-                        ? const LinearGradient(
-                            colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          )
-                        : LinearGradient(
-                            colors: [Colors.grey.shade400, Colors.grey.shade500],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                    borderRadius: BorderRadius.circular(12.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: inStock ? const Color(0xFF29B6F6).withOpacity(0.28) : Colors.transparent,
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        inStock ? CupertinoIcons.bag_fill : CupertinoIcons.xmark_circle,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      inStock ? CupertinoIcons.bag_fill : CupertinoIcons.xmark_circle,
+                      color: Colors.white,
+                      size: 15.sp,
+                    ),
+                    SizedBox(width: 7.w),
+                    Text(
+                      inStock ? 'Order Now' : 'Out of Stock',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
-                        size: 15.sp,
+                        letterSpacing: 0.4,
                       ),
-                      SizedBox(width: 7.w),
-                      Text(
-                        inStock ? 'Order Now' : 'Out of Stock',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ).animate().scale(delay: 500.ms, curve: Curves.elasticOut),
-            ),
-          ],
-        ),
+              ),
+            ).animate().scale(delay: 600.ms, curve: Curves.elasticOut),
+          ),
+        ],
       ),
     );
   }
