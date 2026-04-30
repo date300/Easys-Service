@@ -375,8 +375,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 SizedBox(height: 12.h),
                 _buildDescription(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
                 SizedBox(height: 12.h),
-                _buildSellerInfo(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
-                SizedBox(height: 12.h),
                 _buildRatings(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
                 SizedBox(height: 100.h),
               ],
@@ -921,88 +919,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         ],
       ),
     ).animate().fadeIn(delay: 400.ms);
-  }
-
-  Widget _buildSellerInfo(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
-    final vendorName = _product?.vendorName ?? 'Unknown Vendor';
-    final businessName = _product?.businessName;
-    final initials = vendorName.isNotEmpty ? vendorName[0].toUpperCase() : '?';
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(color: const Color(0xFF6366F1).withOpacity(0.1), borderRadius: BorderRadius.circular(10.r)),
-                child: Icon(CupertinoIcons.person_2, color: const Color(0xFF6366F1), size: 18.sp),
-              ),
-              SizedBox(width: 10.w),
-              Text('Seller Info', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-            ],
-          ),
-          SizedBox(height: 14.h),
-          Row(
-            children: [
-              Container(
-                width: 48.w,
-                height: 48.w,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF29B6F6), Color(0xFF0284C7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 2))],
-                ),
-                child: Center(
-                  child: Text(initials, style: GoogleFonts.poppins(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.white)),
-                ),
-              ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            businessName ?? vendorName,
-                            style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Icon(CupertinoIcons.checkmark_seal_fill, color: const Color(0xFF29B6F6), size: 15.sp),
-                      ],
-                    ),
-                    SizedBox(height: 2.h),
-                    Text('${_product?.rating.toStringAsFixed(1) ?? '0.0'} rating | Verified Seller', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF29B6F6), Color(0xFF0284C7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                  borderRadius: BorderRadius.circular(10.r),
-                  boxShadow: [BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 2))],
-                ),
-                child: Text('Follow', style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.white, fontWeight: FontWeight.w600)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 500.ms);
   }
 
   Widget _buildRatings(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
