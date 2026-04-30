@@ -338,7 +338,7 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Live from API',
+                  'Live',
                   style: GoogleFonts.poppins(
                     color: Colors.white.withOpacity(0.55),
                     fontSize: isSmall ? 9.sp : 10.sp,
@@ -372,52 +372,6 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
             ),
 
           SizedBox(height: 12.h),
-
-          if (!_isLoading && _errorMessage == null)
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                Clipboard.setData(ClipboardData(
-                    text: _voucherBalance!.availableBalance.toStringAsFixed(2)));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Balance copied',
-                        style: GoogleFonts.poppins(fontSize: 12.sp)),
-                    backgroundColor: const Color(0xFF0288D1),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r)),
-                    duration: const Duration(seconds: 2),
-                    margin: EdgeInsets.all(16.w),
-                  ),
-                );
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(CupertinoIcons.doc_on_doc,
-                        color: Colors.white.withOpacity(0.8),
-                        size: isSmall ? 10.sp : 11.sp),
-                    SizedBox(width: 5.w),
-                    Text(
-                      'Copy Balance',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white.withOpacity(0.85),
-                        fontSize: isSmall ? 10.sp : 11.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
 
           if (_errorMessage != null)
             GestureDetector(
