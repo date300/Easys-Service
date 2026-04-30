@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart'; // নতুন ইম্পোর্ট
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
 import 'product_details_page.dart';
@@ -735,22 +736,18 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     ).animate().fadeIn(delay: 350.ms);
   }
 
-  // ==================== PRODUCTS TAB ====================
+  // ==================== PRODUCTS TAB (MasonryGridView) ====================
   Widget _buildProductsTab(List<ProductModel> products, bool isSmall, bool isDesktop, bool isTablet, Color cardBackground, Color shadowColor, Color kTextDark, Color kTextMid) {
     if (products.isEmpty) return _buildEmptyState(kTextMid);
 
     final crossAxisCount = isSmall ? 2 : (isTablet ? 3 : 2);
-    final childAspectRatio = isSmall ? 0.72 : (isTablet ? 0.78 : 0.68);
 
-    return GridView.builder(
+    return MasonryGridView.count(
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 100.h),
       physics: const BouncingScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 10.w,
-        mainAxisSpacing: 10.h,
-        childAspectRatio: childAspectRatio,
-      ),
+      crossAxisCount: crossAxisCount,
+      mainAxisSpacing: 10.h,
+      crossAxisSpacing: 10.w,
       itemCount: products.length,
       itemBuilder: (_, i) => _ResellProductCard(
         product: products[i],
@@ -882,7 +879,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   }
 }
 
-// ==================== RESELL PRODUCT CARD ====================
+// ==================== RESELL PRODUCT CARD (AUTO HEIGHT) ====================
 
 class _ResellProductCard extends StatefulWidget {
   final ProductModel product;
@@ -940,7 +937,9 @@ class _ResellProductCardState extends State<_ResellProductCard> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min, // কন্টেন্ট অনুযায়ী হাইট
             children: [
+              // ইমেজ অংশ
               Stack(
                 children: [
                   ClipRRect(
@@ -1022,72 +1021,65 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                   ),
                 ],
               ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(10.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title & subtitle group at top
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.product.title,
-                            style: GoogleFonts.poppins(
-                              fontSize: widget.isSmall ? 10.sp : 11.sp,
-                              fontWeight: FontWeight.w600,
-                              color: widget.kTextDark,
-                              height: 1.3,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (widget.product.subtitle != null) ...[
-                            SizedBox(height: 2.h),
-                            Text(
-                              widget.product.subtitle!,
-                              style: GoogleFonts.poppins(
-                                fontSize: 9.sp,
-                                fontWeight: FontWeight.w400,
-                                color: widget.kTextMid,
-                                height: 1.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
+              // বডি কন্টেন্ট (কমপ্যাক্ট)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.product.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: widget.isSmall ? 11.sp : 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: widget.kTextDark,
+                        height: 1.3,
                       ),
-                      const Spacer(),
-                      // Price row pinned at bottom
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '\u09F3${widget.product.wholesalePrice.toInt()}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF29B6F6),
-                            ),
-                          ),
-                          SizedBox(width: 5.w),
-                          if (widget.product.originalPrice != null)
-                            Text(
-                              '\u09F3${widget.product.originalPrice!.toInt()}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w500,
-                                color: widget.kTextMid,
-                                decoration: TextDecoration.lineThrough,
-                              ),
-                            ),
-                        ],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (widget.product.subtitle != null) ...[
+                      SizedBox(height: 2.h),
+                      Text(
+                        widget.product.subtitle!,
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w400,
+                          color: widget.kTextMid,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
+                    SizedBox(height: 6.h),
+                    // প্রাইস রো
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '\u09F3${widget.product.wholesalePrice.toInt()}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF29B6F6),
+                          ),
+                        ),
+                        SizedBox(width: 5.w),
+                        if (widget.product.originalPrice != null)
+                          Text(
+                            '\u09F3${widget.product.originalPrice!.toInt()}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w500,
+                              color: widget.kTextMid,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
