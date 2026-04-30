@@ -105,8 +105,7 @@ _detailRoute(
   path: '/voucher-balance',
   builder: (context, state) => const VoucherBalancePage(),
 ), 
-_detailRoute(
-  path: '/product/:id',
+_detailRoute(  path: '/product/:id',
   builder: (context, state) => ProductDetailsPage(
     productId: state.pathParameters['id']!,
   ),
