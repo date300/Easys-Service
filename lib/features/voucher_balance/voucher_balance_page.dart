@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart'; // JWT টোকেন পড়ার জন্য যোগ করা হয়েছে
 
 // ==========================================
 // 1. Data Model
@@ -31,18 +32,15 @@ class VoucherBalance {
 class VoucherApiService {
   static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
 
-  // TODO: Replace with your secure token storage (e.g., flutter_secure_storage)
-  static const String _token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzksImVtYWlsIjoic29oYW5vbmZpcmUuYml6QGdtYWlsLmNvbSIsImlhdCI6MTc3NzUzMjIyMiwiZXhwIjoxNzc4ODI4MjIyfQ.5r7NuMGfZ4ou0UwzN-qHQUaqrRdUBK56iFK0byY6CNY';
-
-  static Future<VoucherBalance> fetchBalance() async {
+  // এখন টোকেনটি প্যারামিটার হিসেবে আসবে, হার্ডকোড করা থাকবে না
+  static Future<VoucherBalance> fetchBalance(String token) async {
     final response = await http.get(
       Uri.parse('$_baseUrl/voucher/balance'),
       headers: {
-        'Authorization': 'Bearer $_token',
+        'Authorization': 'Bearer $token', // ডাইনামিক টোকেন ব্যবহার
         'Content-Type': 'application/json',
       },
-    );
+    ).timeout(const Duration(seconds: 15)); // টাইমআউট যোগ করা হয়েছে
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
@@ -52,7 +50,7 @@ class VoucherApiService {
         throw Exception('API Error: ${json['message'] ?? 'Unknown error'}');
       }
     } else if (response.statusCode == 401) {
-      throw Exception('Unauthorized: Token expired or invalid');
+      throw Exception('Unauthorized: Session expired. Please login again.');
     } else {
       throw Exception('Server Error: ${response.statusCode}');
     }
@@ -90,7 +88,17 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     });
 
     try {
-      final balance = await VoucherApiService.fetchBalance();
+      // প্রথম ফাইলের মতই SharedPreferences থেকে টোকেন নেওয়া হচ্ছে
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Authentication token not found. Please login.');
+      }
+
+      // API সার্ভিসে টোকেনটি পাঠিয়ে ডেটা আনা হচ্ছে
+      final balance = await VoucherApiService.fetchBalance(token);
+      
       if (mounted) {
         setState(() {
           _voucherBalance = balance;

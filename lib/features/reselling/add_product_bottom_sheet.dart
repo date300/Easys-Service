@@ -106,7 +106,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
       final Map<String, dynamic> requestBody = {
         'product_name':     name,
         'brand':            _brandController.text.trim().isNotEmpty
-                              ? _brandController.text.trim() : 'Generic',
+                              ? _brandController.text.trim() : 'Easy Service',
         'price':            price,
         'discount_price':   discountPrice,
         'category_id':      _categoryMap[_selectedCategory] ?? 1,
