@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
@@ -107,7 +108,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
   List<Map<String, dynamic>> _reviews = [];
   bool _isLoadingReviews = false;
 
-  // Variant selection
   ProductVariant? _selectedVariant;
   String? _selectedColor;
   String? _selectedSize;
@@ -165,12 +165,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
   Future<void> _toggleWishlist() async {
     if (_product == null) return;
-
     HapticFeedback.lightImpact();
     _heartAnimController.forward(from: 0);
-
     final result = await ApiService.toggleWishlist(_product!.id);
-
     if (mounted) {
       setState(() => _isWishlisted = result);
     }
@@ -186,31 +183,20 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
   List<String> get _availableColors {
     if (_product == null) return [];
-    final colors = _product!.variants
+    return _product!.variants
         .where((v) => v.color != null && v.color!.isNotEmpty)
         .map((v) => v.color!)
         .toSet()
         .toList();
-    return colors;
   }
 
   List<String> get _availableSizes {
     if (_product == null) return [];
-    final sizes = _product!.variants
+    return _product!.variants
         .where((v) => v.size != null && v.size!.isNotEmpty)
         .map((v) => v.size!)
         .toSet()
         .toList();
-    return sizes;
-  }
-
-  List<ProductVariant> get _filteredVariants {
-    if (_product == null) return [];
-    return _product!.variants.where((v) {
-      final colorMatch = _selectedColor == null || v.color == _selectedColor;
-      final sizeMatch = _selectedSize == null || v.size == _selectedSize;
-      return colorMatch && sizeMatch;
-    }).toList();
   }
 
   double get _currentPrice {
@@ -221,6 +207,19 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
   int get _currentStock {
     if (_selectedVariant != null) return _selectedVariant!.stock;
     return _product?.stock ?? 0;
+  }
+
+  void _updateSelectedVariant() {
+    if (_selectedColor == null && _selectedSize == null) {
+      _selectedVariant = null;
+      return;
+    }
+    final matches = _product!.variants.where((v) {
+      final colorMatch = _selectedColor == null || v.color == _selectedColor;
+      final sizeMatch = _selectedSize == null || v.size == _selectedSize;
+      return colorMatch && sizeMatch;
+    }).toList();
+    _selectedVariant = matches.isNotEmpty ? matches.first : null;
   }
 
   void _showResellSheet() {
@@ -235,8 +234,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         selectedVariant: _selectedVariant,
         onConfirm: (margin) {
           widget.onStartResell?.call(margin);
-          Navigator.pop(context);
-          Navigator.pop(context);
+          Navigator.pop(context); // bottom sheet বন্ধ
+          context.pop();          // GoRouter দিয়ে page back
         },
       ),
     );
@@ -270,10 +269,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               SizedBox(height: 16.h),
               Text(
                 'Loading product...',
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: kTextMid,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14.sp, color: kTextMid),
               ),
             ],
           ),
@@ -284,14 +280,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     if (_error != null || _product == null) {
       return Scaffold(
         backgroundColor: kBackground,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(CupertinoIcons.chevron_left, color: kTextDark),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -319,10 +307,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         ? (((product.originalPrice - product.wholesalePrice) / product.originalPrice) * 100)
             .toStringAsFixed(0)
         : null;
+
     return Scaffold(
       backgroundColor: kBackground,
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(isDark, kTextDark, shadowColor),
+      // ✅ AppBar নেই — MainWrapper-এর AppTopBar ব্যবহার হবে
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -330,6 +318,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: 16.h),
                 _buildImageSlider(isDark, cardBg, shadowColor, borderColor),
                 SizedBox(height: 12.h),
                 _buildPriceSection(isDark, kTextDark, kTextMid, cardBg, borderColor, shadowColor, discount),
@@ -360,69 +349,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isDark, Color kTextDark, Color shadowColor) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Container(
-          margin: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.95) : Colors.white.withOpacity(0.95),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2)),
-            ],
-          ),
-          child: Icon(CupertinoIcons.chevron_left, color: kTextDark, size: 18.sp),
-        ),
-      ),
-      actions: [
-        GestureDetector(
-          onTap: _toggleWishlist,
-          child: Container(
-            margin: EdgeInsets.all(8.w),
-            padding: EdgeInsets.all(8.w),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.95) : Colors.white.withOpacity(0.95),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Icon(
-                _isWishlisted ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-                key: ValueKey(_isWishlisted),
-                color: _isWishlisted ? const Color(0xFFFF3B30) : kTextDark.withOpacity(0.6),
-                size: 18.sp,
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            // TODO: Implement share
-          },
-          child: Container(
-            margin: EdgeInsets.only(right: 12.w, top: 8.w, bottom: 8.w),
-            padding: EdgeInsets.all(8.w),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.95) : Colors.white.withOpacity(0.95),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Icon(CupertinoIcons.share, color: kTextDark.withOpacity(0.6), size: 18.sp),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildImageSlider(bool isDark, Color cardBg, Color shadowColor, Color borderColor) {
     final images = _productImages;
 
@@ -432,9 +358,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3)),
-        ],
+        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16.r),
@@ -550,6 +474,48 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   ),
                 ).animate().scale(delay: 300.ms, curve: Curves.elasticOut),
               ),
+            // ✅ Wishlist + Share buttons (AppBar ছিল, এখন image-এর উপরে)
+            Positioned(
+              top: 12.h,
+              left: 12.w,
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _toggleWishlist,
+                    child: Container(
+                      padding: EdgeInsets.all(8.w),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
+                      ),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Icon(
+                          _isWishlisted ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                          key: ValueKey(_isWishlisted),
+                          color: _isWishlisted ? const Color(0xFFFF3B30) : Colors.grey,
+                          size: 18.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      padding: EdgeInsets.all(8.w),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E1E).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
+                      ),
+                      child: Icon(CupertinoIcons.share, color: Colors.grey, size: 18.sp),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -607,10 +573,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
           ).animate().fadeIn(delay: 200.ms),
           if (product.subtitle != null && product.subtitle!.isNotEmpty) ...[
             SizedBox(height: 4.h),
-            Text(
-              product.subtitle!,
-              style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid),
-            ),
+            Text(product.subtitle!, style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
           ],
           SizedBox(height: 14.h),
           Divider(color: borderColor, height: 1),
@@ -637,21 +600,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 ),
               ),
               SizedBox(width: 10.w),
-              Text(
-                '(${product.reviewCount} reviews)',
-                style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
-              ),
+              Text('(${product.reviewCount} reviews)', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
               SizedBox(width: 8.w),
-              Container(
-                width: 4.w,
-                height: 4.w,
-                decoration: BoxDecoration(color: kTextMid.withOpacity(0.4), shape: BoxShape.circle),
-              ),
+              Container(width: 4.w, height: 4.w, decoration: BoxDecoration(color: kTextMid.withOpacity(0.4), shape: BoxShape.circle)),
               SizedBox(width: 8.w),
-              Text(
-                '${product.viewCount} views',
-                style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
-              ),
+              Text('${product.viewCount} views', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
             ],
           ).animate().fadeIn(delay: 250.ms),
           SizedBox(height: 12.h),
@@ -668,10 +621,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 children: [
                   Icon(CupertinoIcons.tag, size: 12.sp, color: const Color(0xFF29B6F6)),
                   SizedBox(width: 4.w),
-                  Text(
-                    product.brand!,
-                    style: GoogleFonts.poppins(fontSize: 11.sp, color: const Color(0xFF29B6F6), fontWeight: FontWeight.w600),
-                  ),
+                  Text(product.brand!, style: GoogleFonts.poppins(fontSize: 11.sp, color: const Color(0xFF29B6F6), fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -707,18 +657,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 child: Icon(CupertinoIcons.layers, color: const Color(0xFF6366F1), size: 18.sp),
               ),
               SizedBox(width: 10.w),
-              Text(
-                'Select Variant',
-                style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark),
-              ),
+              Text('Select Variant', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark)),
             ],
           ),
           SizedBox(height: 14.h),
           if (colors.isNotEmpty) ...[
-            Text(
-              'Color',
-              style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextDark),
-            ),
+            Text('Color', style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextDark)),
             SizedBox(height: 8.h),
             Wrap(
               spacing: 8.w,
@@ -726,30 +670,21 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               children: colors.map((color) {
                 final isSelected = _selectedColor == color;
                 return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedColor = isSelected ? null : color;
-                      _updateSelectedVariant();
-                    });
-                  },
+                  onTap: () => setState(() {
+                    _selectedColor = isSelected ? null : color;
+                    _updateSelectedVariant();
+                  }),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                     decoration: BoxDecoration(
                       color: isSelected ? const Color(0xFF29B6F6) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF1F5F9)),
                       borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF29B6F6) : borderColor,
-                        width: isSelected ? 2 : 1,
-                      ),
+                      border: Border.all(color: isSelected ? const Color(0xFF29B6F6) : borderColor, width: isSelected ? 2 : 1),
                     ),
                     child: Text(
                       color,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.sp,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? Colors.white : kTextDark,
-                      ),
+                      style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500, color: isSelected ? Colors.white : kTextDark),
                     ),
                   ),
                 );
@@ -758,10 +693,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             SizedBox(height: 14.h),
           ],
           if (sizes.isNotEmpty) ...[
-            Text(
-              'Size',
-              style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextDark),
-            ),
+            Text('Size', style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextDark)),
             SizedBox(height: 8.h),
             Wrap(
               spacing: 8.w,
@@ -769,30 +701,21 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               children: sizes.map((size) {
                 final isSelected = _selectedSize == size;
                 return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedSize = isSelected ? null : size;
-                      _updateSelectedVariant();
-                    });
-                  },
+                  onTap: () => setState(() {
+                    _selectedSize = isSelected ? null : size;
+                    _updateSelectedVariant();
+                  }),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                     decoration: BoxDecoration(
                       color: isSelected ? const Color(0xFF29B6F6) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF1F5F9)),
                       borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF29B6F6) : borderColor,
-                        width: isSelected ? 2 : 1,
-                      ),
+                      border: Border.all(color: isSelected ? const Color(0xFF29B6F6) : borderColor, width: isSelected ? 2 : 1),
                     ),
                     child: Text(
                       size,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.sp,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? Colors.white : kTextDark,
-                      ),
+                      style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500, color: isSelected ? Colors.white : kTextDark),
                     ),
                   ),
                 );
@@ -806,35 +729,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Selected Price:',
-                  style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid),
-                ),
-                Text(
-                  '\u09F3${_selectedVariant!.price.toInt()}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF29B6F6),
-                  ),
-                ),
+                Text('Selected Price:', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
+                Text('\u09F3${_selectedVariant!.price.toInt()}', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
               ],
             ),
             SizedBox(height: 4.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Stock:',
-                  style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid),
-                ),
+                Text('Stock:', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
                 Text(
                   '${_selectedVariant!.stock} available',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _selectedVariant!.stock > 0 ? const Color(0xFF34C759) : const Color(0xFFFF3B30),
-                  ),
+                  style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: _selectedVariant!.stock > 0 ? const Color(0xFF34C759) : const Color(0xFFFF3B30)),
                 ),
               ],
             ),
@@ -842,21 +748,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         ],
       ),
     ).animate().fadeIn(delay: 250.ms);
-  }
-
-  void _updateSelectedVariant() {
-    if (_selectedColor == null && _selectedSize == null) {
-      _selectedVariant = null;
-      return;
-    }
-
-    final matches = _product!.variants.where((v) {
-      final colorMatch = _selectedColor == null || v.color == _selectedColor;
-      final sizeMatch = _selectedSize == null || v.size == _selectedSize;
-      return colorMatch && sizeMatch;
-    }).toList();
-
-    _selectedVariant = matches.isNotEmpty ? matches.first : null;
   }
 
   Widget _buildStockBadge(bool isDark, Color cardBg, Color kTextDark, Color borderColor, Color shadowColor) {
@@ -881,12 +772,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       child: Row(
         children: [
           Icon(
-            inStock
-                ? (lowStock ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.checkmark_circle)
-                : CupertinoIcons.xmark_circle,
-            color: inStock
-                ? (lowStock ? const Color(0xFFFF9500) : const Color(0xFF34C759))
-                : const Color(0xFFFF3B30),
+            inStock ? (lowStock ? CupertinoIcons.exclamationmark_triangle : CupertinoIcons.checkmark_circle) : CupertinoIcons.xmark_circle,
+            color: inStock ? (lowStock ? const Color(0xFFFF9500) : const Color(0xFF34C759)) : const Color(0xFFFF3B30),
             size: 20.sp,
           ),
           SizedBox(width: 10.w),
@@ -895,22 +782,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  inStock
-                      ? (lowStock ? 'Low Stock - Only $stock left!' : 'In Stock ($stock available)')
-                      : 'Out of Stock',
+                  inStock ? (lowStock ? 'Low Stock - Only $stock left!' : 'In Stock ($stock available)') : 'Out of Stock',
                   style: GoogleFonts.poppins(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: inStock
-                        ? (lowStock ? const Color(0xFFFF9500) : const Color(0xFF34C759))
-                        : const Color(0xFFFF3B30),
+                    color: inStock ? (lowStock ? const Color(0xFFFF9500) : const Color(0xFF34C759)) : const Color(0xFFFF3B30),
                   ),
                 ),
                 if (lowStock)
-                  Text(
-                    'Hurry up! Limited quantity available',
-                    style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
-                  ),
+                  Text('Hurry up! Limited quantity available', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
               ],
             ),
           ),
@@ -923,7 +803,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     final description = _product?.description;
     if (description == null || description.isEmpty) return const SizedBox.shrink();
 
-    final shortDesc = description.length > 120 ? description.substring(0, 120) + '...' : description;
+    final shortDesc = description.length > 120 ? '${description.substring(0, 120)}...' : description;
     final hasMore = description.length > 120;
 
     return Container(
@@ -942,38 +822,23 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             children: [
               Container(
                 padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF29B6F6).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFF29B6F6).withOpacity(0.1), borderRadius: BorderRadius.circular(10.r)),
                 child: Icon(CupertinoIcons.doc_text, color: const Color(0xFF29B6F6), size: 18.sp),
               ),
               SizedBox(width: 10.w),
-              Text(
-                'Product Description',
-                style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark),
-              ),
+              Text('Product Description', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark)),
             ],
           ),
           SizedBox(height: 14.h),
           if (hasMore)
             AnimatedCrossFade(
-              firstChild: Text(
-                shortDesc,
-                style: GoogleFonts.poppins(fontSize: 12.5.sp, color: kTextDark.withOpacity(0.8), height: 1.7),
-              ),
-              secondChild: Text(
-                description,
-                style: GoogleFonts.poppins(fontSize: 12.5.sp, color: kTextDark.withOpacity(0.8), height: 1.7),
-              ),
+              firstChild: Text(shortDesc, style: GoogleFonts.poppins(fontSize: 12.5.sp, color: kTextDark.withOpacity(0.8), height: 1.7)),
+              secondChild: Text(description, style: GoogleFonts.poppins(fontSize: 12.5.sp, color: kTextDark.withOpacity(0.8), height: 1.7)),
               crossFadeState: _showFullDescription ? CrossFadeState.showSecond : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 300),
             )
           else
-            Text(
-              description,
-              style: GoogleFonts.poppins(fontSize: 12.5.sp, color: kTextDark.withOpacity(0.8), height: 1.7),
-            ),
+            Text(description, style: GoogleFonts.poppins(fontSize: 12.5.sp, color: kTextDark.withOpacity(0.8), height: 1.7)),
           if (hasMore) ...[
             SizedBox(height: 12.h),
             GestureDetector(
@@ -1020,17 +885,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             children: [
               Container(
                 padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFF6366F1).withOpacity(0.1), borderRadius: BorderRadius.circular(10.r)),
                 child: Icon(CupertinoIcons.person_2, color: const Color(0xFF6366F1), size: 18.sp),
               ),
               SizedBox(width: 10.w),
-              Text(
-                'Seller Info',
-                style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark),
-              ),
+              Text('Seller Info', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark)),
             ],
           ),
           SizedBox(height: 14.h),
@@ -1040,21 +899,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 width: 48.w,
                 height: 48.w,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: const LinearGradient(colors: [Color(0xFF29B6F6), Color(0xFF0284C7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 2)),
-                  ],
+                  boxShadow: [BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 2))],
                 ),
                 child: Center(
-                  child: Text(
-                    initials,
-                    style: GoogleFonts.poppins(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
+                  child: Text(initials, style: GoogleFonts.poppins(fontSize: 15.sp, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
               SizedBox(width: 14.w),
@@ -1076,30 +926,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                       ],
                     ),
                     SizedBox(height: 2.h),
-                    Text(
-                      '${_product?.rating.toStringAsFixed(1) ?? '0.0'} rating | Verified Seller',
-                      style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
-                    ),
+                    Text('${_product?.rating.toStringAsFixed(1) ?? '0.0'} rating | Verified Seller', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
                   ],
                 ),
               ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: const LinearGradient(colors: [Color(0xFF29B6F6), Color(0xFF0284C7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                   borderRadius: BorderRadius.circular(10.r),
-                  boxShadow: [
-                    BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 2)),
-                  ],
+                  boxShadow: [BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 2))],
                 ),
-                child: Text(
-                  'Follow',
-                  style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.white, fontWeight: FontWeight.w600),
-                ),
+                child: Text('Follow', style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -1112,9 +950,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     final product = _product!;
     final reviews = _reviews;
     final isLoading = _isLoadingReviews;
-
-    // Calculate rating distribution from API data if available
-    final List<double> ratingWidths = [0.75, 0.15, 0.05, 0.03, 0.02]; // Fallback
+    final List<double> ratingWidths = [0.75, 0.15, 0.05, 0.03, 0.02];
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -1135,36 +971,21 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 children: [
                   Container(
                     padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFCC02).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
+                    decoration: BoxDecoration(color: const Color(0xFFFFCC02).withOpacity(0.1), borderRadius: BorderRadius.circular(10.r)),
                     child: Icon(CupertinoIcons.star_fill, color: const Color(0xFFFFCC02), size: 18.sp),
                   ),
                   SizedBox(width: 10.w),
-                  Text(
-                    'Ratings & Reviews',
-                    style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark),
-                  ),
+                  Text('Ratings & Reviews', style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark)),
                 ],
               ),
               if (reviews.isNotEmpty)
                 TextButton(
-                  onPressed: () {
-                    // TODO: Navigate to all reviews page
-                  },
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
+                  onPressed: () {},
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        'See All',
-                        style: GoogleFonts.poppins(fontSize: 12.sp, color: const Color(0xFF29B6F6), fontWeight: FontWeight.w600),
-                      ),
+                      Text('See All', style: GoogleFonts.poppins(fontSize: 12.sp, color: const Color(0xFF29B6F6), fontWeight: FontWeight.w600)),
                       SizedBox(width: 2.w),
                       Icon(CupertinoIcons.chevron_right, size: 12.sp, color: const Color(0xFF29B6F6)),
                     ],
@@ -1177,25 +998,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             children: [
               Column(
                 children: [
-                  Text(
-                    product.rating.toStringAsFixed(1),
-                    style: GoogleFonts.poppins(fontSize: 40.sp, fontWeight: FontWeight.bold, color: kTextDark),
-                  ),
-                  Row(
-                    children: List.generate(
-                      5,
-                      (i) => Icon(
-                        i < product.rating.floor() ? CupertinoIcons.star_fill : CupertinoIcons.star,
-                        color: const Color(0xFFFFCC02),
-                        size: 14.sp,
-                      ),
-                    ),
-                  ),
+                  Text(product.rating.toStringAsFixed(1), style: GoogleFonts.poppins(fontSize: 40.sp, fontWeight: FontWeight.bold, color: kTextDark)),
+                  Row(children: List.generate(5, (i) => Icon(i < product.rating.floor() ? CupertinoIcons.star_fill : CupertinoIcons.star, color: const Color(0xFFFFCC02), size: 14.sp))),
                   SizedBox(height: 4.h),
-                  Text(
-                    '${product.reviewCount} reviews',
-                    style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
-                  ),
+                  Text('${product.reviewCount} reviews', style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
                 ],
               ),
               SizedBox(width: 20.w),
@@ -1235,17 +1041,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
           Divider(color: borderColor, height: 1),
           SizedBox(height: 12.h),
           if (isLoading)
-            Center(
-              child: CupertinoActivityIndicator(radius: 12.r, color: const Color(0xFF29B6F6)),
-            )
+            Center(child: CupertinoActivityIndicator(radius: 12.r, color: const Color(0xFF29B6F6)))
           else if (reviews.isEmpty)
             Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 20.h),
-                child: Text(
-                  'No reviews yet',
-                  style: GoogleFonts.poppins(fontSize: 13.sp, color: kTextMid),
-                ),
+                child: Text('No reviews yet', style: GoogleFonts.poppins(fontSize: 13.sp, color: kTextMid)),
               ),
             )
           else
@@ -1272,12 +1073,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                         Container(
                           width: 36.w,
                           height: 36.w,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(colors: [Color(0xFF29B6F6), Color(0xFF0284C7)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -1292,25 +1089,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                reviewerName,
-                                style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextDark),
-                              ),
+                              Text(reviewerName, style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextDark)),
                               Row(
                                 children: [
-                                  ...List.generate(
-                                    5,
-                                    (i) => Icon(
-                                      i < rating ? CupertinoIcons.star_fill : CupertinoIcons.star,
-                                      color: const Color(0xFFFFCC02),
-                                      size: 11.sp,
-                                    ),
-                                  ),
+                                  ...List.generate(5, (i) => Icon(i < rating ? CupertinoIcons.star_fill : CupertinoIcons.star, color: const Color(0xFFFFCC02), size: 11.sp)),
                                   SizedBox(width: 6.w),
-                                  Text(
-                                    createdAt,
-                                    style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid),
-                                  ),
+                                  Text(createdAt, style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid)),
                                 ],
                               ),
                             ],
@@ -1320,10 +1104,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                     ),
                     SizedBox(height: 10.h),
                     if (comment.isNotEmpty)
-                      Text(
-                        comment,
-                        style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid, height: 1.5),
-                      ),
+                      Text(comment, style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid, height: 1.5)),
                   ],
                 ),
               ).animate().fadeIn(delay: (entry.key * 80 + 550).ms);
@@ -1349,14 +1130,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Wholesale Price',
-                style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid),
-              ),
-              Text(
-                '\u09F3${_currentPrice.toInt()}',
-                style: GoogleFonts.poppins(fontSize: 20.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6)),
-              ),
+              Text('Wholesale Price', style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid)),
+              Text('\u09F3${_currentPrice.toInt()}', style: GoogleFonts.poppins(fontSize: 20.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
             ],
           ),
           SizedBox(width: 14.w),
@@ -1367,33 +1142,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 padding: EdgeInsets.symmetric(vertical: 16.h),
                 decoration: BoxDecoration(
                   gradient: inStock
-                      ? const LinearGradient(
-                          colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        )
-                      : LinearGradient(
-                          colors: [Colors.grey.shade400, Colors.grey.shade500],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
+                      ? const LinearGradient(colors: [Color(0xFF29B6F6), Color(0xFF0284C7)], begin: Alignment.centerLeft, end: Alignment.centerRight)
+                      : LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade500], begin: Alignment.centerLeft, end: Alignment.centerRight),
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
-                    BoxShadow(
-                      color: inStock ? const Color(0xFF29B6F6).withOpacity(0.35) : Colors.transparent,
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
+                    BoxShadow(color: inStock ? const Color(0xFF29B6F6).withOpacity(0.35) : Colors.transparent, blurRadius: 14, offset: const Offset(0, 5)),
                   ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      inStock ? CupertinoIcons.cart_badge_plus : CupertinoIcons.cart_badge_minus,
-                      color: Colors.white,
-                      size: 18.sp,
-                    ),
+                    Icon(inStock ? CupertinoIcons.cart_badge_plus : CupertinoIcons.cart_badge_minus, color: Colors.white, size: 18.sp),
                     SizedBox(width: 8.w),
                     Text(
                       inStock ? 'Resell & Earn' : 'Out of Stock',

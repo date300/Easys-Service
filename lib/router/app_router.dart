@@ -17,6 +17,7 @@ import '../features/payment/payment_gateway_screen.dart';
 import '../modules/notifications/notification_screen.dart';
 import '../main.dart';
 import '../features/voucher_balance/voucher_balance_page.dart';
+import '../features/reselling/product_details_page.dart'; 
 // ==================== HELPERS ====================
 
 Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
@@ -103,7 +104,12 @@ _detailRoute(
         _detailRoute(
   path: '/voucher-balance',
   builder: (context, state) => const VoucherBalancePage(),
-),
+), 
+_detailRoute(
+  path: '/product/:id',
+  builder: (context, state) => ProductDetailsPage(
+    productId: state.pathParameters['id']!,
+  ),
         GoRoute(
   path: '/payment',
   builder: (context, state) {

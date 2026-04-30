@@ -483,7 +483,7 @@ void _showAddProductSheet() {
       ),
     );
   }
-
+void _goToDetails() {  widget.ref.read(isDetailViewProvider.notifier).state = true;  widget.ref.read(detailViewTitleProvider.notifier).state = widget.product.title;  context.push('/product/${widget.product.id}');}
   // ==================== SECTION HEADER ====================
   Widget _buildSectionHeader(double hPadding, bool isSmall, bool isDesktop, Color kTextDark, Color kTextMid, {required String title, required String subtitle, bool showViewAll = false}) {
     return Padding(
