@@ -7,7 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // ✅ Added
+import 'package:shared_preferences/shared_preferences.dart';
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
 
@@ -17,7 +17,6 @@ class ApiService {
   static const String baseUrl = 'https://easy.ltcminematrix.com/api';
   static String? authToken;
 
-  // ✅ SharedPreferences থেকে jwt_token লোড করো (AppDrawer এর মতো)
   static Future<void> loadAuthToken() async {
     final prefs = await SharedPreferences.getInstance();
     authToken = prefs.getString('jwt_token');
@@ -152,7 +151,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       _error = null;
     });
 
-    // ✅ প্রথমে SharedPreferences থেকে token লোড করো, তারপর product fetch করো
     await ApiService.loadAuthToken();
 
     final product = await ApiService.fetchProductDetail(widget.productId);
@@ -298,10 +296,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
-    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF64748B);
+    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
     final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8EDF2);
+    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
     final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.04);
+    final lockBgColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9);
 
     if (_isLoading) {
       return Scaffold(
@@ -310,7 +309,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CupertinoActivityIndicator(radius: 14.r, color: const Color(0xFF29B6F6)),
+              CupertinoActivityIndicator(radius: 12.r, color: const Color(0xFF29B6F6)),
               SizedBox(height: 16.h),
               Text(
                 'Loading product...',
@@ -362,19 +361,19 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: 12.h),
+                _buildImageSlider(isDark, cardBg, shadowColor, borderColor, lockBgColor),
                 SizedBox(height: 16.h),
-                _buildImageSlider(isDark, cardBg, shadowColor, borderColor),
-                SizedBox(height: 12.h),
                 _buildPriceSection(isDark, kTextDark, kTextMid, cardBg, borderColor, shadowColor, discount),
-                SizedBox(height: 12.h),
+                SizedBox(height: 16.h),
                 if (product.variants.isNotEmpty) ...[
                   _buildVariantSelector(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 16.h),
                 ],
                 _buildStockBadge(isDark, cardBg, kTextDark, borderColor, shadowColor),
-                SizedBox(height: 12.h),
+                SizedBox(height: 16.h),
                 _buildDescription(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
-                SizedBox(height: 12.h),
+                SizedBox(height: 16.h),
                 _buildRatings(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
                 SizedBox(height: 100.h),
               ],
@@ -391,17 +390,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     );
   }
 
-  Widget _buildImageSlider(bool isDark, Color cardBg, Color shadowColor, Color borderColor) {
+  Widget _buildImageSlider(bool isDark, Color cardBg, Color shadowColor, Color borderColor, Color lockBgColor) {
     final images = _productImages;
 
     if (images.isEmpty) {
       return Container(
         height: 320.h,
-        margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 0),
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(12.r),
           boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3))],
+          border: Border.all(color: borderColor, width: 0.5),
         ),
         child: Center(
           child: Icon(CupertinoIcons.photo, color: Colors.grey.shade300, size: 60.sp),
@@ -411,14 +411,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
     return Container(
       height: 320.h,
-      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 0),
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3))],
+        border: Border.all(color: borderColor, width: 0.5),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         child: Stack(
           children: [
             PageView.builder(
@@ -434,7 +435,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Center(
-                        child: CupertinoActivityIndicator(radius: 14.r, color: const Color(0xFF29B6F6)),
+                        child: CupertinoActivityIndicator(radius: 12.r, color: const Color(0xFF29B6F6)),
                       );
                     },
                     errorBuilder: (_, __, ___) => Center(
@@ -583,11 +584,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     final product = _product!;
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
         border: Border.all(color: borderColor, width: 0.5),
       ),
@@ -696,7 +697,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
         border: Border.all(color: borderColor, width: 0.5),
       ),
@@ -868,7 +869,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
         border: Border.all(color: borderColor, width: 0.5),
       ),
@@ -932,7 +933,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
         border: Border.all(color: borderColor, width: 0.5),
       ),
@@ -1101,7 +1102,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       ),
       child: Row(
         children: [
-          // Price section
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -1122,10 +1122,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             ],
           ),
           SizedBox(width: 12.w),
-          // Divider
           Container(height: 36.h, width: 1, color: borderColor),
           SizedBox(width: 12.w),
-          // Order Now button
           Expanded(
             child: GestureDetector(
               onTap: inStock ? _showResellSheet : null,
