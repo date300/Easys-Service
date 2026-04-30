@@ -319,8 +319,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         ? (((product.originalPrice - product.wholesalePrice) / product.originalPrice) * 100)
             .toStringAsFixed(0)
         : null;
-    final maxProfit = product.maxResalePrice - _currentPrice;
-
     return Scaffold(
       backgroundColor: kBackground,
       extendBodyBehindAppBar: true,
@@ -341,10 +339,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   SizedBox(height: 12.h),
                 ],
                 _buildStockBadge(isDark, cardBg, kTextDark, borderColor, shadowColor),
-                SizedBox(height: 12.h),
-                _buildProfitBanner(maxProfit, shadowColor),
-                SizedBox(height: 12.h),
-                _buildDeliveryInfo(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
                 SizedBox(height: 12.h),
                 _buildDescription(isDark, cardBg, kTextDark, kTextMid, borderColor, shadowColor),
                 SizedBox(height: 12.h),
@@ -925,138 +919,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     ).animate().fadeIn(delay: 275.ms);
   }
 
-  Widget _buildProfitBanner(double maxProfit, Color shadowColor) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(color: const Color(0xFF29B6F6).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(CupertinoIcons.money_dollar_circle, color: Colors.white, size: 24.sp),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Earn up to \u09F3${maxProfit.toInt()} profit',
-                  style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  'Resell this product and keep the margin',
-                  style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.white.withOpacity(0.85)),
-                ),
-              ],
-            ),
-          ),
-          Icon(CupertinoIcons.chevron_right, color: Colors.white.withOpacity(0.8), size: 18.sp),
-        ],
-      ),
-    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05);
-  }
-
-  Widget _buildDeliveryInfo(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
-    final items = [
-      _InfoRow(icon: CupertinoIcons.cart, color: const Color(0xFF29B6F6), title: 'Cash on Delivery', value: 'Available'),
-      _InfoRow(icon: CupertinoIcons.return_icon, color: const Color(0xFF34C759), title: 'Return Policy', value: '7 Days Easy Return'),
-      _InfoRow(icon: CupertinoIcons.bus, color: const Color(0xFFFF9500), title: 'Delivery', value: '2-5 Business Days'),
-    ];
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 2))],
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF29B6F6).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(CupertinoIcons.cube_box, color: const Color(0xFF29B6F6), size: 18.sp),
-              ),
-              SizedBox(width: 10.w),
-              Text(
-                'Delivery & Services',
-                style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: kTextDark),
-              ),
-            ],
-          ),
-          SizedBox(height: 14.h),
-          ...items.asMap().entries.map((entry) => _buildInfoRow(
-                entry.value,
-                kTextDark,
-                kTextMid,
-                borderColor,
-                isLast: entry.key == items.length - 1,
-              )),
-        ],
-      ),
-    ).animate().fadeIn(delay: 350.ms);
-  }
-
-  Widget _buildInfoRow(_InfoRow data, Color kTextDark, Color kTextMid, Color borderColor, {bool isLast = false}) {
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 10.h),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: data.color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Icon(data.icon, color: data.color, size: 16.sp),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(data.title, style: GoogleFonts.poppins(fontSize: 12.sp, fontWeight: FontWeight.w600, color: kTextDark)),
-                    SizedBox(height: 2.h),
-                    Text(data.value, style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (!isLast) Divider(color: borderColor, height: 1),
-      ],
-    );
-  }
-
   Widget _buildDescription(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
     final description = _product?.description;
     if (description == null || description.isEmpty) return const SizedBox.shrink();
@@ -1546,13 +1408,4 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       ),
     );
   }
-}
-
-class _InfoRow {
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String value;
-
-  _InfoRow({required this.icon, required this.color, required this.title, required this.value});
 }
