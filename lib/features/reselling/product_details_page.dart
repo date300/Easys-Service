@@ -30,7 +30,14 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
-          return ProductModel.fromJson(data['product']);
+          // ✅ images, variants, is_wishlisted আলাদা আসে — একসাথে merge করো
+          final productData = {
+            ...Map<String, dynamic>.from(data['product']),
+            'images': data['images'] ?? [],
+            'variants': data['variants'] ?? [],
+            'is_wishlisted': data['is_wishlisted'] ?? false,
+          };
+          return ProductModel.fromJson(productData);
         }
       }
       return null;
@@ -64,11 +71,20 @@ class ApiService {
   }
 
   static Future<bool> toggleWishlist(String productId) async {
+    // ✅ Token নেই মানে login করা নেই
+    if (authToken == null) {
+      debugPrint('Wishlist failed: No auth token');
+      return false;
+    }
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/product/$productId/wishlist'),
         headers: headers,
       );
+
+      debugPrint('Wishlist status: ${response.statusCode}');
+      debugPrint('Wishlist body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['is_wishlisted'] == true;
@@ -165,8 +181,29 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
   Future<void> _toggleWishlist() async {
     if (_product == null) return;
+
+    // ✅ Token নেই মানে login নেই — user কে জানাও
+    if (ApiService.authToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please login to add to wishlist',
+            style: GoogleFonts.poppins(fontSize: 13.sp),
+          ),
+          backgroundColor: const Color(0xFFFF3B30),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+        ),
+      );
+      return;
+    }
+
     HapticFeedback.lightImpact();
     _heartAnimController.forward(from: 0);
+
+    // ✅ Optimistic update — আগেই UI বদলাও
+    setState(() => _isWishlisted = !_isWishlisted);
+
     final result = await ApiService.toggleWishlist(_product!.id);
     if (mounted) {
       setState(() => _isWishlisted = result);
@@ -178,7 +215,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     if (_product!.images.isNotEmpty) {
       return _product!.images.map((img) => img.imageUrl).toList();
     }
-    return [_product!.image];
+    // ✅ fallback: single image field
+    if (_product!.image.isNotEmpty) return [_product!.image];
+    return [];
   }
 
   List<String> get _availableColors {
@@ -234,8 +273,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         selectedVariant: _selectedVariant,
         onConfirm: (margin) {
           widget.onStartResell?.call(margin);
-          Navigator.pop(context); // bottom sheet বন্ধ
-          context.pop();          // GoRouter দিয়ে page back
+          Navigator.pop(context);
+          context.pop();
         },
       ),
     );
@@ -310,7 +349,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
     return Scaffold(
       backgroundColor: kBackground,
-      // ✅ AppBar নেই — MainWrapper-এর AppTopBar ব্যবহার হবে
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -351,6 +389,22 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
 
   Widget _buildImageSlider(bool isDark, Color cardBg, Color shadowColor, Color borderColor) {
     final images = _productImages;
+
+    // ✅ Image না থাকলে placeholder দেখাও
+    if (images.isEmpty) {
+      return Container(
+        height: 320.h,
+        margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 0),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3))],
+        ),
+        child: Center(
+          child: Icon(CupertinoIcons.photo, color: Colors.grey.shade300, size: 60.sp),
+        ),
+      );
+    }
 
     return Container(
       height: 320.h,
@@ -431,26 +485,27 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   }),
                 ),
               ),
-            Positioned(
-              bottom: 12.h,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(images.length, (i) {
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: EdgeInsets.symmetric(horizontal: 3.w),
-                    width: _currentImageIndex == i ? 20.w : 6.w,
-                    height: 6.h,
-                    decoration: BoxDecoration(
-                      color: _currentImageIndex == i ? const Color(0xFF29B6F6) : Colors.grey.withOpacity(0.35),
-                      borderRadius: BorderRadius.circular(3.r),
-                    ),
-                  );
-                }),
+            if (images.length > 1)
+              Positioned(
+                bottom: 12.h,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(images.length, (i) {
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: EdgeInsets.symmetric(horizontal: 3.w),
+                      width: _currentImageIndex == i ? 20.w : 6.w,
+                      height: 6.h,
+                      decoration: BoxDecoration(
+                        color: _currentImageIndex == i ? const Color(0xFF29B6F6) : Colors.grey.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(3.r),
+                      ),
+                    );
+                  }),
+                ),
               ),
-            ),
             if (_product?.originalPrice != null && _product!.originalPrice > 0)
               Positioned(
                 top: 16.h,
@@ -474,7 +529,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   ),
                 ).animate().scale(delay: 300.ms, curve: Curves.elasticOut),
               ),
-            // ✅ Wishlist + Share buttons (AppBar ছিল, এখন image-এর উপরে)
+            // Wishlist + Share buttons
             Positioned(
               top: 12.h,
               left: 12.w,
