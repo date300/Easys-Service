@@ -950,35 +950,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
             ),
             child: Icon(CupertinoIcons.money_dollar_circle, color: Colors.white, size: 24.sp),
           ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Resell \u09F3${maxProfit.toInt()} profit!',
-                  style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                Text(
-                  'Add your margin upto \u09F3${maxProfit.toInt()} and start selling today',
-                  style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.white.withOpacity(0.9)),
-                ),
-              ],
-            ),
-          ),
+         
           Icon(CupertinoIcons.chevron_right, color: Colors.white.withOpacity(0.8), size: 18.sp),
         ],
       ),
     ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05);
-  }
-
-  Widget _buildDeliveryInfo(bool isDark, Color cardBg, Color kTextDark, Color kTextMid, Color borderColor, Color shadowColor) {
-    final items = [
-      _InfoRow(icon: CupertinoIcons.location, color: const Color(0xFF34C759), title: 'Delivery', value: 'Free delivery on orders over \u09F3999'),
-      _InfoRow(icon: CupertinoIcons.return_icon, color: const Color(0xFF29B6F6), title: 'Returns', value: '7 days easy return policy'),
-      _InfoRow(icon: CupertinoIcons.shield_fill, color: const Color(0xFF6366F1), title: 'Warranty', value: '1 year brand warranty'),
-      _InfoRow(icon: CupertinoIcons.checkmark_seal, color: const Color(0xFFFF9500), title: 'Authentic', value: '100% genuine guaranteed'),
-    ];
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
