@@ -1,26 +1,29 @@
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:http/http.dart' as http;
 
 // ==========================================
-// 1. Demo Data Models
+// 1. Data Models
 // ==========================================
 
 class VoucherBalance {
-  final double totalBalance;
-  final double usedBalance;
   final double availableBalance;
-  final List<VoucherTransaction> transactions;
 
   VoucherBalance({
-    required this.totalBalance,
-    required this.usedBalance,
     required this.availableBalance,
-    required this.transactions,
   });
+
+  factory VoucherBalance.fromJson(Map<String, dynamic> json) {
+    return VoucherBalance(
+      availableBalance:
+          double.tryParse(json['data']['voucher_balance'].toString()) ?? 0.0,
+    );
+  }
 }
 
 class VoucherTransaction {
@@ -41,96 +44,130 @@ class VoucherTransaction {
   });
 }
 
-final VoucherBalance demoVoucherBalance = VoucherBalance(
-  totalBalance: 5000.00,
-  usedBalance: 1850.00,
-  availableBalance: 3150.00,
-  transactions: [
-    VoucherTransaction(
-      id: '1',
-      description: 'Referral Bonus',
-      amount: 500.00,
-      type: 'credit',
-      date: '26 Apr, 10:30 AM',
-      status: 'completed',
-    ),
-    VoucherTransaction(
-      id: '2',
-      description: 'Voucher Redeemed',
-      amount: 250.00,
-      type: 'debit',
-      date: '25 Apr, 03:15 PM',
-      status: 'completed',
-    ),
-    VoucherTransaction(
-      id: '3',
-      description: 'Daily Login Reward',
-      amount: 50.00,
-      type: 'credit',
-      date: '25 Apr, 09:00 AM',
-      status: 'completed',
-    ),
-    VoucherTransaction(
-      id: '4',
-      description: 'Withdrawal Request',
-      amount: 1000.00,
-      type: 'debit',
-      date: '24 Apr, 06:45 PM',
-      status: 'pending',
-    ),
-    VoucherTransaction(
-      id: '5',
-      description: 'Team Bonus Reward',
-      amount: 750.00,
-      type: 'credit',
-      date: '23 Apr, 11:20 AM',
-      status: 'completed',
-    ),
-    VoucherTransaction(
-      id: '6',
-      description: 'Purchase Voucher',
-      amount: 200.00,
-      type: 'debit',
-      date: '22 Apr, 02:10 PM',
-      status: 'failed',
-    ),
-    VoucherTransaction(
-      id: '7',
-      description: 'Royalty Salary',
-      amount: 1200.00,
-      type: 'credit',
-      date: '21 Apr, 08:00 AM',
-      status: 'completed',
-    ),
-    VoucherTransaction(
-      id: '8',
-      description: 'Special Event Bonus',
-      amount: 400.00,
-      type: 'credit',
-      date: '20 Apr, 05:30 PM',
-      status: 'pending',
-    ),
-    VoucherTransaction(
-      id: '9',
-      description: 'Voucher Used at Shop',
-      amount: 400.00,
-      type: 'debit',
-      date: '19 Apr, 01:00 PM',
-      status: 'completed',
-    ),
-    VoucherTransaction(
-      id: '10',
-      description: 'Welcome Bonus',
-      amount: 300.00,
-      type: 'credit',
-      date: '18 Apr, 10:00 AM',
-      status: 'completed',
-    ),
-  ],
-);
+// ==========================================
+// 2. API Service
+// ==========================================
+
+class VoucherApiService {
+  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+
+  // TODO: Replace with your secure token storage (e.g., flutter_secure_storage)
+  static const String _token =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzksImVtYWlsIjoic29oYW5vbmZpcmUuYml6QGdtYWlsLmNvbSIsImlhdCI6MTc3NzUzMjIyMiwiZXhwIjoxNzc4ODI4MjIyfQ.5r7NuMGfZ4ou0UwzN-qHQUaqrRdUBK56iFK0byY6CNY';
+
+  static Future<VoucherBalance> fetchBalance() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/voucher/balance'),
+      headers: {
+        'Authorization': 'Bearer $_token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['status'] == 'success') {
+        return VoucherBalance.fromJson(json);
+      } else {
+        throw Exception('API Error: ${json['message'] ?? 'Unknown error'}');
+      }
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Token expired or invalid');
+    } else {
+      throw Exception('Server Error: ${response.statusCode}');
+    }
+  }
+}
 
 // ==========================================
-// 2. VoucherBalancePage — Ultra Premium iOS
+// 3. Demo Transactions (static for now)
+// ==========================================
+
+final List<VoucherTransaction> demoTransactions = [
+  VoucherTransaction(
+    id: '1',
+    description: 'Referral Bonus',
+    amount: 500.00,
+    type: 'credit',
+    date: '26 Apr, 10:30 AM',
+    status: 'completed',
+  ),
+  VoucherTransaction(
+    id: '2',
+    description: 'Voucher Redeemed',
+    amount: 250.00,
+    type: 'debit',
+    date: '25 Apr, 03:15 PM',
+    status: 'completed',
+  ),
+  VoucherTransaction(
+    id: '3',
+    description: 'Daily Login Reward',
+    amount: 50.00,
+    type: 'credit',
+    date: '25 Apr, 09:00 AM',
+    status: 'completed',
+  ),
+  VoucherTransaction(
+    id: '4',
+    description: 'Withdrawal Request',
+    amount: 1000.00,
+    type: 'debit',
+    date: '24 Apr, 06:45 PM',
+    status: 'pending',
+  ),
+  VoucherTransaction(
+    id: '5',
+    description: 'Team Bonus Reward',
+    amount: 750.00,
+    type: 'credit',
+    date: '23 Apr, 11:20 AM',
+    status: 'completed',
+  ),
+  VoucherTransaction(
+    id: '6',
+    description: 'Purchase Voucher',
+    amount: 200.00,
+    type: 'debit',
+    date: '22 Apr, 02:10 PM',
+    status: 'failed',
+  ),
+  VoucherTransaction(
+    id: '7',
+    description: 'Royalty Salary',
+    amount: 1200.00,
+    type: 'credit',
+    date: '21 Apr, 08:00 AM',
+    status: 'completed',
+  ),
+  VoucherTransaction(
+    id: '8',
+    description: 'Special Event Bonus',
+    amount: 400.00,
+    type: 'credit',
+    date: '20 Apr, 05:30 PM',
+    status: 'pending',
+  ),
+  VoucherTransaction(
+    id: '9',
+    description: 'Voucher Used at Shop',
+    amount: 400.00,
+    type: 'debit',
+    date: '19 Apr, 01:00 PM',
+    status: 'completed',
+  ),
+  VoucherTransaction(
+    id: '10',
+    description: 'Welcome Bonus',
+    amount: 300.00,
+    type: 'credit',
+    date: '18 Apr, 10:00 AM',
+    status: 'completed',
+  ),
+];
+
+// ==========================================
+// 4. VoucherBalancePage
 // ==========================================
 
 class VoucherBalancePage extends StatefulWidget {
@@ -142,8 +179,45 @@ class VoucherBalancePage extends StatefulWidget {
 
 class _VoucherBalancePageState extends State<VoucherBalancePage> {
   static const Color skyBlue = Color(0xFF29B6F6);
+
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Credit', 'Debit', 'Pending'];
+
+  // API State
+  VoucherBalance? _voucherBalance;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBalance();
+  }
+
+  // ==================== API CALL ====================
+  Future<void> _fetchBalance() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final balance = await VoucherApiService.fetchBalance();
+      if (mounted) {
+        setState(() {
+          _voucherBalance = balance;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   List<VoucherTransaction> _getFiltered(List<VoucherTransaction> all) {
     switch (_selectedFilter) {
@@ -169,19 +243,24 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     final bgColor = isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7);
     final cardColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF000000);
-    final subTextColor = isDark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93);
-    final borderColor = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
-    final shadowColor = isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.04);
-    final separatorColor = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    final subTextColor =
+        isDark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93);
+    final borderColor =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.5)
+        : Colors.black.withOpacity(0.04);
+    final separatorColor =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1024;
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
     final isSmall = screenWidth < 360;
-    final hPadding = isDesktop ? 32.w : isTablet ? 20.w : isSmall ? 12.w : 16.w;
+    final hPadding =
+        isDesktop ? 32.w : isTablet ? 20.w : isSmall ? 12.w : 16.w;
 
-    final voucher = demoVoucherBalance;
-    final filtered = _getFiltered(voucher.transactions);
+    final filtered = _getFiltered(demoTransactions);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -192,34 +271,39 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
           backgroundColor: cardColor,
           onRefresh: () async {
             HapticFeedback.mediumImpact();
-            await Future.delayed(const Duration(seconds: 1));
+            await _fetchBalance();
           },
           child: ListView(
             padding: EdgeInsets.fromLTRB(hPadding, 8.h, hPadding, 40.h),
             physics: const BouncingScrollPhysics(),
             children: [
-              // Compact iOS Header
               _buildHeader(textColor, subTextColor, isSmall, isDesktop),
               SizedBox(height: 14.h),
 
-              // Premium Balance Card — compact
-              _buildBalanceCard(voucher, isSmall).animate().fadeIn(delay: 80.ms).slideY(begin: 0.03),
+              // Balance Card — shows loading / error / real data
+              _buildBalanceCard(isSmall, textColor, subTextColor)
+                  .animate()
+                  .fadeIn(delay: 80.ms)
+                  .slideY(begin: 0.03),
               SizedBox(height: 10.h),
 
-              // Deposit Card — ultra compact
-              _buildDepositCard(isSmall, isDesktop, cardColor, shadowColor, borderColor, textColor, subTextColor)
-                  .animate().fadeIn(delay: 120.ms).slideY(begin: 0.03),
+              _buildDepositCard(isSmall, isDesktop, cardColor, shadowColor,
+                      borderColor, textColor, subTextColor)
+                  .animate()
+                  .fadeIn(delay: 120.ms)
+                  .slideY(begin: 0.03),
               SizedBox(height: 10.h),
 
-              // Compact Stats Row
               Row(
                 children: [
                   Expanded(
                     child: _buildStatCard(
                       icon: CupertinoIcons.arrow_down_circle_fill,
                       iconColor: const Color(0xFF34C759),
-                      label: 'Earned',
-                      amount: '\u09F3${voucher.totalBalance.toStringAsFixed(0)}',
+                      label: 'Balance',
+                      amount: _isLoading
+                          ? '...'
+                          : '\u09F3${_voucherBalance?.availableBalance.toStringAsFixed(2) ?? '0.00'}',
                       cardColor: cardColor,
                       textColor: textColor,
                       subTextColor: subTextColor,
@@ -234,8 +318,8 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
                     child: _buildStatCard(
                       icon: CupertinoIcons.arrow_up_circle_fill,
                       iconColor: const Color(0xFFFF9500),
-                      label: 'Used',
-                      amount: '\u09F3${voucher.usedBalance.toStringAsFixed(0)}',
+                      label: 'Transactions',
+                      amount: '${demoTransactions.length}',
                       cardColor: cardColor,
                       textColor: textColor,
                       subTextColor: subTextColor,
@@ -249,15 +333,15 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
               ),
               SizedBox(height: 18.h),
 
-              // Section Header — compact
-              _buildSectionHeader(textColor, subTextColor, filtered.length, isSmall, isDesktop),
+              _buildSectionHeader(
+                  textColor, subTextColor, filtered.length, isSmall, isDesktop),
               SizedBox(height: 8.h),
 
-              // Filter Chips — compact
-              _buildFilterChips(isDark, subTextColor, borderColor).animate().fadeIn(delay: 240.ms),
+              _buildFilterChips(isDark, subTextColor, borderColor)
+                  .animate()
+                  .fadeIn(delay: 240.ms),
               SizedBox(height: 10.h),
 
-              // iOS Grouped List Style Transactions
               if (filtered.isEmpty)
                 _buildEmptyState(subTextColor)
               else
@@ -279,8 +363,9 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     );
   }
 
-  // ==================== COMPACT iOS HEADER ====================
-  Widget _buildHeader(Color textColor, Color subTextColor, bool isSmall, bool isDesktop) {
+  // ==================== HEADER ====================
+  Widget _buildHeader(
+      Color textColor, Color subTextColor, bool isSmall, bool isDesktop) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -316,12 +401,12 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
             width: 32.w,
             height: 32.w,
             decoration: BoxDecoration(
-              color: isSmall ? const Color(0xFF29B6F6).withOpacity(0.08) : const Color(0xFF29B6F6).withOpacity(0.08),
+              color: skyBlue.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               CupertinoIcons.question_circle,
-              color: const Color(0xFF29B6F6),
+              color: skyBlue,
               size: isSmall ? 16.sp : 18.sp,
             ),
           ),
@@ -330,15 +415,14 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     ).animate().fadeIn(delay: 40.ms);
   }
 
-  // ==================== PREMIUM COMPACT BALANCE CARD ====================
-  Widget _buildBalanceCard(VoucherBalance voucher, bool isSmall) {
-    final usedPercent = voucher.totalBalance > 0
-        ? (voucher.usedBalance / voucher.totalBalance).clamp(0.0, 1.0)
-        : 0.0;
-
+  // ==================== BALANCE CARD (API Data) ====================
+  Widget _buildBalanceCard(
+      bool isSmall, Color textColor, Color subTextColor) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: isSmall ? 16.w : 20.w, vertical: isSmall ? 16.h : 18.h),
+      padding: EdgeInsets.symmetric(
+          horizontal: isSmall ? 16.w : 20.w,
+          vertical: isSmall ? 16.h : 18.h),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
@@ -358,12 +442,15 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  Icon(CupertinoIcons.gift_fill, color: Colors.white.withOpacity(0.7), size: isSmall ? 11.sp : 12.sp),
+                  Icon(CupertinoIcons.gift_fill,
+                      color: Colors.white.withOpacity(0.7),
+                      size: isSmall ? 11.sp : 12.sp),
                   SizedBox(width: 5.w),
                   Text(
                     'Available',
@@ -377,7 +464,8 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
                 ],
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                padding:
+                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10.r),
@@ -395,110 +483,224 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
             ],
           ),
           SizedBox(height: 8.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '\u09F3',
-                style: GoogleFonts.poppins(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: isSmall ? 16.sp : 18.sp,
-                  fontWeight: FontWeight.w500,
-                  height: 1.2,
+
+          // Balance Amount — Loading / Error / Data
+          if (_isLoading)
+            _buildBalanceShimmer(isSmall)
+          else if (_errorMessage != null)
+            _buildBalanceError(isSmall)
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '\u09F3',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: isSmall ? 16.sp : 18.sp,
+                    fontWeight: FontWeight.w500,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-              SizedBox(width: 3.w),
-              Text(
-                voucher.availableBalance.toStringAsFixed(2),
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: isSmall ? 28.sp : 32.sp,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -1.2,
-                  height: 1.1,
+                SizedBox(width: 3.w),
+                Text(
+                  _voucherBalance!.availableBalance.toStringAsFixed(2),
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: isSmall ? 28.sp : 32.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -1.2,
+                    height: 1.1,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 14.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Used \u09F3${voucher.usedBalance.toStringAsFixed(0)}',
-                style: GoogleFonts.poppins(
-                  color: Colors.white.withOpacity(0.55),
-                  fontSize: isSmall ? 9.sp : 10.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Text(
-                'Total \u09F3${voucher.totalBalance.toStringAsFixed(0)}',
-                style: GoogleFonts.poppins(
-                  color: Colors.white.withOpacity(0.55),
-                  fontSize: isSmall ? 9.sp : 10.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 5.h),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8.r),
-            child: LinearProgressIndicator(
-              value: usedPercent,
-              backgroundColor: Colors.white.withOpacity(0.18),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-              minHeight: 4.h,
+              ],
             ),
-          ),
-          SizedBox(height: 12.h),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              Clipboard.setData(ClipboardData(
-                  text: voucher.availableBalance.toStringAsFixed(2)));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Balance copied', style: GoogleFonts.poppins(fontSize: 12.sp)),
-                  backgroundColor: const Color(0xFF0288D1),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                  duration: const Duration(seconds: 2),
-                  margin: EdgeInsets.all(16.w),
+
+          SizedBox(height: 14.h),
+
+          // Progress bar area — hide on error
+          if (_errorMessage == null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Live from API',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white.withOpacity(0.55),
+                    fontSize: isSmall ? 9.sp : 10.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              );
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(CupertinoIcons.doc_on_doc, color: Colors.white.withOpacity(0.8), size: isSmall ? 10.sp : 11.sp),
-                  SizedBox(width: 5.w),
-                  Text(
-                    'Copy',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: isSmall ? 10.sp : 11.sp,
-                      fontWeight: FontWeight.w500,
+                if (!_isLoading)
+                  GestureDetector(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      await _fetchBalance();
+                    },
+                    child: Row(
+                      children: [
+                        Icon(CupertinoIcons.arrow_clockwise,
+                            color: Colors.white.withOpacity(0.55),
+                            size: isSmall ? 9.sp : 10.sp),
+                        SizedBox(width: 3.w),
+                        Text(
+                          'Refresh',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white.withOpacity(0.55),
+                            fontSize: isSmall ? 9.sp : 10.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+              ],
+            ),
+            SizedBox(height: 12.h),
+          ],
+
+          // Copy Button
+          if (!_isLoading && _errorMessage == null)
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                Clipboard.setData(ClipboardData(
+                    text: _voucherBalance!.availableBalance
+                        .toStringAsFixed(2)));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Balance copied',
+                        style: GoogleFonts.poppins(fontSize: 12.sp)),
+                    backgroundColor: const Color(0xFF0288D1),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r)),
+                    duration: const Duration(seconds: 2),
+                    margin: EdgeInsets.all(16.w),
+                  ),
+                );
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border:
+                      Border.all(color: Colors.white.withOpacity(0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.doc_on_doc,
+                        color: Colors.white.withOpacity(0.8),
+                        size: isSmall ? 10.sp : 11.sp),
+                    SizedBox(width: 5.w),
+                    Text(
+                      'Copy Balance',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withOpacity(0.85),
+                        fontSize: isSmall ? 10.sp : 11.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+
+          // Retry Button on Error
+          if (_errorMessage != null)
+            GestureDetector(
+              onTap: () async {
+                HapticFeedback.mediumImpact();
+                await _fetchBalance();
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border:
+                      Border.all(color: Colors.white.withOpacity(0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(CupertinoIcons.arrow_clockwise,
+                        color: Colors.white.withOpacity(0.8),
+                        size: isSmall ? 10.sp : 11.sp),
+                    SizedBox(width: 5.w),
+                    Text(
+                      'Retry',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withOpacity(0.85),
+                        fontSize: isSmall ? 10.sp : 11.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  // ==================== ULTRA COMPACT DEPOSIT CARD ====================
+  // Loading shimmer inside card
+  Widget _buildBalanceShimmer(bool isSmall) {
+    return Container(
+      height: isSmall ? 34.h : 38.h,
+      width: 140.w,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+    ).animate(onPlay: (c) => c.repeat()).shimmer(
+          duration: 1200.ms,
+          color: Colors.white.withOpacity(0.35),
+        );
+  }
+
+  // Error state inside card
+  Widget _buildBalanceError(bool isSmall) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(CupertinoIcons.exclamationmark_circle,
+                color: Colors.white.withOpacity(0.8),
+                size: isSmall ? 14.sp : 16.sp),
+            SizedBox(width: 6.w),
+            Text(
+              'Failed to load',
+              style: GoogleFonts.poppins(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: isSmall ? 14.sp : 16.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          _errorMessage ?? '',
+          style: GoogleFonts.poppins(
+            color: Colors.white.withOpacity(0.5),
+            fontSize: isSmall ? 9.sp : 10.sp,
+            fontWeight: FontWeight.w400,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  // ==================== DEPOSIT CARD ====================
   Widget _buildDepositCard(
     bool isSmall,
     bool isDesktop,
@@ -512,7 +714,9 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
       onTap: _goToPayment,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: isSmall ? 14.w : 16.w, vertical: isSmall ? 10.h : 12.h),
+        padding: EdgeInsets.symmetric(
+            horizontal: isSmall ? 14.w : 16.w,
+            vertical: isSmall ? 10.h : 12.h),
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16.r),
@@ -547,11 +751,9 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
                 ],
               ),
               child: Center(
-                child: Icon(
-                  CupertinoIcons.plus,
-                  color: Colors.white,
-                  size: isSmall ? 16.sp : 18.sp,
-                ),
+                child: Icon(CupertinoIcons.plus,
+                    color: Colors.white,
+                    size: isSmall ? 16.sp : 18.sp),
               ),
             ),
             SizedBox(width: 12.w),
@@ -580,18 +782,16 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
                 ],
               ),
             ),
-            Icon(
-              CupertinoIcons.chevron_right,
-              color: subTextColor.withOpacity(0.5),
-              size: isSmall ? 12.sp : 14.sp,
-            ),
+            Icon(CupertinoIcons.chevron_right,
+                color: subTextColor.withOpacity(0.5),
+                size: isSmall ? 12.sp : 14.sp),
           ],
         ),
       ),
     );
   }
 
-  // ==================== COMPACT STAT CARD ====================
+  // ==================== STAT CARD ====================
   Widget _buildStatCard({
     required IconData icon,
     required Color iconColor,
@@ -632,7 +832,8 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
                   color: iconColor.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
-                child: Icon(icon, color: iconColor, size: isSmall ? 14.sp : 15.sp),
+                child: Icon(icon,
+                    color: iconColor, size: isSmall ? 14.sp : 15.sp),
               ),
               const Spacer(),
               Text(
@@ -660,8 +861,9 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     );
   }
 
-  // ==================== COMPACT SECTION HEADER ====================
-  Widget _buildSectionHeader(Color textColor, Color subTextColor, int count, bool isSmall, bool isDesktop) {
+  // ==================== SECTION HEADER ====================
+  Widget _buildSectionHeader(Color textColor, Color subTextColor, int count,
+      bool isSmall, bool isDesktop) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -678,14 +880,14 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
           decoration: BoxDecoration(
-            color: const Color(0xFF29B6F6).withOpacity(0.08),
+            color: skyBlue.withOpacity(0.08),
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: Text(
             '$count',
             style: GoogleFonts.poppins(
               fontSize: isSmall ? 10.sp : 11.sp,
-              color: const Color(0xFF29B6F6),
+              color: skyBlue,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -694,8 +896,9 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  // ==================== COMPACT FILTER CHIPS ====================
-  Widget _buildFilterChips(bool isDark, Color subTextColor, Color borderColor) {
+  // ==================== FILTER CHIPS ====================
+  Widget _buildFilterChips(
+      bool isDark, Color subTextColor, Color borderColor) {
     return SizedBox(
       height: 30.h,
       child: ListView.separated(
@@ -713,18 +916,22 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 5.h),
+              padding:
+                  EdgeInsets.symmetric(horizontal: 14.w, vertical: 5.h),
               decoration: BoxDecoration(
                 color: selected
                     ? skyBlue
-                    : (isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA)),
+                    : (isDark
+                        ? const Color(0xFF2C2C2E)
+                        : const Color(0xFFE5E5EA)),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Text(
                 f,
                 style: GoogleFonts.poppins(
                   fontSize: 11.sp,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight:
+                      selected ? FontWeight.w600 : FontWeight.w500,
                   color: selected ? Colors.white : subTextColor,
                 ),
               ),
@@ -735,7 +942,7 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     );
   }
 
-  // ==================== iOS GROUPED LIST TRANSACTIONS ====================
+  // ==================== GROUPED TRANSACTIONS ====================
   Widget _buildGroupedTransactions(
     List<VoucherTransaction> transactions,
     bool isDark,
@@ -774,14 +981,18 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
               separatorColor,
               isLast,
               isSmall,
-            ).animate().fadeIn(delay: (entry.key * 40).ms, duration: 250.ms).slideY(begin: 0.04, curve: Curves.easeOut);
+            )
+                .animate()
+                .fadeIn(
+                    delay: (entry.key * 40).ms, duration: 250.ms)
+                .slideY(begin: 0.04, curve: Curves.easeOut);
           }).toList(),
         ),
       ),
     );
   }
 
-  // ==================== COMPACT iOS ROW ====================
+  // ==================== TRANSACTION ROW ====================
   Widget _buildCompactTransactionRow(
     VoucherTransaction tx,
     Color textColor,
@@ -791,8 +1002,10 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     bool isSmall,
   ) {
     final isCredit = tx.type == 'credit';
-    final amountColor = isCredit ? const Color(0xFF34C759) : const Color(0xFFFF9500);
-    final iconData = isCredit ? CupertinoIcons.arrow_down : CupertinoIcons.arrow_up;
+    final amountColor =
+        isCredit ? const Color(0xFF34C759) : const Color(0xFFFF9500);
+    final iconData =
+        isCredit ? CupertinoIcons.arrow_down : CupertinoIcons.arrow_up;
     final amountPrefix = isCredit ? '+' : '-';
 
     Color statusColor;
@@ -818,7 +1031,9 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: isSmall ? 12.w : 14.w, vertical: isSmall ? 10.h : 11.h),
+          padding: EdgeInsets.symmetric(
+              horizontal: isSmall ? 12.w : 14.w,
+              vertical: isSmall ? 10.h : 11.h),
           child: Row(
             children: [
               Container(
@@ -828,7 +1043,8 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
                   color: amountColor.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(9.r),
                 ),
-                child: Icon(iconData, color: amountColor, size: isSmall ? 14.sp : 15.sp),
+                child: Icon(iconData,
+                    color: amountColor, size: isSmall ? 14.sp : 15.sp),
               ),
               SizedBox(width: 10.w),
               Expanded(
@@ -872,7 +1088,8 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
                   ),
                   SizedBox(height: 2.h),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 6.w, vertical: 1.5.h),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(4.r),
@@ -894,13 +1111,14 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
         if (!isLast)
           Padding(
             padding: EdgeInsets.only(left: isSmall ? 54.w : 58.w),
-            child: Divider(color: separatorColor, height: 0.5, thickness: 0.5),
+            child: Divider(
+                color: separatorColor, height: 0.5, thickness: 0.5),
           ),
       ],
     );
   }
 
-  // ==================== COMPACT EMPTY STATE ====================
+  // ==================== EMPTY STATE ====================
   Widget _buildEmptyState(Color subTextColor) {
     return Center(
       child: Padding(
@@ -910,14 +1128,11 @@ class _VoucherBalancePageState extends State<VoucherBalancePage> {
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: const Color(0xFF29B6F6).withOpacity(0.06),
+                color: skyBlue.withOpacity(0.06),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                CupertinoIcons.doc_text,
-                size: 32.sp,
-                color: const Color(0xFF29B6F6).withOpacity(0.5),
-              ),
+              child: Icon(CupertinoIcons.doc_text,
+                  size: 32.sp, color: skyBlue.withOpacity(0.5)),
             ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
             SizedBox(height: 12.h),
             Text(
