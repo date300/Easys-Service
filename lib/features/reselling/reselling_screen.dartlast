@@ -141,27 +141,85 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     }
   }
 
-List<ProductModel> _filterProducts(List<ProductModel> all) {
-  return all.where((p) {
-    final matchCat = _selectedCategory == 'All' || p.category == _selectedCategory;
-    final matchSearch = p.title.toLowerCase().contains(_searchQuery.toLowerCase());
-    return matchCat && matchSearch;
-  }).toList();
-}
+  List<ProductModel> _filterProducts(List<ProductModel> all) {
+    return all.where((p) {
+      final matchCat = _selectedCategory == 'All' || p.category == _selectedCategory;
+      final matchSearch = p.title.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchCat && matchSearch;
+    }).toList();
+  }
 
-void _showAddProductSheet() {
-  HapticFeedback.mediumImpact();
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => AddProductBottomSheet(
-      onProductAdded: (ProductModel newProduct) {
-        ref.read(productListProvider.notifier).addProduct(newProduct);
-      },
-    ),
-  );
-}
+  void _showAddProductSheet() {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddProductBottomSheet(
+        onProductAdded: (ProductModel newProduct) {
+          ref.read(productListProvider.notifier).addProduct(newProduct);
+        },
+      ),
+    );
+  }
+
+  void _showResellSheet(ProductModel product) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ResellBottomSheet(
+        product: product,
+        onConfirm: (margin) {
+          final updated = ProductModel(
+            id: product.id,
+            title: product.title,
+            subtitle: product.subtitle,
+            image: product.image,
+            wholesalePrice: product.wholesalePrice,
+            originalPrice: product.originalPrice,
+            maxResalePrice: product.maxResalePrice,
+            category: product.category,
+            rating: product.rating,
+            isReselling: true,
+            myMargin: margin,
+            stock: product.stock,
+          );
+          ref.read(productListProvider.notifier).updateProduct(updated);
+        },
+      ),
+    );
+  }
+
+  void _goToDetails(ProductModel product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailsPage(
+          productId: product.id,
+          onStartResell: (margin) {
+            final updated = ProductModel(
+              id: product.id,
+              title: product.title,
+              subtitle: product.subtitle,
+              image: product.image,
+              wholesalePrice: product.wholesalePrice,
+              originalPrice: product.originalPrice,
+              maxResalePrice: product.maxResalePrice,
+              category: product.category,
+              rating: product.rating,
+              isReselling: true,
+              myMargin: margin,
+              stock: product.stock,
+            );
+            ref.read(productListProvider.notifier).updateProduct(updated);
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allProducts = ref.watch(productListProvider);
@@ -483,7 +541,7 @@ void _showAddProductSheet() {
       ),
     );
   }
-void _goToDetails() {  widget.ref.read(isDetailViewProvider.notifier).state = true;  widget.ref.read(detailViewTitleProvider.notifier).state = widget.product.title;  context.push('/product/${widget.product.id}');}
+
   // ==================== SECTION HEADER ====================
   Widget _buildSectionHeader(double hPadding, bool isSmall, bool isDesktop, Color kTextDark, Color kTextMid, {required String title, required String subtitle, bool showViewAll = false}) {
     return Padding(
@@ -701,37 +759,9 @@ void _goToDetails() {  widget.ref.read(isDetailViewProvider.notifier).state = tr
         shadowColor: shadowColor,
         kTextDark: kTextDark,
         kTextMid: kTextMid,
-        ref: ref,
+        onTap: () => _goToDetails(products[i]),
+        onResell: () => _showResellSheet(products[i]),
       ).animate().fadeIn(delay: (i * 50).ms, duration: 300.ms).slideY(begin: 0.06, curve: Curves.easeOut),
-    );
-  }
-
-  void _showResellSheet(ProductModel product) {
-    HapticFeedback.mediumImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ResellBottomSheet(
-        product: product,
-        onConfirm: (margin) {
-          final updated = ProductModel(
-            id: product.id,
-            title: product.title,
-            subtitle: product.subtitle,
-            image: product.image,
-            wholesalePrice: product.wholesalePrice,
-            originalPrice: product.originalPrice,
-            maxResalePrice: product.maxResalePrice,
-            category: product.category,
-            rating: product.rating,
-            isReselling: true,
-            myMargin: margin,
-            stock: product.stock,
-          );
-          ref.read(productListProvider.notifier).updateProduct(updated);
-        },
-      ),
     );
   }
 
@@ -861,7 +891,8 @@ class _ResellProductCard extends StatefulWidget {
   final Color shadowColor;
   final Color kTextDark;
   final Color kTextMid;
-  final WidgetRef ref;
+  final VoidCallback onTap;
+  final VoidCallback onResell;
 
   const _ResellProductCard({
     required this.product,
@@ -870,7 +901,8 @@ class _ResellProductCard extends StatefulWidget {
     required this.shadowColor,
     required this.kTextDark,
     required this.kTextMid,
-    required this.ref,
+    required this.onTap,
+    required this.onResell,
   });
 
   @override
@@ -880,43 +912,16 @@ class _ResellProductCard extends StatefulWidget {
 class _ResellProductCardState extends State<_ResellProductCard> {
   bool _pressed = false;
 
-  void _goToDetails() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProductDetailsPage(
-          productId: widget.product.id,
-          onStartResell: (margin) {
-            final updated = ProductModel(
-              id: widget.product.id,
-              title: widget.product.title,
-              subtitle: widget.product.subtitle,
-              image: widget.product.image,
-              wholesalePrice: widget.product.wholesalePrice,
-              originalPrice: widget.product.originalPrice,
-              maxResalePrice: widget.product.maxResalePrice,
-              category: widget.product.category,
-              rating: widget.product.rating,
-              isReselling: true,
-              myMargin: margin,
-              stock: widget.product.stock,
-            );
-            widget.ref.read(productListProvider.notifier).updateProduct(updated);
-          },
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) {
         setState(() => _pressed = false);
-        _goToDetails();
+        widget.onTap();
       },
       onTapCancel: () => setState(() => _pressed = false),
+      onLongPress: widget.onResell,
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1.0,
         duration: const Duration(milliseconds: 120),
@@ -1073,7 +1078,6 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                             ),
                         ],
                       ),
-
                     ],
                   ),
                 ),

@@ -488,7 +488,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
   Widget _buildQuickActions(double hPadding, bool isSmall, bool isDesktop, Color cardBackground, Color shadowColor, Color borderColor, Color kTextDark) {
     final actions = [
       _QuickActionData(icon: CupertinoIcons.doc_text, label: 'Orders', color: const Color(0xFF6366F1)),
-      _QuickActionData(icon: CupertinoIcons.person_2, label: 'Customers', color: const Color(0xFF0284C7)),
+      _QuickActionData(icon: CupertinoIcons.briefcase, label: 'Vendor List', color: const Color(0xFF0284C7)),
       _QuickActionData(icon: CupertinoIcons.square_grid_2x2, label: 'Categories', color: const Color(0xFFEA580C)),
       _QuickActionData(icon: CupertinoIcons.heart, label: 'Wishlist', color: const Color(0xFF29B6F6)),
     ];
@@ -740,7 +740,7 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     if (products.isEmpty) return _buildEmptyState(kTextMid);
 
     final crossAxisCount = isSmall ? 2 : (isTablet ? 3 : 2);
-    final childAspectRatio = isSmall ? 0.62 : 0.58;
+    final childAspectRatio = isSmall ? 0.72 : (isTablet ? 0.78 : 0.68);
 
     return GridView.builder(
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 100.h),
@@ -1028,32 +1028,40 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.product.title,
-                        style: GoogleFonts.poppins(
-                          fontSize: widget.isSmall ? 10.sp : 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: widget.kTextDark,
-                          height: 1.3,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (widget.product.subtitle != null) ...[
-                        SizedBox(height: 2.h),
-                        Text(
-                          widget.product.subtitle!,
-                          style: GoogleFonts.poppins(
-                            fontSize: 9.sp,
-                            fontWeight: FontWeight.w400,
-                            color: widget.kTextMid,
-                            height: 1.2,
+                      // Title & subtitle group at top
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.product.title,
+                            style: GoogleFonts.poppins(
+                              fontSize: widget.isSmall ? 10.sp : 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: widget.kTextDark,
+                              height: 1.3,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      SizedBox(height: 6.h),
+                          if (widget.product.subtitle != null) ...[
+                            SizedBox(height: 2.h),
+                            Text(
+                              widget.product.subtitle!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 9.sp,
+                                fontWeight: FontWeight.w400,
+                                color: widget.kTextMid,
+                                height: 1.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                      const Spacer(),
+                      // Price row pinned at bottom
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
