@@ -1,4 +1,4 @@
-,import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/vendor_apply/vendor_apply_page.dart';
@@ -17,8 +17,7 @@ import '../features/payment/payment_gateway_screen.dart';
 import '../modules/notifications/notification_screen.dart';
 import '../main.dart';
 import '../features/voucher_balance/voucher_balance_page.dart';
-import '../features/reselling/product_details_page.dart';
-
+import '../features/reselling/product_details_page.dart'; 
 // ==================== HELPERS ====================
 
 Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
@@ -93,35 +92,35 @@ final GoRouter appRouter = GoRouter(
           path: '/edit-profile',
           builder: (context, state) => const EditProfileScreen(),
         ),
-        _detailRoute(
-          path: '/vendor-apply',
-          builder: (context, state) => const VendorApplyPage(),
-        ),
+        
+_detailRoute(
+  path: '/vendor-apply',
+  builder: (context, state) => const VendorApplyPage(),
+),
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
         _detailRoute(
-          path: '/voucher-balance',
-          builder: (context, state) => const VoucherBalancePage(),
-        ),
-        _detailRoute(
-          path: '/product/:id',
-          builder: (context, state) => ProductDetailsPage(
-            productId: state.pathParameters['id']!,
-          ),
-        ),
+  path: '/voucher-balance',
+  builder: (context, state) => const VoucherBalancePage(),
+), 
+_detailRoute(  path: '/product/:id',
+  builder: (context, state) => ProductDetailsPage(
+    productId: state.pathParameters['id']!,
+  ),
         GoRoute(
-          path: '/payment',
-          builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>?;
-            return PaymentGatewayScreen(
-              amount: extra?['amount'] ?? 300.00,
-              purpose: extra?['purpose'] ?? 'Account Verification Fee',
-              onPaymentSuccess: extra?['onSuccess'],
-            );
-          },
-        ),
+  path: '/payment',
+  builder: (context, state) {
+    final extra = state.extra as Map<String, dynamic>?;
+    return PaymentGatewayScreen(
+      amount: extra?['amount'] ?? 300.00, // ডিফল্ট ৩০০ টাকা রাখা হয়েছে
+      purpose: extra?['purpose'] ?? 'Account Verification Fee',
+      onPaymentSuccess: extra?['onSuccess'],
+    );
+  },
+),
+
       ],
     ),
   ],
@@ -145,4 +144,3 @@ final GoRouter appRouter = GoRouter(
     return null;
   },
 );
-
