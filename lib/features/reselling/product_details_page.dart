@@ -1177,45 +1177,82 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     final inStock = _currentStock > 0;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 24.h),
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 14.h),
       decoration: BoxDecoration(
         color: cardBg,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, -4))],
-        border: Border(top: BorderSide(color: borderColor, width: 1)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, -3))],
+        border: Border(top: BorderSide(color: borderColor, width: 0.8)),
       ),
       child: Row(
         children: [
+          // Price section
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Wholesale Price', style: GoogleFonts.poppins(fontSize: 10.sp, color: kTextMid)),
-              Text('\u09F3${_currentPrice.toInt()}', style: GoogleFonts.poppins(fontSize: 20.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
+              Text(
+                'Wholesale',
+                style: GoogleFonts.poppins(fontSize: 9.sp, color: kTextMid, letterSpacing: 0.3),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '\u09F3${_currentPrice.toInt()}',
+                    style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6), height: 1.1),
+                  ),
+                ],
+              ),
             ],
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: 12.w),
+          // Divider
+          Container(height: 36.h, width: 1, color: borderColor),
+          SizedBox(width: 12.w),
+          // Order Now button
           Expanded(
             child: GestureDetector(
               onTap: inStock ? _showResellSheet : null,
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 16.h),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
                 decoration: BoxDecoration(
                   gradient: inStock
-                      ? const LinearGradient(colors: [Color(0xFF29B6F6), Color(0xFF0284C7)], begin: Alignment.centerLeft, end: Alignment.centerRight)
-                      : LinearGradient(colors: [Colors.grey.shade400, Colors.grey.shade500], begin: Alignment.centerLeft, end: Alignment.centerRight),
-                  borderRadius: BorderRadius.circular(14.r),
+                      ? const LinearGradient(
+                          colors: [Color(0xFF29B6F6), Color(0xFF0284C7)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        )
+                      : LinearGradient(
+                          colors: [Colors.grey.shade400, Colors.grey.shade500],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                  borderRadius: BorderRadius.circular(12.r),
                   boxShadow: [
-                    BoxShadow(color: inStock ? const Color(0xFF29B6F6).withOpacity(0.35) : Colors.transparent, blurRadius: 14, offset: const Offset(0, 5)),
+                    BoxShadow(
+                      color: inStock ? const Color(0xFF29B6F6).withOpacity(0.28) : Colors.transparent,
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(inStock ? CupertinoIcons.cart_badge_plus : CupertinoIcons.cart_badge_minus, color: Colors.white, size: 18.sp),
-                    SizedBox(width: 8.w),
+                    Icon(
+                      inStock ? CupertinoIcons.bag_fill : CupertinoIcons.xmark_circle,
+                      color: Colors.white,
+                      size: 15.sp,
+                    ),
+                    SizedBox(width: 7.w),
                     Text(
-                      inStock ? 'Resell & Earn' : 'Out of Stock',
-                      style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                      inStock ? 'Order Now' : 'Out of Stock',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 0.4,
+                      ),
                     ),
                   ],
                 ),
