@@ -337,7 +337,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: vPadding),
-                  _buildImageSlider(isDark, cardBackground, shadowColor, borderColor, isDesktop, isTablet, isSmall),
+                  _buildImageSlider(isDark, shadowColor, borderColor, isDesktop, isTablet, isSmall),
                   SizedBox(height: isDesktop ? 24.h : 16.h),
                   _buildSectionHeader('Price', 'Wholesale & discount', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
                   _buildPriceSection(isDark, kTextDark, kTextMid, borderColor, discount, isDesktop, isTablet, isSmall),
@@ -400,31 +400,21 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     );
   }
 
-  Widget _buildImageSlider(bool isDark, Color cardBackground, Color shadowColor, Color borderColor, bool isDesktop, bool isTablet, bool isSmall) {
+  Widget _buildImageSlider(bool isDark, Color shadowColor, Color borderColor, bool isDesktop, bool isTablet, bool isSmall) {
     final images = _productImages;
     final bannerHeight = isDesktop ? 360.h : isTablet ? 300.h : isSmall ? 220.h : 320.h;
 
     if (images.isEmpty) {
-      return Container(
+      return SizedBox(
         height: bannerHeight,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3))],
-        ),
         child: Center(
           child: Icon(CupertinoIcons.photo, color: Colors.grey.shade300, size: 60.sp),
         ),
       );
     }
 
-    return Container(
+    return SizedBox(
       height: bannerHeight,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 8, offset: const Offset(0, 3))],
-      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16.r),
         child: Stack(
