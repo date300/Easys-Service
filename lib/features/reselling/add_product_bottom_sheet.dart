@@ -25,7 +25,7 @@ class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
   final _priceController         = TextEditingController();
   final _discountPriceController = TextEditingController();
   final _stockController         = TextEditingController(text: '10');
-  final _brandController         = TextEditingController(text: 'Generic');
+  final _brandController         = TextEditingController(text: 'Easy Service');
   final _skuController           = TextEditingController();
 
   bool _isLoading = false;
