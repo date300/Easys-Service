@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ Added
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
 
@@ -15,6 +16,13 @@ const Color kTextMid = Color(0xFF64748B);
 class ApiService {
   static const String baseUrl = 'https://easy.ltcminematrix.com/api';
   static String? authToken;
+
+  // ✅ SharedPreferences থেকে jwt_token লোড করো (AppDrawer এর মতো)
+  static Future<void> loadAuthToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    authToken = prefs.getString('jwt_token');
+    debugPrint('ApiService: token loaded = $authToken');
+  }
 
   static Map<String, String> get headers => {
         'Content-Type': 'application/json',
@@ -30,7 +38,6 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
-          // ✅ images, variants, is_wishlisted আলাদা আসে — একসাথে merge করো
           final productData = {
             ...Map<String, dynamic>.from(data['product']),
             'images': data['images'] ?? [],
@@ -71,7 +78,6 @@ class ApiService {
   }
 
   static Future<bool> toggleWishlist(String productId) async {
-    // ✅ Token নেই মানে login করা নেই
     if (authToken == null) {
       debugPrint('Wishlist failed: No auth token');
       return false;
@@ -146,6 +152,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       _error = null;
     });
 
+    // ✅ প্রথমে SharedPreferences থেকে token লোড করো, তারপর product fetch করো
+    await ApiService.loadAuthToken();
+
     final product = await ApiService.fetchProductDetail(widget.productId);
 
     if (mounted) {
@@ -182,7 +191,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
   Future<void> _toggleWishlist() async {
     if (_product == null) return;
 
-    // ✅ Token নেই মানে login নেই — user কে জানাও
     if (ApiService.authToken == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -201,7 +209,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     HapticFeedback.lightImpact();
     _heartAnimController.forward(from: 0);
 
-    // ✅ Optimistic update — আগেই UI বদলাও
     setState(() => _isWishlisted = !_isWishlisted);
 
     final result = await ApiService.toggleWishlist(_product!.id);
@@ -215,7 +222,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
     if (_product!.images.isNotEmpty) {
       return _product!.images.map((img) => img.imageUrl).toList();
     }
-    // ✅ fallback: single image field
     if (_product!.image.isNotEmpty) return [_product!.image];
     return [];
   }
@@ -390,7 +396,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
   Widget _buildImageSlider(bool isDark, Color cardBg, Color shadowColor, Color borderColor) {
     final images = _productImages;
 
-    // ✅ Image না থাকলে placeholder দেখাও
     if (images.isEmpty) {
       return Container(
         height: 320.h,
@@ -529,7 +534,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
                   ),
                 ).animate().scale(delay: 300.ms, curve: Curves.elasticOut),
               ),
-            // Wishlist + Share buttons
             Positioned(
               top: 12.h,
               left: 12.w,
