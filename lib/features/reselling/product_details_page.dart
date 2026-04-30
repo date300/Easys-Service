@@ -331,33 +331,39 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
         children: [
           SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: hPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: vPadding),
-                  _buildImageSlider(isDark, shadowColor, borderColor, isDesktop, isTablet, isSmall),
-                  SizedBox(height: isDesktop ? 24.h : 16.h),
-                  _buildSectionHeader('Price', 'Wholesale & discount', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
-                  _buildPriceSection(isDark, kTextDark, kTextMid, borderColor, discount, isDesktop, isTablet, isSmall),
-                  SizedBox(height: isDesktop ? 20.h : 12.h),
-                  if (product.variants.isNotEmpty) ...[
-                    _buildSectionHeader('Select Variant', 'Choose your preference', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
-                    _buildVariantSelector(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
-                    SizedBox(height: isDesktop ? 20.h : 12.h),
-                  ],
-                  _buildSectionHeader('Stock', 'Availability', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
-                  _buildStockBadge(isDark, kTextDark, borderColor, isDesktop, isTablet, isSmall),
-                  SizedBox(height: isDesktop ? 20.h : 12.h),
-                  _buildSectionHeader('Product Description', 'Details & Specifications', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
-                  _buildDescription(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
-                  SizedBox(height: isDesktop ? 20.h : 12.h),
-                  _buildSectionHeader('Ratings & Reviews', 'See what others say', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
-                  _buildRatings(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
-                  SizedBox(height: 100.h + vPadding),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ইমেজ স্লাইডার – ফুল প্রস্থে, কোনো প্যাডিং ছাড়া
+                _buildImageSlider(isDark, shadowColor, borderColor, isDesktop, isTablet, isSmall),
+                // বাকি সব কন্টেন্ট প্যাডিং সহ
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: hPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: vPadding),
+                      _buildSectionHeader('Price', 'Wholesale & discount', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                      _buildPriceSection(isDark, kTextDark, kTextMid, borderColor, discount, isDesktop, isTablet, isSmall),
+                      SizedBox(height: isDesktop ? 20.h : 12.h),
+                      if (product.variants.isNotEmpty) ...[
+                        _buildSectionHeader('Select Variant', 'Choose your preference', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                        _buildVariantSelector(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
+                        SizedBox(height: isDesktop ? 20.h : 12.h),
+                      ],
+                      _buildSectionHeader('Stock', 'Availability', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                      _buildStockBadge(isDark, kTextDark, borderColor, isDesktop, isTablet, isSmall),
+                      SizedBox(height: isDesktop ? 20.h : 12.h),
+                      _buildSectionHeader('Product Description', 'Details & Specifications', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                      _buildDescription(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
+                      SizedBox(height: isDesktop ? 20.h : 12.h),
+                      _buildSectionHeader('Ratings & Reviews', 'See what others say', kTextDark, kTextMid, isDesktop: isDesktop, isSmall: isSmall),
+                      _buildRatings(isDark, kTextDark, kTextMid, borderColor, isDesktop, isTablet, isSmall),
+                      SizedBox(height: 100.h + vPadding),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           Positioned(
