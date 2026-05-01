@@ -8,13 +8,13 @@ import 'product_model.dart';
 
 class ResellBottomSheet extends StatefulWidget {
   final ProductModel product;
-  final ProductVariant? selectedVariant;  // ✅ যোগ করুন
+  final ProductVariant? selectedVariant;
   final Function(double margin) onConfirm;
 
   const ResellBottomSheet({
     super.key,
     required this.product,
-    this.selectedVariant,  // ✅ optional
+    this.selectedVariant,
     required this.onConfirm,
   });
 
@@ -23,11 +23,13 @@ class ResellBottomSheet extends StatefulWidget {
 }
 
 class _ResellBottomSheetState extends State<ResellBottomSheet> {
+  // আসল ফিচারের জন্য এই ভ্যারিয়েবলগুলো আপাতত দরকার নেই, 
+  // কিন্তু ভবিষ্যতে ব্যবহার করতে পারবে
   double _margin = 0;
 
-  // ✅ ভ্যারিয়েন্ট সিলেক্ট করা থাকলে সেটার প্রাইস, নাহলে প্রোডাক্টের wholesalePrice
-  double get _basePrice => widget.selectedVariant?.price ?? widget.product.wholesalePrice;
-  
+  double get _basePrice =>
+      widget.selectedVariant?.price ?? widget.product.wholesalePrice;
+
   double get _maxMargin => widget.product.maxResalePrice - _basePrice;
   double get _sellPrice => _basePrice + _margin;
 
@@ -36,8 +38,8 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBackground = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
-    final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
-    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
+    final borderColor =
+        isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
 
     return Container(
       padding: EdgeInsets.only(
@@ -49,7 +51,6 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Drag handle
           Center(
@@ -63,213 +64,36 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
               ),
             ),
           ),
-          SizedBox(height: 20.h),
-          
-          // Product info
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12.r),
-                  child: SizedBox(
-                    width: 52.w,
-                    height: 52.w,
-                    child: Image.network(
-                      widget.product.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey.shade100,
-                        child: Icon(CupertinoIcons.photo, color: Colors.grey.shade400),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 14.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.product.title,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.bold,
-                          color: kTextDark,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 2.h),
-                      // ✅ Variant info দেখান
-                      if (widget.selectedVariant != null) ...[
-                        Text(
-                          [
-                            if (widget.selectedVariant!.color != null) widget.selectedVariant!.color,
-                            if (widget.selectedVariant!.size != null) widget.selectedVariant!.size,
-                          ].where((e) => e != null).join(' - '),
-                          style: GoogleFonts.poppins(
-                            fontSize: 11.sp,
-                            color: const Color(0xFF29B6F6),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                      ],
-                      Text(
-                        'Wholesale: \u09F3${_basePrice.toInt()}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: kTextMid,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          SizedBox(height: 40.h),
+
+          // Coming Soon Content
+          Icon(
+            CupertinoIcons.hammer_fill,
+            size: 48.sp,
+            color: const Color(0xFF29B6F6).withOpacity(0.7),
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'Coming Soon',
+            style: GoogleFonts.poppins(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.bold,
+              color: kTextDark,
             ),
           ),
-          SizedBox(height: 24.h),
-          
-          // Title
+          SizedBox(height: 8.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
+            padding: EdgeInsets.symmetric(horizontal: 32.w),
             child: Text(
-              'Set Your Margin',
+              'Resell feature is under development.\nStay tuned!',
+              textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.bold,
-                color: kTextDark,
+                fontSize: 13.sp,
+                color: Colors.grey.shade500,
               ),
             ),
           ),
-          SizedBox(height: 10.h),
-          
-          // Slider labels
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('\u09F30', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
-                Text('\u09F3${_maxMargin.toInt()}', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
-              ],
-            ),
-          ),
-          
-          // Slider
-          Slider(
-            value: _margin.clamp(0, _maxMargin > 0 ? _maxMargin : 1),
-            min: 0,
-            max: _maxMargin > 0 ? _maxMargin : 1,
-            divisions: _maxMargin > 0 ? _maxMargin.toInt() : 1,
-            activeColor: const Color(0xFF29B6F6),
-            inactiveColor: borderColor,
-            thumbColor: const Color(0xFF29B6F6),
-            onChanged: (val) => setState(() => _margin = val),
-          ),
-          
-          // Price cards
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(14.w),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: borderColor),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Margin',
-                          style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          '\u09F3${_margin.toInt()}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF34C759),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(14.w),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF29B6F6).withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: const Color(0xFF29B6F6).withOpacity(0.2)),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Sell Price',
-                          style: GoogleFonts.poppins(fontSize: 11.sp, color: kTextMid),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          '\u09F3${_sellPrice.toInt()}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF29B6F6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 20.h),
-          
-          // Confirm button
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                widget.onConfirm(_margin);
-                Navigator.pop(context);
-              },
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF29B6F6),
-                  borderRadius: BorderRadius.circular(14.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF29B6F6).withOpacity(0.3),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'Start Reselling',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 40.h),
         ],
       ),
     ).animate().slideY(begin: 0.15, duration: 300.ms, curve: Curves.easeOut);

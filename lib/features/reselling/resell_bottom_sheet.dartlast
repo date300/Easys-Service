@@ -8,11 +8,13 @@ import 'product_model.dart';
 
 class ResellBottomSheet extends StatefulWidget {
   final ProductModel product;
+  final ProductVariant? selectedVariant;  // ✅ যোগ করুন
   final Function(double margin) onConfirm;
 
   const ResellBottomSheet({
     super.key,
     required this.product,
+    this.selectedVariant,  // ✅ optional
     required this.onConfirm,
   });
 
@@ -23,6 +25,12 @@ class ResellBottomSheet extends StatefulWidget {
 class _ResellBottomSheetState extends State<ResellBottomSheet> {
   double _margin = 0;
 
+  // ✅ ভ্যারিয়েন্ট সিলেক্ট করা থাকলে সেটার প্রাইস, নাহলে প্রোডাক্টের wholesalePrice
+  double get _basePrice => widget.selectedVariant?.price ?? widget.product.wholesalePrice;
+  
+  double get _maxMargin => widget.product.maxResalePrice - _basePrice;
+  double get _sellPrice => _basePrice + _margin;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -30,9 +38,6 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
     final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
     final kTextMid = isDark ? Colors.grey.shade400 : const Color(0xFF475569);
     final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.withOpacity(0.1);
-
-    final maxMargin = widget.product.maxMargin;
-    final sellPrice = widget.product.wholesalePrice + _margin;
 
     return Container(
       padding: EdgeInsets.only(
@@ -46,6 +51,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Drag handle
           Center(
             child: Container(
               margin: EdgeInsets.only(top: 12.h),
@@ -58,6 +64,8 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             ),
           ),
           SizedBox(height: 20.h),
+          
+          // Product info
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
@@ -89,9 +97,27 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                           fontWeight: FontWeight.bold,
                           color: kTextDark,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      SizedBox(height: 2.h),
+                      // ✅ Variant info দেখান
+                      if (widget.selectedVariant != null) ...[
+                        Text(
+                          [
+                            if (widget.selectedVariant!.color != null) widget.selectedVariant!.color,
+                            if (widget.selectedVariant!.size != null) widget.selectedVariant!.size,
+                          ].where((e) => e != null).join(' - '),
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.sp,
+                            color: const Color(0xFF29B6F6),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                      ],
                       Text(
-                        'Wholesale: \u09F3${widget.product.wholesalePrice.toInt()}',
+                        'Wholesale: \u09F3${_basePrice.toInt()}',
                         style: GoogleFonts.poppins(
                           fontSize: 12.sp,
                           color: kTextMid,
@@ -104,6 +130,8 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             ),
           ),
           SizedBox(height: 24.h),
+          
+          // Title
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Text(
@@ -116,26 +144,32 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             ),
           ),
           SizedBox(height: 10.h),
+          
+          // Slider labels
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('\u09F30', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
-                Text('\u09F3${maxMargin.toInt()}', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
+                Text('\u09F3${_maxMargin.toInt()}', style: GoogleFonts.poppins(fontSize: 12.sp, color: kTextMid)),
               ],
             ),
           ),
+          
+          // Slider
           Slider(
-            value: _margin,
+            value: _margin.clamp(0, _maxMargin > 0 ? _maxMargin : 1),
             min: 0,
-            max: maxMargin,
-            divisions: maxMargin.toInt(),
+            max: _maxMargin > 0 ? _maxMargin : 1,
+            divisions: _maxMargin > 0 ? _maxMargin.toInt() : 1,
             activeColor: const Color(0xFF29B6F6),
             inactiveColor: borderColor,
             thumbColor: const Color(0xFF29B6F6),
             onChanged: (val) => setState(() => _margin = val),
           ),
+          
+          // Price cards
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
@@ -184,7 +218,7 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          '\u09F3${sellPrice.toInt()}',
+                          '\u09F3${_sellPrice.toInt()}',
                           style: GoogleFonts.poppins(
                             fontSize: 20.sp,
                             fontWeight: FontWeight.bold,
@@ -199,6 +233,8 @@ class _ResellBottomSheetState extends State<ResellBottomSheet> {
             ),
           ),
           SizedBox(height: 20.h),
+          
+          // Confirm button
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: GestureDetector(
