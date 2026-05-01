@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
-import '../main.dart'; 
+import '../main.dart';
 
 class AppTopBar extends ConsumerWidget {
   final bool isDetailView;
@@ -27,13 +27,12 @@ class AppTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final double radius = isMobile ? 32.r : 28;
-    
-    // 🔥 DYNAMIC THEME COLORS
+    final double radius = isMobile ? 16.r : 14; // ছোট রেডিয়াস
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final overlayColor = isDark 
-        ? darkHeader.withOpacity(0.85)  // Dark mode: darker overlay
-        : skyBlue.withOpacity(0.55);      // Light mode: skyBlue overlay
+    final overlayColor = isDark
+        ? darkHeader.withOpacity(0.9)
+        : skyBlue.withOpacity(0.6);
 
     return ClipRRect(
       borderRadius: BorderRadius.only(
@@ -41,10 +40,10 @@ class AppTopBar extends ConsumerWidget {
         bottomRight: Radius.circular(radius),
       ),
       child: SizedBox(
-        height: isMobile ? 65.h : 75,
+        height: isMobile ? 48.h : 55, // অনেক ছোট হাইট
         child: Stack(
           children: [
-            // Background Lottie Animation
+            // Background Lottie
             Positioned.fill(
               child: Lottie.network(
                 'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json',
@@ -53,13 +52,13 @@ class AppTopBar extends ConsumerWidget {
               ),
             ),
 
-            // Blur Overlay - DYNAMIC COLOR
+            // Blur Overlay
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8), // কম ব্লার
                 child: Container(
                   decoration: BoxDecoration(
-                    color: overlayColor,  // 🔥 DYNAMIC
+                    color: overlayColor,
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(radius),
                       bottomRight: Radius.circular(radius),
@@ -73,7 +72,7 @@ class AppTopBar extends ConsumerWidget {
             SafeArea(
               bottom: false,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                padding: EdgeInsets.symmetric(horizontal: 8.w), // কম প্যাডিং
                 child: Row(
                   children: [
                     _buildLeadingIcon(context, ref, isDark),
@@ -85,16 +84,15 @@ class AppTopBar extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
-                            color: Colors.white,  // Always white for contrast
-                            fontWeight: FontWeight.bold,
-                            fontSize: isMobile ? 18.sp : 20,
-                            letterSpacing: 0.5,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600, // একটু কম বোল্ড
+                            fontSize: isMobile ? 15.sp : 17, // ছোট ফন্ট
+                            letterSpacing: 0.3,
                           ),
                         ),
                       ),
                     ),
 
-                    // Notification Action
                     _buildTrailingAction(context, isDark),
                   ],
                 ),
@@ -109,10 +107,12 @@ class AppTopBar extends ConsumerWidget {
   Widget _buildLeadingIcon(BuildContext context, WidgetRef ref, bool isDark) {
     if (isDetailView) {
       return IconButton(
+        padding: EdgeInsets.zero, // এক্সট্রা প্যাডিং সরানো
+        constraints: const BoxConstraints(),
         icon: Icon(
-          Icons.arrow_back_rounded, 
-          color: Colors.white, 
-          size: 26.sp,  // 🔥 Added .sp for responsive
+          Icons.arrow_back_rounded,
+          color: Colors.white,
+          size: 22.sp, // ছোট আইকন
         ),
         onPressed: () {
           ref.read(isDetailViewProvider.notifier).state = false;
@@ -129,32 +129,33 @@ class AppTopBar extends ConsumerWidget {
 
     return Builder(
       builder: (ctx) => IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
         icon: Icon(
-          Icons.menu_open_rounded, 
-          color: Colors.white, 
-          size: 28.sp,  // 🔥 Added .sp for responsive
+          Icons.menu_open_rounded,
+          color: Colors.white,
+          size: 24.sp, // ছোট আইকন
         ),
         onPressed: () => Scaffold.of(ctx).openDrawer(),
       ),
     );
   }
 
-  // Notification Icon with Navigation - DYNAMIC
   Widget _buildTrailingAction(BuildContext context, bool isDark) {
     if (!isDetailView && isLoggedIn) {
       return IconButton(
-        onPressed: () {
-          context.push('/notifications');
-        },
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onPressed: () => context.push('/notifications'),
         icon: Badge(
           child: Icon(
-            Icons.notifications_outlined, 
-            color: Colors.white, 
-            size: 26.sp,  // 🔥 Added .sp for responsive
+            Icons.notifications_outlined,
+            color: Colors.white,
+            size: 22.sp, // ছোট আইকন
           ),
         ),
       );
     }
-    return SizedBox(width: 48.w);
+    return SizedBox(width: 40.w); // ছোট প্লেসহোল্ডার
   }
 }

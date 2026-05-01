@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // for SystemChrome
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,12 +28,26 @@ class AppTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final double radius = isMobile ? 16.r : 14; // ছোট রেডিয়াস
+    final double radius = isMobile ? 16.r : 14;
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    final double contentHeight = isMobile ? 48.h : 55;
+    final double totalHeight = contentHeight + statusBarHeight;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final overlayColor = isDark
         ? darkHeader.withOpacity(0.9)
         : skyBlue.withOpacity(0.6);
+
+    // স্ট্যাটাস বার ট্রান্সপারেন্ট ও সাদা আইকন
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.light, // iOS এর জন্য
+        ),
+      );
+    });
 
     return ClipRRect(
       borderRadius: BorderRadius.only(
@@ -40,10 +55,10 @@ class AppTopBar extends ConsumerWidget {
         bottomRight: Radius.circular(radius),
       ),
       child: SizedBox(
-        height: isMobile ? 48.h : 55, // অনেক ছোট হাইট
+        height: totalHeight,
         child: Stack(
           children: [
-            // Background Lottie
+            // Background Lottie (পুরো উচ্চতা জুড়ে)
             Positioned.fill(
               child: Lottie.network(
                 'https://lottie.host/81b37365-2244-4861-9c86-13d6a455a5b1/F0mJ3Z9oYv.json',
@@ -52,10 +67,10 @@ class AppTopBar extends ConsumerWidget {
               ),
             ),
 
-            // Blur Overlay
+            // Blur Overlay (পুরো উচ্চতা জুড়ে)
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8), // কম ব্লার
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: Container(
                   decoration: BoxDecoration(
                     color: overlayColor,
@@ -68,33 +83,36 @@ class AppTopBar extends ConsumerWidget {
               ),
             ),
 
-            // Content
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.w), // কম প্যাডিং
-                child: Row(
-                  children: [
-                    _buildLeadingIcon(context, ref, isDark),
-
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          isDetailView ? detailTitle : 'Easy Service',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600, // একটু কম বোল্ড
-                            fontSize: isMobile ? 15.sp : 17, // ছোট ফন্ট
-                            letterSpacing: 0.3,
+            // Content – স্ট্যাটাস বারের নিচে
+            Positioned(
+              left: 0,
+              right: 0,
+              top: statusBarHeight,
+              child: SizedBox(
+                height: contentHeight,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  child: Row(
+                    children: [
+                      _buildLeadingIcon(context, ref, isDark),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            isDetailView ? detailTitle : 'Easy Service',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: isMobile ? 15.sp : 17,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-
-                    _buildTrailingAction(context, isDark),
-                  ],
+                      _buildTrailingAction(context, isDark),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -107,12 +125,12 @@ class AppTopBar extends ConsumerWidget {
   Widget _buildLeadingIcon(BuildContext context, WidgetRef ref, bool isDark) {
     if (isDetailView) {
       return IconButton(
-        padding: EdgeInsets.zero, // এক্সট্রা প্যাডিং সরানো
+        padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
         icon: Icon(
           Icons.arrow_back_rounded,
           color: Colors.white,
-          size: 22.sp, // ছোট আইকন
+          size: 22.sp,
         ),
         onPressed: () {
           ref.read(isDetailViewProvider.notifier).state = false;
@@ -134,7 +152,7 @@ class AppTopBar extends ConsumerWidget {
         icon: Icon(
           Icons.menu_open_rounded,
           color: Colors.white,
-          size: 24.sp, // ছোট আইকন
+          size: 24.sp,
         ),
         onPressed: () => Scaffold.of(ctx).openDrawer(),
       ),
@@ -151,11 +169,11 @@ class AppTopBar extends ConsumerWidget {
           child: Icon(
             Icons.notifications_outlined,
             color: Colors.white,
-            size: 22.sp, // ছোট আইকন
+            size: 22.sp,
           ),
         ),
       );
     }
-    return SizedBox(width: 40.w); // ছোট প্লেসহোল্ডার
+    return SizedBox(width: 40.w);
   }
 }
