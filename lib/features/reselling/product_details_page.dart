@@ -240,10 +240,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage>
       if (urls.isNotEmpty) return urls;
     }
 
-    // ✅ FIX 2: Fallback — product.thumbnail বা product.image
-    if (_product!.thumbnail != null && _product!.thumbnail!.isNotEmpty) {
-      return [_product!.thumbnail!];
-    }
+    // ✅ FIX 2: Fallback — product.image
     if (_product!.image.isNotEmpty) return [_product!.image];
 
     return [];
