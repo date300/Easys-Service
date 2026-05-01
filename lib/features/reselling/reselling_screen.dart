@@ -6,12 +6,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';                // ✅ go_router import
 import 'package:http/http.dart' as http;
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart'; // নতুন ইম্পোর্ট
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+
 import 'product_model.dart';
 import 'resell_bottom_sheet.dart';
 import 'product_details_page.dart';
 import 'add_product_bottom_sheet.dart';
+
+// ✅ MainWrapper এর প্রোভাইডার
+import '../../main.dart';
 
 // ==================== RIVERPOD PROVIDERS ====================
 
@@ -193,32 +198,14 @@ class _ResellingScreenState extends ConsumerState<ResellingScreen>
     );
   }
 
+  // ✅ আপডেটেড _goToDetails – এখন ডিটেইল ভিউতে যাবে
   void _goToDetails(ProductModel product) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProductDetailsPage(
-          productId: product.id,
-          onStartResell: (margin) {
-            final updated = ProductModel(
-              id: product.id,
-              title: product.title,
-              subtitle: product.subtitle,
-              image: product.image,
-              wholesalePrice: product.wholesalePrice,
-              originalPrice: product.originalPrice,
-              maxResalePrice: product.maxResalePrice,
-              category: product.category,
-              rating: product.rating,
-              isReselling: true,
-              myMargin: margin,
-              stock: product.stock,
-            );
-            ref.read(productListProvider.notifier).updateProduct(updated);
-          },
-        ),
-      ),
-    );
+    // ডিটেইল ভিউ প্রোভাইডার সেট
+    ref.read(isDetailViewProvider.notifier).state = true;
+    ref.read(detailViewTitleProvider.notifier).state = product.title;
+
+    // রাউট নেভিগেট (ড্রয়ারে দেখাবে)
+    context.push('/product/${product.id}');
   }
 
   @override
@@ -937,9 +924,9 @@ class _ResellProductCardState extends State<_ResellProductCard> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, // কন্টেন্ট অনুযায়ী হাইট
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // ইমেজ অংশ
+              // Product Image
               Stack(
                 children: [
                   ClipRRect(
@@ -1021,7 +1008,7 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                   ),
                 ],
               ),
-              // বডি কন্টেন্ট (কমপ্যাক্ট)
+              // Product Info
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                 child: Column(
@@ -1054,7 +1041,7 @@ class _ResellProductCardState extends State<_ResellProductCard> {
                       ),
                     ],
                     SizedBox(height: 6.h),
-                    // প্রাইস রো
+                    // Price Row
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
