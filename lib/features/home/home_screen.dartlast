@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/guards/verification_guard.dart'; 
 import '../../main.dart'; 
 
 // ==================== MODELS ====================
@@ -80,9 +79,7 @@ final servicesProvider = Provider<List<Service>>((ref) {
     Service(name: 'Easy Bus', icon: CupertinoIcons.bus, color: Color(0xFF2563EB), secondaryColor: Color(0xFF60A5FA), route: null, requiresVerification: false),
     Service(name: 'Courier', icon: CupertinoIcons.cube_box, color: Color(0xFFEA580C), secondaryColor: Color(0xFFFB923C), route: null, requiresVerification: false),
     Service(name: 'Agro', icon: CupertinoIcons.leaf_arrow_circlepath, color: Color(0xFF15803D), secondaryColor: Color(0xFF86EFAC), route: null, requiresVerification: false),
-    // UPDATED: Loan — hammer icon, isComingSoon = true
     Service(name: 'Loan', icon: Icons.hardware, color: Color(0xFF16A34A), secondaryColor: Color(0xFF4ADE80), route: null, requiresVerification: false, isComingSoon: true),
-    // UPDATED: Campaign — hammer icon, isComingSoon = true
     Service(name: 'Campaign', icon: Icons.hardware, color: Color(0xFF7C3AED), secondaryColor: Color(0xFFA78BFA), route: '/campaigns', requiresVerification: true, isComingSoon: true),
   ];
 });
@@ -342,7 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               icon: Icon(isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, size: isSmall ? 12.sp : 14.sp, color: HomeScreen.kPrimary),
               label: Text(isExpanded ? 'Less' : 'More', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 11.sp, fontWeight: FontWeight.w600, color: HomeScreen.kPrimary)),
             ),
- 	         ),
+          ),
       ],
     );
   }
@@ -387,7 +384,7 @@ class _ServiceCard extends ConsumerWidget {
   void _navigateToDetail(BuildContext context, WidgetRef ref) {
     ref.read(isDetailViewProvider.notifier).state = true;
     ref.read(detailViewTitleProvider.notifier).state = service.name;
-   context.push(service.route!);
+    context.push(service.route!);
   }
 
   void _onTap(BuildContext context, WidgetRef ref) {
@@ -402,11 +399,7 @@ class _ServiceCard extends ConsumerWidget {
       ));
       return;
     }
-    if (service.requiresVerification) {
-      VerificationGuard.check(context, amount: 199.00, purpose: 'Verification Fee', onVerified: () => _navigateToDetail(context, ref));
-    } else {
-      _navigateToDetail(context, ref);
-    }
+    _navigateToDetail(context, ref);
   }
 
   @override
@@ -414,7 +407,6 @@ class _ServiceCard extends ConsumerWidget {
     final iconSize = isSmall ? 20.sp : isDesktop ? 26.sp : 22.sp;
     final containerSize = isSmall ? 42.w : isDesktop ? 58.w : 48.w;
 
-    // ── COMING SOON label style ──
     final comingSoonFontSize = isSmall ? 7.5.sp : isDesktop ? 10.sp : 8.5.sp;
 
     return GestureDetector(
@@ -440,7 +432,6 @@ class _ServiceCard extends ConsumerWidget {
             children: [
               Flexible(
                 child: Text(
-                  // ── KEY CHANGE: show "Coming Soon" instead of service.name ──
                   service.isComingSoon ? 'Coming\nSoon' : service.name,
                   style: GoogleFonts.poppins(
                     fontSize: service.isComingSoon ? comingSoonFontSize : (isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp),

@@ -6,7 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../main.dart'; 
+import '../../main.dart';
+import 'reselling/reselling_screen.dart';
+import 'reselling/product_model.dart';
 
 // ==================== MODELS ====================
 
@@ -17,7 +19,7 @@ class Service {
   final Color secondaryColor;
   final String? route;
   final bool requiresVerification;
-  final bool isComingSoon; // NEW
+  final bool isComingSoon;
 
   const Service({
     required this.name,
@@ -26,23 +28,7 @@ class Service {
     required this.secondaryColor,
     this.route,
     this.requiresVerification = true,
-    this.isComingSoon = false, // NEW
-  });
-}
-
-class Product {
-  final String id;
-  final String name;
-  final double price;
-  final String imageUrl;
-  final String? discountPrice;
-
-  const Product({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.imageUrl,
-    this.discountPrice,
+    this.isComingSoon = false,
   });
 }
 
@@ -86,24 +72,11 @@ final servicesProvider = Provider<List<Service>>((ref) {
 
 final isExpandedProvider = StateProvider<bool>((ref) => false);
 
-final featuredProductsProvider = Provider<List<Product>>((ref) {
-  return const [
-    Product(id: '1', name: 'Earbuds Pro', price: 2499.00, imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400'),
-    Product(id: '2', name: 'Smart Watch', price: 8999.00, imageUrl: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400'),
-    Product(id: '3', name: 'Power Bank', price: 1899.00, imageUrl: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=400'),
-    Product(id: '4', name: 'Speaker', price: 3299.00, imageUrl: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400'),
-    Product(id: '5', name: 'Phone Case', price: 799.00, imageUrl: 'https://images.unsplash.com/photo-1603313011101-320f26a4f6f6?w=400'),
-    Product(id: '6', name: 'USB-C Cable', price: 499.00, imageUrl: 'https://images.unsplash.com/photo-1625153669422-6b3c9a3b7c9f?w=400'),
-    Product(id: '7', name: 'Charger Pad', price: 1599.00, imageUrl: 'https://images.unsplash.com/photo-1586816879360-004f5b0c51e3?w=400'),
-    Product(id: '8', name: 'Car Mount', price: 699.00, imageUrl: 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=400'),
-  ];
-});
-
 final bannerProvider = Provider<List<BannerItem>>((ref) {
   return const [
     BannerItem(id: '1', imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800', title: 'Mega Sale', subtitle: 'Up to 50% off', bgColor: Color(0xFF6366F1)),
     BannerItem(id: '2', imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800', title: 'New Arrivals', subtitle: 'Latest gadgets', bgColor: Color(0xFFEA580C)),
-    BannerItem(id: '3', imageUrl: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800', title: 'Free Delivery', subtitle: 'On orders over ?500', bgColor: Color(0xFF16A34A)),
+    BannerItem(id: '3', imageUrl: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800', title: 'Free Delivery', subtitle: 'On orders over ৳500', bgColor: Color(0xFF16A34A)),
   ];
 });
 
@@ -127,6 +100,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _bannerController = PageController();
     _startAutoSlide();
+
+    // API থেকে প্রোডাক্ট লোড করো
+    Future.microtask(() {
+      ref.read(productListProvider.notifier).fetchProducts();
+    });
   }
 
   @override
@@ -141,9 +119,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final banners = ref.read(bannerProvider);
       final currentIndex = ref.read(currentBannerIndexProvider);
       final nextIndex = (currentIndex + 1) % banners.length;
-      
+
       if (_bannerController.hasClients) {
-        _bannerController.animateToPage(nextIndex, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+        _bannerController.animateToPage(
+          nextIndex,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
       }
       ref.read(currentBannerIndexProvider.notifier).state = nextIndex;
       _startAutoSlide();
@@ -153,7 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final services = ref.watch(servicesProvider);
-    final products = ref.watch(featuredProductsProvider);
+    final products = ref.watch(productListProvider);
     final banners = ref.watch(bannerProvider);
     final currentBannerIndex = ref.watch(currentBannerIndexProvider);
     final screenWidth = MediaQuery.of(context).size.width;
@@ -188,19 +170,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildBannerSlider(context, banners, currentBannerIndex, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall),
+                      _buildBannerSlider(
+                        context,
+                        banners,
+                        currentBannerIndex,
+                        isDesktop: isDesktop,
+                        isTablet: isTablet,
+                        isSmall: isSmall,
+                      ),
                       SizedBox(height: isDesktop ? 24.h : 16.h),
-                      
-                      _buildSectionHeader(context, isDesktop, isSmall, kTextDark, kTextMid, title: 'Services', subtitle: 'All you need', showViewAll: true),
+
+                      _buildSectionHeader(
+                        context,
+                        isDesktop,
+                        isSmall,
+                        kTextDark,
+                        kTextMid,
+                        title: 'Services',
+                        subtitle: 'All you need',
+                        showViewAll: true,
+                      ),
                       SizedBox(height: isDesktop ? 20.h : 12.h),
-                      _buildCategoriesGrid(context, ref, services, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall, screenWidth: screenWidth, cardBackground: cardBackground, shadowColor: shadowColor, borderColor: borderColor, lockBgColor: lockBgColor, kTextDark: kTextDark),
-                      
+                      _buildCategoriesGrid(
+                        context,
+                        ref,
+                        services,
+                        isDesktop: isDesktop,
+                        isTablet: isTablet,
+                        isSmall: isSmall,
+                        screenWidth: screenWidth,
+                        cardBackground: cardBackground,
+                        shadowColor: shadowColor,
+                        borderColor: borderColor,
+                        lockBgColor: lockBgColor,
+                        kTextDark: kTextDark,
+                      ),
+
                       SizedBox(height: isDesktop ? 32.h : 20.h),
-                      
-                      _buildSectionHeader(context, isDesktop, isSmall, kTextDark, kTextMid, title: 'Products', subtitle: 'Trending now', showViewAll: true),
+
+                      _buildSectionHeader(
+                        context,
+                        isDesktop,
+                        isSmall,
+                        kTextDark,
+                        kTextMid,
+                        title: 'Products',
+                        subtitle: 'Trending now',
+                        showViewAll: true,
+                      ),
                       SizedBox(height: isDesktop ? 16.h : 10.h),
-                      _buildHorizontalProductList(context, products, isDesktop: isDesktop, isTablet: isTablet, isSmall: isSmall, cardBackground: cardBackground, shadowColor: shadowColor, kTextDark: kTextDark, kTextMid: kTextMid),
-                      
+                      _buildHorizontalProductList(
+                        context,
+                        ref,
+                        products,
+                        isDesktop: isDesktop,
+                        isTablet: isTablet,
+                        isSmall: isSmall,
+                        cardBackground: cardBackground,
+                        shadowColor: shadowColor,
+                        kTextDark: kTextDark,
+                        kTextMid: kTextMid,
+                      ),
+
                       SizedBox(height: 20.h),
                     ],
                   ),
@@ -213,12 +244,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildBannerSlider(BuildContext context, List<BannerItem> banners, int currentIndex, {required bool isDesktop, required bool isTablet, required bool isSmall}) {
+  // ==================== BANNER SLIDER ====================
+  Widget _buildBannerSlider(
+    BuildContext context,
+    List<BannerItem> banners,
+    int currentIndex, {
+    required bool isDesktop,
+    required bool isTablet,
+    required bool isSmall,
+  }) {
     final bannerHeight = isDesktop ? 180.h : isTablet ? 140.h : isSmall ? 100.h : 120.h;
 
     return Container(
       height: bannerHeight,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12.r), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 3))]),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 3)),
+        ],
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
         child: Stack(
@@ -234,16 +278,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(banner.imageUrl, fit: BoxFit.cover, loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Container(color: banner.bgColor, child: Center(child: CupertinoActivityIndicator(radius: 12.r))), errorBuilder: (context, error, stackTrace) => Container(color: banner.bgColor, child: Icon(CupertinoIcons.photo, size: 32.sp, color: Colors.white))),
-                      Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.5)]))),
+                      Image.network(
+                        banner.imageUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) => loadingProgress == null
+                            ? child
+                            : Container(
+                                color: banner.bgColor,
+                                child: Center(child: CupertinoActivityIndicator(radius: 12.r)),
+                              ),
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: banner.bgColor,
+                          child: Icon(CupertinoIcons.photo, size: 32.sp, color: Colors.white),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Colors.black.withOpacity(0.5)],
+                          ),
+                        ),
+                      ),
                       Positioned(
                         bottom: isSmall ? 8.h : 12.h,
                         left: isSmall ? 10.w : 14.w,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (banner.title != null) Text(banner.title!, style: GoogleFonts.poppins(fontSize: isSmall ? 14.sp : isTablet ? 16.sp : 18.sp, fontWeight: FontWeight.bold, color: Colors.white)),
-                            if (banner.subtitle != null) Text(banner.subtitle!, style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : isTablet ? 11.sp : 12.sp, color: Colors.white.withOpacity(0.9))),
+                            if (banner.title != null)
+                              Text(
+                                banner.title!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: isSmall ? 14.sp : isTablet ? 16.sp : 18.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            if (banner.subtitle != null)
+                              Text(
+                                banner.subtitle!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: isSmall ? 10.sp : isTablet ? 11.sp : 12.sp,
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -256,13 +336,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               bottom: isSmall ? 6.h : 8.h,
               right: isSmall ? 10.w : 14.w,
               child: Row(
-                children: List.generate(banners.length, (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: EdgeInsets.symmetric(horizontal: 3.w),
-                  width: currentIndex == index ? 16.w : 6.w,
-                  height: isSmall ? 5.h : 6.h,
-                  decoration: BoxDecoration(color: currentIndex == index ? Colors.white : Colors.white.withOpacity(0.5), borderRadius: BorderRadius.circular(3.r)),
-                )),
+                children: List.generate(
+                  banners.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: EdgeInsets.symmetric(horizontal: 3.w),
+                    width: currentIndex == index ? 16.w : 6.w,
+                    height: isSmall ? 5.h : 6.h,
+                    decoration: BoxDecoration(
+                      color: currentIndex == index ? Colors.white : Colors.white.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(3.r),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -271,7 +357,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).animate().fadeIn(duration: 500.ms);
   }
 
-  Widget _buildSectionHeader(BuildContext context, bool isDesktop, bool isSmall, Color kTextDark, Color kTextMid, {required String title, required String subtitle, bool showViewAll = false}) {
+  // ==================== SECTION HEADER ====================
+  Widget _buildSectionHeader(
+    BuildContext context,
+    bool isDesktop,
+    bool isSmall,
+    Color kTextDark,
+    Color kTextMid, {
+    required String title,
+    required String subtitle,
+    bool showViewAll = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -279,18 +375,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: GoogleFonts.poppins(fontSize: isSmall ? 14.sp : isDesktop ? 18.sp : 16.sp, fontWeight: FontWeight.bold, color: kTextDark)),
-            Text(subtitle, style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : isDesktop ? 12.sp : 11.sp, color: kTextMid)),
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: isSmall ? 14.sp : isDesktop ? 18.sp : 16.sp,
+                fontWeight: FontWeight.bold,
+                color: kTextDark,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: GoogleFonts.poppins(
+                fontSize: isSmall ? 10.sp : isDesktop ? 12.sp : 11.sp,
+                color: kTextMid,
+              ),
+            ),
           ],
         ),
         if (showViewAll)
           TextButton(
             onPressed: () {},
-            style: TextButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('See All', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 11.sp, color: HomeScreen.kPrimary, fontWeight: FontWeight.w600)),
+                Text(
+                  'See All',
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 10.sp : 11.sp,
+                    color: HomeScreen.kPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 SizedBox(width: 2.w),
                 Icon(CupertinoIcons.chevron_right, size: isSmall ? 10.sp : 12.sp, color: HomeScreen.kPrimary),
               ],
@@ -300,8 +420,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ).animate().fadeIn(duration: 400.ms);
   }
 
-  Widget _buildCategoriesGrid(BuildContext context, WidgetRef ref, List<Service> services, {required bool isDesktop, required bool isTablet, required bool isSmall, required double screenWidth, required Color cardBackground, required Color shadowColor, required Color borderColor, required Color lockBgColor, required Color kTextDark}) {
-    int crossAxisCount = isSmall ? 4 : (screenWidth >= 1200 ? 8 : (screenWidth >= 900 ? 6 : (screenWidth >= 600 ? 5 : 4)));
+  // ==================== CATEGORIES GRID ====================
+  Widget _buildCategoriesGrid(
+    BuildContext context,
+    WidgetRef ref,
+    List<Service> services, {
+    required bool isDesktop,
+    required bool isTablet,
+    required bool isSmall,
+    required double screenWidth,
+    required Color cardBackground,
+    required Color shadowColor,
+    required Color borderColor,
+    required Color lockBgColor,
+    required Color kTextDark,
+  }) {
+    int crossAxisCount = isSmall
+        ? 4
+        : (screenWidth >= 1200
+            ? 8
+            : (screenWidth >= 900
+                ? 6
+                : (screenWidth >= 600 ? 5 : 4)));
     final isExpanded = ref.watch(isExpandedProvider);
     final initialItemsCount = crossAxisCount * 2;
     final displayedServices = isExpanded ? services : services.take(initialItemsCount).toList();
@@ -328,7 +468,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               borderColor: borderColor,
               lockBgColor: lockBgColor,
               kTextDark: kTextDark,
-            ).animate().fade(duration: 300.ms, delay: (index * 30).ms).scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOut);
+            ).animate().fade(duration: 300.ms, delay: (index * 30).ms).scale(
+                  begin: const Offset(0.9, 0.9),
+                  curve: Curves.easeOut,
+                );
           },
         ),
         if (services.length > initialItemsCount)
@@ -336,15 +479,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: EdgeInsets.only(top: 8.h),
             child: TextButton.icon(
               onPressed: () => ref.read(isExpandedProvider.notifier).state = !isExpanded,
-              icon: Icon(isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, size: isSmall ? 12.sp : 14.sp, color: HomeScreen.kPrimary),
-              label: Text(isExpanded ? 'Less' : 'More', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 11.sp, fontWeight: FontWeight.w600, color: HomeScreen.kPrimary)),
+              icon: Icon(
+                isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                size: isSmall ? 12.sp : 14.sp,
+                color: HomeScreen.kPrimary,
+              ),
+              label: Text(
+                isExpanded ? 'Less' : 'More',
+                style: GoogleFonts.poppins(
+                  fontSize: isSmall ? 10.sp : 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: HomeScreen.kPrimary,
+                ),
+              ),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildHorizontalProductList(BuildContext context, List<Product> products, {required bool isDesktop, required bool isTablet, required bool isSmall, required Color cardBackground, required Color shadowColor, required Color kTextDark, required Color kTextMid}) {
+  // ==================== HORIZONTAL PRODUCT LIST ====================
+  Widget _buildHorizontalProductList(
+    BuildContext context,
+    WidgetRef ref,
+    List<ProductModel> products, {
+    required bool isDesktop,
+    required bool isTablet,
+    required bool isSmall,
+    required Color cardBackground,
+    required Color shadowColor,
+    required Color kTextDark,
+    required Color kTextMid,
+  }) {
+    // লোডিং স্টেট — প্রোডাক্ট এখনো আসেনি
+    if (products.isEmpty) {
+      return SizedBox(
+        height: isSmall ? 150.h : isTablet ? 170.h : 180.h,
+        child: const Center(child: CupertinoActivityIndicator()),
+      );
+    }
+
     return SizedBox(
       height: isSmall ? 150.h : isTablet ? 170.h : 180.h,
       child: ListView.builder(
@@ -361,6 +535,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             shadowColor: shadowColor,
             kTextDark: kTextDark,
             kTextMid: kTextMid,
+            onTap: () {
+              ref.read(isDetailViewProvider.notifier).state = true;
+              ref.read(detailViewTitleProvider.notifier).state = products[index].title;
+              context.push('/product/${products[index].id}');
+            },
           ).animate().fade(duration: 300.ms, delay: (index * 40).ms).slideX(begin: 10, curve: Curves.easeOut);
         },
       ),
@@ -379,7 +558,16 @@ class _ServiceCard extends ConsumerWidget {
   final Color lockBgColor;
   final Color kTextDark;
 
-  const _ServiceCard({required this.service, this.isDesktop = false, this.isSmall = false, required this.cardBackground, required this.shadowColor, required this.borderColor, required this.lockBgColor, required this.kTextDark});
+  const _ServiceCard({
+    required this.service,
+    this.isDesktop = false,
+    this.isSmall = false,
+    required this.cardBackground,
+    required this.shadowColor,
+    required this.borderColor,
+    required this.lockBgColor,
+    required this.kTextDark,
+  });
 
   void _navigateToDetail(BuildContext context, WidgetRef ref) {
     ref.read(isDetailViewProvider.notifier).state = true;
@@ -391,7 +579,10 @@ class _ServiceCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (service.route == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${service.name} coming soon!', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp)),
+        content: Text(
+          '${service.name} coming soon!',
+          style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp),
+        ),
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF0F172A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
@@ -406,7 +597,6 @@ class _ServiceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final iconSize = isSmall ? 20.sp : isDesktop ? 26.sp : 22.sp;
     final containerSize = isSmall ? 42.w : isDesktop ? 58.w : 48.w;
-
     final comingSoonFontSize = isSmall ? 7.5.sp : isDesktop ? 10.sp : 8.5.sp;
 
     return GestureDetector(
@@ -434,7 +624,9 @@ class _ServiceCard extends ConsumerWidget {
                 child: Text(
                   service.isComingSoon ? 'Coming\nSoon' : service.name,
                   style: GoogleFonts.poppins(
-                    fontSize: service.isComingSoon ? comingSoonFontSize : (isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp),
+                    fontSize: service.isComingSoon
+                        ? comingSoonFontSize
+                        : (isSmall ? 9.sp : isDesktop ? 11.sp : 10.sp),
                     fontWeight: FontWeight.w500,
                     color: service.isComingSoon ? Colors.grey : kTextDark,
                     height: 1.1,
@@ -454,15 +646,25 @@ class _ServiceCard extends ConsumerWidget {
 
 // ==================== PRODUCT CARD ====================
 class _ProductCard extends StatelessWidget {
-  final Product product;
+  final ProductModel product;
   final bool isDesktop;
   final bool isSmall;
   final Color cardBackground;
   final Color shadowColor;
   final Color kTextDark;
   final Color kTextMid;
+  final VoidCallback onTap;
 
-  const _ProductCard({required this.product, required this.isDesktop, this.isSmall = false, required this.cardBackground, required this.shadowColor, required this.kTextDark, required this.kTextMid});
+  const _ProductCard({
+    required this.product,
+    required this.isDesktop,
+    this.isSmall = false,
+    required this.cardBackground,
+    required this.shadowColor,
+    required this.kTextDark,
+    required this.kTextMid,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -471,22 +673,37 @@ class _ProductCard extends StatelessWidget {
     final imageSize = isSmall ? 85.w : isDesktop ? 110.w : 95.w;
 
     return GestureDetector(
-      onTap: () => debugPrint('Product: ${product.name}'),
+      onTap: onTap,
       child: Container(
         width: cardWidth,
         height: cardHeight,
         margin: EdgeInsets.only(right: isSmall ? 6.w : 8.w),
-        decoration: BoxDecoration(color: cardBackground, borderRadius: BorderRadius.circular(10.r), boxShadow: [BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2), spreadRadius: 0)]),
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(10.r),
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 6, offset: const Offset(0, 2), spreadRadius: 0),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(10.r)),
-              child: Container(
+              child: SizedBox(
                 width: cardWidth,
                 height: imageSize,
-                color: Colors.grey.shade100,
-                child: Image.network(product.imageUrl, fit: BoxFit.cover, loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Center(child: CupertinoActivityIndicator(radius: isSmall ? 10.r : 12.r)), errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey.shade200, child: Icon(CupertinoIcons.photo, size: isSmall ? 24.sp : 28.sp, color: Colors.grey.shade400))),
+                child: Image.network(
+                  product.image,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) => loadingProgress == null
+                      ? child
+                      : Center(child: CupertinoActivityIndicator(radius: isSmall ? 10.r : 12.r)),
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey.shade200,
+                    child: Icon(CupertinoIcons.photo, size: isSmall ? 24.sp : 28.sp, color: Colors.grey.shade400),
+                  ),
+                ),
               ),
             ),
             Expanded(
@@ -496,8 +713,25 @@ class _ProductCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(product.name, style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, fontWeight: FontWeight.w500, color: kTextDark, height: 1.2), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text('?${product.price.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF29B6F6))),
+                    Text(
+                      product.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: isSmall ? 9.sp : 10.sp,
+                        fontWeight: FontWeight.w500,
+                        color: kTextDark,
+                        height: 1.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '৳${product.wholesalePrice.toInt()}',
+                      style: GoogleFonts.poppins(
+                        fontSize: isSmall ? 11.sp : 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF29B6F6),
+                      ),
+                    ),
                   ],
                 ),
               ),
