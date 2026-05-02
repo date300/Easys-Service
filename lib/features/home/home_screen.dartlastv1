@@ -514,13 +514,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // লোডিং স্টেট — প্রোডাক্ট এখনো আসেনি
     if (products.isEmpty) {
       return SizedBox(
-        height: isSmall ? 175.h : isTablet ? 195.h : 205.h,
+        height: isSmall ? 150.h : isTablet ? 170.h : 180.h,
         child: const Center(child: CupertinoActivityIndicator()),
       );
     }
 
     return SizedBox(
-      height: isSmall ? 175.h : isTablet ? 195.h : 205.h,
+      height: isSmall ? 150.h : isTablet ? 170.h : 180.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -669,18 +669,14 @@ class _ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardWidth = isSmall ? 100.w : isDesktop ? 130.w : 115.w;
+    final cardHeight = isSmall ? 140.h : isDesktop ? 170.h : 160.h;
     final imageSize = isSmall ? 85.w : isDesktop ? 110.w : 95.w;
-
-    // ডিসকাউন্ট % হিসাব
-    final hasDiscount = product.originalPrice != null && product.originalPrice! > product.wholesalePrice;
-    final discountPercent = hasDiscount
-        ? (((product.originalPrice! - product.wholesalePrice) / product.originalPrice!) * 100).round()
-        : 0;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: cardWidth,
+        height: cardHeight,
         margin: EdgeInsets.only(right: isSmall ? 6.w : 8.w),
         decoration: BoxDecoration(
           color: cardBackground,
@@ -691,122 +687,53 @@ class _ProductCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            // ছবি + badge গুলো
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(10.r)),
-                  child: SizedBox(
-                    width: cardWidth,
-                    height: imageSize,
-                    child: Image.network(
-                      product.image,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) => loadingProgress == null
-                          ? child
-                          : Center(child: CupertinoActivityIndicator(radius: isSmall ? 10.r : 12.r)),
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey.shade200,
-                        child: Icon(CupertinoIcons.photo, size: isSmall ? 24.sp : 28.sp, color: Colors.grey.shade400),
-                      ),
-                    ),
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(10.r)),
+              child: SizedBox(
+                width: cardWidth,
+                height: imageSize,
+                child: Image.network(
+                  product.image,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) => loadingProgress == null
+                      ? child
+                      : Center(child: CupertinoActivityIndicator(radius: isSmall ? 10.r : 12.r)),
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey.shade200,
+                    child: Icon(CupertinoIcons.photo, size: isSmall ? 24.sp : 28.sp, color: Colors.grey.shade400),
                   ),
                 ),
-                // ডিসকাউন্ট badge
-                if (hasDiscount)
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF3B30),
-                        borderRadius: BorderRadius.circular(5.r),
-                      ),
-                      child: Text(
-                        '-$discountPercent%',
-                        style: GoogleFonts.poppins(
-                          fontSize: 8.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                // স্টার rating
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-                    decoration: BoxDecoration(
-                      color: cardBackground.withOpacity(0.92),
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(CupertinoIcons.star_fill, color: const Color(0xFFFFCC02), size: 9.sp),
-                        SizedBox(width: 2.w),
-                        Text(
-                          product.rating.toString(),
-                          style: GoogleFonts.poppins(
-                            fontSize: 8.sp,
-                            fontWeight: FontWeight.w700,
-                            color: kTextDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-
-            // প্রোডাক্ট info
-            Padding(
-              padding: EdgeInsets.all(isSmall ? 6.w : 8.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    product.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: isSmall ? 9.sp : 10.sp,
-                      fontWeight: FontWeight.w500,
-                      color: kTextDark,
-                      height: 1.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 4.h),
-                  // wholesale price
-                  Text(
-                    '৳${product.wholesalePrice.toInt()}',
-                    style: GoogleFonts.poppins(
-                      fontSize: isSmall ? 11.sp : 12.sp,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF29B6F6),
-                    ),
-                  ),
-                  // original price strikethrough
-                  if (hasDiscount) ...[
-                    SizedBox(height: 1.h),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(isSmall ? 6.w : 8.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                     Text(
-                      '৳${product.originalPrice!.toInt()}',
+                      product.title,
                       style: GoogleFonts.poppins(
-                        fontSize: 9.sp,
-                        fontWeight: FontWeight.w400,
-                        color: kTextMid,
-                        decoration: TextDecoration.lineThrough,
+                        fontSize: isSmall ? 9.sp : 10.sp,
+                        fontWeight: FontWeight.w500,
+                        color: kTextDark,
+                        height: 1.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '৳${product.wholesalePrice.toInt()}',
+                      style: GoogleFonts.poppins(
+                        fontSize: isSmall ? 11.sp : 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF29B6F6),
                       ),
                     ),
                   ],
-                ],
+                ),
               ),
             ),
           ],
