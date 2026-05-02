@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/vendor_apply/vendor_apply_page.dart';
-import '../features/royalty_salary/royalty_salary_page.dart';
+import '../features/royalty_salary/royalty_salary_page.dart'; // 👈 নতুন
 import '../screens/splash/splash_screen.dart';
 import '../features/recharge/recharge_screen.dart';
 import '../features/drive/drive_screen.dart';
@@ -20,7 +20,6 @@ import '../main.dart';
 import '../features/voucher_balance/voucher_balance_page.dart';
 import '../features/reselling/product_details_page.dart';
 import '../features/referral/referral_page.dart';
-import '../features/matrix/matrix_income.dart'; // 👈 Matrix Income page
 
 // ==================== HELPERS ====================
 
@@ -100,6 +99,7 @@ final GoRouter appRouter = GoRouter(
           path: '/vendor-apply',
           builder: (context, state) => const VendorApplyPage(),
         ),
+        // 👇 Royalty Salary — নতুন route
         _detailRoute(
           path: '/royalty-salary',
           builder: (context, state) => const RoyaltySalaryPage(),
@@ -112,15 +112,11 @@ final GoRouter appRouter = GoRouter(
           path: '/voucher-balance',
           builder: (context, state) => const VoucherBalancePage(),
         ),
-        _detailRoute(
-          path: '/referral',
-          builder: (context, state) => const ReferralPage(),
-        ),
-        // 👇 Matrix Income — নতুন route
-        _detailRoute(
-          path: '/matrix-income',
-          builder: (context, state) => const MatrixIncomePage(),
-        ),
+_detailRoute(
+  path: '/referral',
+  builder: (context, state) => const ReferralPage(),
+),
+
         _detailRoute(
           path: '/product/:id',
           builder: (context, state) => ProductDetailsPage(
