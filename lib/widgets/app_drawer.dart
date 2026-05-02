@@ -143,7 +143,7 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 2. Vendor Apply  ← NEW
+                  // 2. Vendor Apply
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -176,7 +176,23 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 4. Leaderboard
+                  // 4. My Referrals 👈 নতুন যোগ করা
+                  if (isLoggedIn)
+                    _drawerItem(
+                      context,
+                      Icons.group_add_rounded,
+                      "My Referrals",
+                      iconColor: Colors.purple,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      splashColor: splashColor,
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.go('/referral');
+                      },
+                    ),
+
+                  // 5. Leaderboard
                   _drawerItem(
                     context,
                     Icons.emoji_events_rounded,
@@ -196,7 +212,7 @@ class AppDrawer extends ConsumerWidget {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 5. Support Center
+                  // 6. Support Center
                   _drawerItem(
                     context,
                     Icons.support_agent_rounded,
@@ -210,7 +226,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 6. Facebook
+                  // 7. Facebook
                   _drawerItem(
                     context,
                     Icons.facebook_rounded,
@@ -225,7 +241,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 7. YouTube
+                  // 8. YouTube
                   _drawerItem(
                     context,
                     Icons.smart_display_rounded,
@@ -240,7 +256,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 8. Telegram
+                  // 9. Telegram
                   _drawerItem(
                     context,
                     Icons.telegram_rounded,
@@ -255,7 +271,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 9. Website
+                  // 10. Website
                   _drawerItem(
                     context,
                     Icons.language_rounded,
@@ -275,7 +291,7 @@ class AppDrawer extends ConsumerWidget {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 10. Privacy Policy
+                  // 11. Privacy Policy
                   _drawerItem(
                     context,
                     Icons.privacy_tip_rounded,
@@ -289,7 +305,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 11. Terms & Conditions
+                  // 12. Terms & Conditions
                   _drawerItem(
                     context,
                     Icons.description_rounded,
@@ -303,7 +319,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 12. About Us
+                  // 13. About Us
                   _drawerItem(
                     context,
                     Icons.info_rounded,

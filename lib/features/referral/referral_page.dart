@@ -1,14 +1,142 @@
-// pages/referral_page.dart
+// lib/features/referral/referral_page.dart
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:share_plus/share_plus.dart'; // pubspec.yaml-এ যোগ করুন
-import '../models/referral.dart';
-import '../services/referral_api_service.dart';
+import 'package:share_plus/share_plus.dart';
+
+// ==========================================
+// 1. Data Models
+// ==========================================
+
+class ReferralUser {
+  final int id;
+  final String fullName;
+  final String mobile;
+  final String email;
+  final bool isActive;
+  final String idVerified;
+  final DateTime createdAt;
+
+  ReferralUser({
+    required this.id,
+    required this.fullName,
+    required this.mobile,
+    required this.email,
+    required this.isActive,
+    required this.idVerified,
+    required this.createdAt,
+  });
+
+  factory ReferralUser.fromJson(Map<String, dynamic> json) {
+    return ReferralUser(
+      id: json['id'],
+      fullName: json['full_name'] ?? '',
+      mobile: json['mobile'] ?? '',
+      email: json['email'] ?? '',
+      isActive: json['is_active'] == 1 || json['is_active'] == true,
+      idVerified: json['id_verified'] ?? 'unverified',
+      createdAt: DateTime.parse(json['created_at']),
+    );
+  }
+}
+
+class UserProfile {
+  final int id;
+  final String fullName;
+  final String referralCode;
+  final String mobile;
+  final String email;
+
+  UserProfile({
+    required this.id,
+    required this.fullName,
+    required this.referralCode,
+    required this.mobile,
+    required this.email,
+  });
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      id: json['id'],
+      fullName: json['full_name'] ?? '',
+      referralCode: json['referral_code'] ?? '',
+      mobile: json['mobile'] ?? '',
+      email: json['email'] ?? '',
+    );
+  }
+}
+
+// ==========================================
+// 2. API Service
+// ==========================================
+
+class ReferralApiService {
+  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+
+  static Future<List<ReferralUser>> fetchReferrals(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/user/referrals'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['status'] == 'success' && json['data'] != null) {
+        return (json['data'] as List).map((e) => ReferralUser.fromJson(e)).toList();
+      }
+      return [];
+    } else if (response.statusCode == 401) {
+      throw Exception('Session expired. Please login again.');
+    } else {
+      throw Exception('Server error: ${response.statusCode}');
+    }
+  }
+
+  static Future<UserProfile> fetchProfile(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/user/profile'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['status'] == 'success' && json['data'] != null) {
+        final data = json['data'];
+        if (data is Map<String, dynamic>) {
+          // যদি রেসপন্সে সরাসরি ইউজার প্রোফাইলের ফিল্ড থাকে
+          if (data.containsKey('referral_code')) {
+            return UserProfile.fromJson(data);
+          }
+          // যদি data.user এর ভিতর থাকে
+          if (data['user'] != null && data['user'] is Map<String, dynamic>) {
+            return UserProfile.fromJson(data['user']);
+          }
+        }
+      }
+      throw Exception('Invalid profile data');
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized. Please login again.');
+    } else {
+      throw Exception('Server error: ${response.statusCode}');
+    }
+  }
+}
+
+// ==========================================
+// 3. ReferralPage
+// ==========================================
 
 class ReferralPage extends StatefulWidget {
   const ReferralPage({super.key});
@@ -20,12 +148,10 @@ class ReferralPage extends StatefulWidget {
 class _ReferralPageState extends State<ReferralPage> {
   static const Color primaryColor = Color(0xFF7C3AED); // বেগুনি টোন
 
-  // প্রোফাইল ডেটা
   UserProfile? _profile;
   bool _isLoadingProfile = true;
   String? _profileError;
 
-  // রেফারেল তালিকা
   List<ReferralUser> _referrals = [];
   bool _isLoadingReferrals = true;
   String? _referralError;
@@ -103,7 +229,7 @@ class _ReferralPageState extends State<ReferralPage> {
     HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Referral code copied!'),
+        content: const Text('Referral code copied!'),
         backgroundColor: primaryColor,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
