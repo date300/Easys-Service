@@ -18,6 +18,7 @@ import '../modules/notifications/notification_screen.dart';
 import '../main.dart';
 import '../features/voucher_balance/voucher_balance_page.dart';
 import '../features/reselling/product_details_page.dart';
+import '../features/royalty_salary/royalty_salary_page.dart';
 
 // ==================== HELPERS ====================
 
@@ -104,6 +105,12 @@ final GoRouter appRouter = GoRouter(
         _detailRoute(
           path: '/voucher-balance',
           builder: (context, state) => const VoucherBalancePage(),
+        ),
+        _detailRoute(
+  path: '/royalty-salary',
+  builder: (context, state) => const RoyaltySalaryPage(),
+),
+
         ),
         _detailRoute(
           path: '/product/:id',
