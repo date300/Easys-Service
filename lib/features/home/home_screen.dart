@@ -7,8 +7,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../main.dart';
-import 'reselling/reselling_screen.dart';
-import 'reselling/product_model.dart';
+import '../reselling/reselling_screen.dart';
+import '../reselling/product_model.dart';
 
 // ==================== MODELS ====================
 
