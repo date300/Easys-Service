@@ -125,12 +125,17 @@ class ProfileScreen extends ConsumerWidget {
                   ),
 
                   _buildProfileItem(
-                    context,
-                    Icons.account_balance_wallet_rounded,
-                    "My Wallet",
-                    isDark: isDark,
-                    onTap: () {},
-                  ),
+  context,
+  Icons.account_balance_wallet_rounded,
+  "My Wallet",
+  isDark: isDark,
+  onTap: () {
+    HapticFeedback.lightImpact();
+    ref.read(isDetailViewProvider.notifier).state = true;
+    ref.read(detailViewTitleProvider.notifier).state = 'My Wallet';
+    context.push('/wallet');
+  },
+),
 
                   _buildProfileItem(
                     context,
