@@ -21,6 +21,7 @@ import '../features/voucher_balance/voucher_balance_page.dart';
 import '../features/reselling/product_details_page.dart';
 import '../features/referral/referral_page.dart';
 import '../features/matrix/matrix_income.dart'; // 👈 Matrix Income page
+import '../features/wallet/wallet_page.dart';
 
 // ==================== HELPERS ====================
 
@@ -60,6 +61,10 @@ final GoRouter appRouter = GoRouter(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
+_detailRoute(
+  path: '/wallet',
+  builder: (context, state) => const WalletPage(),
+),
     GoRoute(
       path: '/notifications',
       builder: (context, state) => const NotificationScreen(),
