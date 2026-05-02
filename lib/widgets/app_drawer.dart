@@ -176,7 +176,7 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 4. My Referrals 👈 নতুন যোগ করা
+                  // 4. My Referrals
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -192,7 +192,23 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 5. Leaderboard
+                  // 5. Matrix Income 👈 নতুন যোগ করা
+                  if (isLoggedIn)
+                    _drawerItem(
+                      context,
+                      Icons.account_tree_rounded,
+                      "Matrix Income",
+                      iconColor: Colors.teal,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      splashColor: splashColor,
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.go('/matrix-income');
+                      },
+                    ),
+
+                  // 6. Leaderboard
                   _drawerItem(
                     context,
                     Icons.emoji_events_rounded,
@@ -212,7 +228,7 @@ class AppDrawer extends ConsumerWidget {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 6. Support Center
+                  // 7. Support Center
                   _drawerItem(
                     context,
                     Icons.support_agent_rounded,
@@ -226,7 +242,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 7. Facebook
+                  // 8. Facebook
                   _drawerItem(
                     context,
                     Icons.facebook_rounded,
@@ -241,7 +257,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 8. YouTube
+                  // 9. YouTube
                   _drawerItem(
                     context,
                     Icons.smart_display_rounded,
@@ -256,7 +272,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 9. Telegram
+                  // 10. Telegram
                   _drawerItem(
                     context,
                     Icons.telegram_rounded,
@@ -271,7 +287,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 10. Website
+                  // 11. Website
                   _drawerItem(
                     context,
                     Icons.language_rounded,
@@ -291,7 +307,7 @@ class AppDrawer extends ConsumerWidget {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 11. Privacy Policy
+                  // 12. Privacy Policy
                   _drawerItem(
                     context,
                     Icons.privacy_tip_rounded,
@@ -305,7 +321,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 12. Terms & Conditions
+                  // 13. Terms & Conditions
                   _drawerItem(
                     context,
                     Icons.description_rounded,
@@ -319,7 +335,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 13. About Us
+                  // 14. About Us
                   _drawerItem(
                     context,
                     Icons.info_rounded,
