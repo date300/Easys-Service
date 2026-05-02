@@ -8,7 +8,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:share_plus/share_plus.dart';
 
 // ==========================================
 // 1. Data Models
@@ -115,11 +114,9 @@ class ReferralApiService {
       if (json['status'] == 'success' && json['data'] != null) {
         final data = json['data'];
         if (data is Map<String, dynamic>) {
-          // যদি রেসপন্সে সরাসরি ইউজার প্রোফাইলের ফিল্ড থাকে
           if (data.containsKey('referral_code')) {
             return UserProfile.fromJson(data);
           }
-          // যদি data.user এর ভিতর থাকে
           if (data['user'] != null && data['user'] is Map<String, dynamic>) {
             return UserProfile.fromJson(data['user']);
           }
@@ -146,7 +143,7 @@ class ReferralPage extends StatefulWidget {
 }
 
 class _ReferralPageState extends State<ReferralPage> {
-  static const Color primaryColor = Color(0xFF7C3AED); // বেগুনি টোন
+  static const Color primaryColor = Color(0xFF7C3AED);
 
   UserProfile? _profile;
   bool _isLoadingProfile = true;
@@ -237,13 +234,19 @@ class _ReferralPageState extends State<ReferralPage> {
     );
   }
 
-  void _shareReferralLink() {
+  void _copyReferralLink() {
     if (_profile == null) return;
     final code = _profile!.referralCode;
     final link = 'https://easy.ltcminematrix.com/register?ref=$code';
-    Share.share(
-      'Join Easy Service and earn rewards!\nUse my referral code: $code\n$link',
-      subject: 'Invitation to Easy Service',
+    Clipboard.setData(ClipboardData(text: link));
+    HapticFeedback.mediumImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Referral link copied!'),
+        backgroundColor: primaryColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -283,15 +286,11 @@ class _ReferralPageState extends State<ReferralPage> {
             children: [
               _buildHeader(textColor, subTextColor, isSmall, isDesktop),
               SizedBox(height: 14.h),
-
-              // রেফারেল কোড কার্ড (গ্রেডিয়েন্ট)
               _buildReferralCodeCard(isSmall)
                   .animate()
                   .fadeIn(delay: 80.ms)
                   .slideY(begin: 0.03),
               SizedBox(height: 10.h),
-
-              // স্ট্যাট কার্ড (টোটাল ও অ্যাক্টিভ)
               Row(
                 children: [
                   Expanded(
@@ -320,13 +319,9 @@ class _ReferralPageState extends State<ReferralPage> {
                 ],
               ),
               SizedBox(height: 10.h),
-
-              // শেয়ার বাটন
-              _buildShareButton(isSmall, cardColor, shadowColor, borderColor, textColor)
+              _buildCopyLinkButton(isSmall, cardColor, shadowColor, borderColor, textColor)
                   .animate().fadeIn(delay: 160.ms).slideY(begin: 0.03),
               SizedBox(height: 20.h),
-
-              // রেফারেল তালিকা
               _buildReferralListHeader(textColor, isSmall),
               SizedBox(height: 6.h),
               if (_isLoadingReferrals)
@@ -392,7 +387,6 @@ class _ReferralPageState extends State<ReferralPage> {
     ).animate().fadeIn(delay: 40.ms);
   }
 
-  // ==================== REFERRAL CODE CARD ====================
   Widget _buildReferralCodeCard(bool isSmall) {
     final code = _profile?.referralCode ?? '--------';
     return Container(
@@ -487,10 +481,9 @@ class _ReferralPageState extends State<ReferralPage> {
     );
   }
 
-  // ==================== SHARE BUTTON ====================
-  Widget _buildShareButton(bool isSmall, Color cardColor, Color shadowColor, Color borderColor, Color textColor) {
+  Widget _buildCopyLinkButton(bool isSmall, Color cardColor, Color shadowColor, Color borderColor, Color textColor) {
     return GestureDetector(
-      onTap: _shareReferralLink,
+      onTap: _copyReferralLink,
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.symmetric(horizontal: isSmall ? 14.w : 16.w, vertical: isSmall ? 12.h : 14.h),
@@ -503,10 +496,10 @@ class _ReferralPageState extends State<ReferralPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.share, color: primaryColor, size: isSmall ? 18.sp : 20.sp),
+            Icon(CupertinoIcons.link, color: primaryColor, size: isSmall ? 18.sp : 20.sp),
             SizedBox(width: 8.w),
             Text(
-              'Share Invite Link',
+              'Copy Referral Link',
               style: GoogleFonts.poppins(
                 fontSize: isSmall ? 13.sp : 14.sp,
                 fontWeight: FontWeight.w600,
@@ -519,7 +512,6 @@ class _ReferralPageState extends State<ReferralPage> {
     );
   }
 
-  // ==================== REFERRAL LIST HEADER ====================
   Widget _buildReferralListHeader(Color textColor, bool isSmall) {
     return Padding(
       padding: EdgeInsets.only(left: 4.w, bottom: 4.h),
@@ -534,7 +526,6 @@ class _ReferralPageState extends State<ReferralPage> {
     );
   }
 
-  // ==================== REFERRAL TILE ====================
   Widget _buildReferralTile(ReferralUser ref, bool isSmall, Color cardColor, Color shadowColor, Color borderColor, Color textColor, Color subTextColor) {
     final isVerified = ref.idVerified == 'verified';
     return Container(
@@ -614,7 +605,6 @@ class _ReferralPageState extends State<ReferralPage> {
     );
   }
 
-  // ==================== STAT CARD ====================
   Widget _buildStatCard({
     required IconData icon,
     required Color iconColor,
@@ -666,7 +656,6 @@ class _ReferralPageState extends State<ReferralPage> {
     );
   }
 
-  // ==================== SHIMMER & ERROR ====================
   Widget _buildShimmerListItem(bool isSmall, Color cardColor) {
     return Container(
       height: 60.h,
