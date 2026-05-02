@@ -19,6 +19,7 @@ import '../modules/notifications/notification_screen.dart';
 import '../main.dart';
 import '../features/voucher_balance/voucher_balance_page.dart';
 import '../features/reselling/product_details_page.dart';
+import '../features/referral/referral_page.dart';
 
 // ==================== HELPERS ====================
 
@@ -111,6 +112,11 @@ final GoRouter appRouter = GoRouter(
           path: '/voucher-balance',
           builder: (context, state) => const VoucherBalancePage(),
         ),
+_detailRoute(
+  path: '/referral',
+  builder: (context, state) => const ReferralPage(),
+),
+
         _detailRoute(
           path: '/product/:id',
           builder: (context, state) => ProductDetailsPage(
