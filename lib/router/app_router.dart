@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/vendor_apply/vendor_apply_page.dart';
+import '../features/royalty_salary/royalty_salary_page.dart'; // 👈 নতুন
 import '../screens/splash/splash_screen.dart';
 import '../features/recharge/recharge_screen.dart';
 import '../features/drive/drive_screen.dart';
@@ -18,7 +19,6 @@ import '../modules/notifications/notification_screen.dart';
 import '../main.dart';
 import '../features/voucher_balance/voucher_balance_page.dart';
 import '../features/reselling/product_details_page.dart';
-import '../features/royalty_salary/royalty_salary_page.dart';
 
 // ==================== HELPERS ====================
 
@@ -98,6 +98,11 @@ final GoRouter appRouter = GoRouter(
           path: '/vendor-apply',
           builder: (context, state) => const VendorApplyPage(),
         ),
+        // 👇 Royalty Salary — নতুন route
+        _detailRoute(
+          path: '/royalty-salary',
+          builder: (context, state) => const RoyaltySalaryPage(),
+        ),
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
@@ -105,12 +110,6 @@ final GoRouter appRouter = GoRouter(
         _detailRoute(
           path: '/voucher-balance',
           builder: (context, state) => const VoucherBalancePage(),
-        ),
-        _detailRoute(
-  path: '/royalty-salary',
-  builder: (context, state) => const RoyaltySalaryPage(),
-),
-
         ),
         _detailRoute(
           path: '/product/:id',
@@ -152,4 +151,3 @@ final GoRouter appRouter = GoRouter(
     return null;
   },
 );
-

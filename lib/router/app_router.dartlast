@@ -1,8 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
+import '../features/vendor_apply/vendor_apply_page.dart';
 import '../screens/splash/splash_screen.dart';
 import '../features/recharge/recharge_screen.dart';
 import '../features/drive/drive_screen.dart';
@@ -11,41 +10,59 @@ import '../features/reselling/reselling_screen.dart';
 import '../features/microjobs/microjobs_screen.dart';
 import '../features/campaigns/campaigns_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/profile/edit_profile/edit_profile_screen.dart';
 import '../features/auth/registration_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
-import '../modules/notifications/notification_screen.dart'; // ← নতুন ইমপোর্ট
+import '../modules/notifications/notification_screen.dart';
 import '../main.dart';
+import '../features/voucher_balance/voucher_balance_page.dart';
+import '../features/reselling/product_details_page.dart';
+import '../features/royalty_salary/royalty_salary_page.dart';
+
+// ==================== HELPERS ====================
+
+Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
+  final container = ProviderScope.containerOf(context);
+  container.read(isDetailViewProvider.notifier).state = false;
+  container.read(detailViewTitleProvider.notifier).state = '';
+  return true;
+}
+
+GoRoute _detailRoute({
+  required String path,
+  required Widget Function(BuildContext, GoRouterState) builder,
+}) {
+  return GoRoute(
+    path: path,
+    onExit: _resetDetailProviders,
+    builder: builder,
+  );
+}
+
+// ==================== ROUTER ====================
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
 
   routes: [
-    // Splash
     GoRoute(
       path: '/splash',
       builder: (context, state) => const SplashScreen(),
     ),
-
-    // Registration
     GoRoute(
       path: '/registration',
       builder: (context, state) => const RegistrationScreen(),
     ),
-
-    // Login
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
-
-    // 🔥 NOTIFICATION — ShellRoute-এর বাইরে (Full Screen)
     GoRoute(
       path: '/notifications',
       builder: (context, state) => const NotificationScreen(),
     ),
 
-    // ShellRoute — Bottom Nav + AppTopBar সহ
     ShellRoute(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
@@ -53,36 +70,60 @@ final GoRouter appRouter = GoRouter(
           path: '/home',
           builder: (context, state) => const HomeScreen(),
         ),
-        GoRoute(
+        _detailRoute(
           path: '/drive',
           builder: (context, state) => const DriveScreen(),
         ),
-        GoRoute(
+        _detailRoute(
           path: '/reselling',
           builder: (context, state) => const ResellingScreen(),
         ),
-        GoRoute(
+        _detailRoute(
           path: '/microjobs',
           builder: (context, state) => const MicrojobsScreen(),
         ),
-        GoRoute(
+        _detailRoute(
           path: '/campaigns',
           builder: (context, state) => const CampaignsScreen(),
+        ),
+        _detailRoute(
+          path: '/recharge',
+          builder: (context, state) => const RechargeScreen(),
+        ),
+        _detailRoute(
+          path: '/edit-profile',
+          builder: (context, state) => const EditProfileScreen(),
+        ),
+        _detailRoute(
+          path: '/vendor-apply',
+          builder: (context, state) => const VendorApplyPage(),
         ),
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
-        GoRoute(
-          path: '/recharge',
-          builder: (context, state) => const RechargeScreen(),
+        _detailRoute(
+          path: '/voucher-balance',
+          builder: (context, state) => const VoucherBalancePage(),
+        ),
+        _detailRoute(
+  path: '/royalty-salary',
+  builder: (context, state) => const RoyaltySalaryPage(),
+),
+
+        ),
+        _detailRoute(
+          path: '/product/:id',
+          builder: (context, state) => ProductDetailsPage(
+            productId: state.pathParameters['id']!,
+          ),
         ),
         GoRoute(
           path: '/payment',
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
             return PaymentGatewayScreen(
-              amount: extra?['amount'] ?? 199.00,
+              amount: extra?['amount'] ?? 300.00,
               purpose: extra?['purpose'] ?? 'Account Verification Fee',
               onPaymentSuccess: extra?['onSuccess'],
             );
@@ -92,7 +133,6 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 
-  // Redirect logic
   redirect: (context, state) async {
     final ref = ProviderScope.containerOf(context);
     await ref.read(authLoadingProvider.future);
@@ -102,20 +142,14 @@ final GoRouter appRouter = GoRouter(
     final isSplash = loc == '/splash';
     final isRegister = loc == '/registration';
     final isLogin = loc == '/login';
-    final isNotification = loc == '/notifications'; // ← নতুন চেক
+    final isNotification = loc == '/notifications';
 
-    // Splash এ থাকলে redirect নেই
     if (isSplash) return null;
-
-    // 🔥 NOTIFICATION: Login না থাকলে login এ পাঠাও
     if (!isLoggedIn && isNotification) return '/login';
-
-    // Login নেই + auth page এও নেই → login এ পাঠাও
     if (!isLoggedIn && !isRegister && !isLogin && !isNotification) return '/login';
-
-    // Login আছে + auth page এ যাওয়ার চেষ্টা → home এ পাঠাও
     if (isLoggedIn && (isLogin || isRegister)) return '/home';
 
     return null;
   },
 );
+
