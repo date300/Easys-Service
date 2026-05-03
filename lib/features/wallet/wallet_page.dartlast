@@ -7,9 +7,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../../main.dart'; // isDetailViewProvider, detailViewTitleProvider এখানে আছে ধরে নিচ্ছি
 
 // ==========================================
 // 1. Models
@@ -84,16 +81,16 @@ class WalletApiService {
 }
 
 // ==========================================
-// 3. Wallet Page (ConsumerStatefulWidget)
+// 3. Wallet Page
 // ==========================================
 
-class WalletPage extends ConsumerStatefulWidget {
+class WalletPage extends StatefulWidget {
   const WalletPage({super.key});
   @override
-  ConsumerState<WalletPage> createState() => _WalletPageState();
+  State<WalletPage> createState() => _WalletPageState();
 }
 
-class _WalletPageState extends ConsumerState<WalletPage> {
+class _WalletPageState extends State<WalletPage> {
   static const Color accentColor = Color(0xFF10B981);
 
   WalletBalance? _balance;
@@ -192,116 +189,56 @@ class _WalletPageState extends ConsumerState<WalletPage> {
     final isSmall = screenWidth < 360;
     final hPadding = isDesktop ? 32.w : isTablet ? 20.w : isSmall ? 12.w : 16.w;
 
-    // ---------- ডিটেইল ভিউ প্রোভাইডার ----------
-    final isDetailView = ref.watch(isDetailViewProvider);
-    final detailTitle = ref.watch(detailViewTitleProvider);
-
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            // ডিটেইল ভিউ হেডার
-            if (isDetailView)
-              _buildDetailHeader(isDark, detailTitle, isSmall, isDesktop),
-            // মূল কন্টেন্ট
-            Expanded(
-              child: RefreshIndicator(
-                color: accentColor,
-                backgroundColor: cardColor,
-                onRefresh: () async {
-                  HapticFeedback.mediumImpact();
-                  await _fetchBalance();
-                  await _fetchHistory(reset: true);
-                },
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (scroll) {
-                    if (scroll is ScrollEndNotification && scroll.metrics.pixels >= scroll.metrics.maxScrollExtent - 50) {
-                      _fetchHistory();
-                    }
-                    return false;
-                  },
-                  child: ListView(
-                    padding: EdgeInsets.fromLTRB(hPadding, isDetailView ? 0.h : 8.h, hPadding, 40.h),
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      if (!isDetailView) _buildHeader(textColor, subTextColor, isSmall, isDesktop),
-                      if (!isDetailView) SizedBox(height: 14.h),
-                      _buildBalanceCard(isSmall)
-                          .animate().fadeIn(delay: 80.ms).slideY(begin: 0.03),
-                      SizedBox(height: 20.h),
-                      _buildFilterChips(isSmall, cardColor, textColor, subTextColor, borderColor)
-                          .animate().fadeIn(delay: 120.ms).slideY(begin: 0.03),
-                      SizedBox(height: 10.h),
-                      if (_isLoadingHistory && _records.isEmpty)
-                        ...List.generate(4, (_) => _buildShimmerItem(isSmall, cardColor))
-                      else if (_historyError != null && _records.isEmpty)
-                        _buildErrorCard(_historyError!, () => _fetchHistory(reset: true), isSmall, cardColor, textColor)
-                      else if (_records.isEmpty)
-                        _buildEmptyCard('No income records yet', isSmall, cardColor, shadowColor, borderColor, textColor, subTextColor)
-                      else ...
-                        _records.map((r) => _buildIncomeTile(r, isSmall, cardColor, shadowColor, borderColor, textColor, subTextColor)).toList(),
-                      if (_isLoadingHistory && _records.isNotEmpty)
-                        Padding(padding: EdgeInsets.symmetric(vertical: 10.h), child: const CupertinoActivityIndicator()),
-                    ],
-                  ),
-                ),
-              ),
+        child: RefreshIndicator(
+          color: accentColor,
+          backgroundColor: cardColor,
+          onRefresh: () async {
+            HapticFeedback.mediumImpact();
+            await _fetchBalance();
+            await _fetchHistory(reset: true);
+          },
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (scroll) {
+              if (scroll is ScrollEndNotification && scroll.metrics.pixels >= scroll.metrics.maxScrollExtent - 50) {
+                _fetchHistory();
+              }
+              return false;
+            },
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(hPadding, 8.h, hPadding, 40.h),
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _buildHeader(textColor, subTextColor, isSmall, isDesktop),
+                SizedBox(height: 14.h),
+                _buildBalanceCard(isSmall)
+                    .animate().fadeIn(delay: 80.ms).slideY(begin: 0.03),
+                SizedBox(height: 20.h),
+                _buildFilterChips(isSmall, cardColor, textColor, subTextColor, borderColor)
+                    .animate().fadeIn(delay: 120.ms).slideY(begin: 0.03),
+                SizedBox(height: 10.h),
+                if (_isLoadingHistory && _records.isEmpty)
+                  ...List.generate(4, (_) => _buildShimmerItem(isSmall, cardColor))
+                else if (_historyError != null && _records.isEmpty)
+                  _buildErrorCard(_historyError!, () => _fetchHistory(reset: true), isSmall, cardColor, textColor)
+                else if (_records.isEmpty)
+                  _buildEmptyCard('No income records yet', isSmall, cardColor, shadowColor, borderColor, textColor, subTextColor)
+                else ...
+                  _records.map((r) => _buildIncomeTile(r, isSmall, cardColor, shadowColor, borderColor, textColor, subTextColor)).toList(),
+                if (_isLoadingHistory && _records.isNotEmpty)
+                  Padding(padding: EdgeInsets.symmetric(vertical: 10.h), child: const CupertinoActivityIndicator()),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  // ==================== ডিটেইল ভিউ হেডার ====================
-  Widget _buildDetailHeader(bool isDark, String title, bool isSmall, bool isDesktop) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-        border: Border(bottom: BorderSide(color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA))),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              if (context.canPop()) {
-                context.pop();
-              }
-            },
-            child: Container(
-              padding: EdgeInsets.all(4.w),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Icon(
-                CupertinoIcons.chevron_left,
-                size: isSmall ? 20.sp : 24.sp,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: isSmall ? 18.sp : isDesktop ? 22.sp : 20.sp,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ==================== সাধারণ হেডার (নন-ডিটেইল ভিউ) ====================
+  // ==================== HEADER ====================
   Widget _buildHeader(Color textColor, Color subTextColor, bool isSmall, bool isDesktop) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
