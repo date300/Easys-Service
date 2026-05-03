@@ -14,11 +14,13 @@ class UserProfile {
   final String fullName;
   final String referralCode;
   final String? profilePicture;
+  final String idVerified; // নতুন
 
   UserProfile({
     required this.fullName,
     required this.referralCode,
     this.profilePicture,
+    required this.idVerified,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class UserProfile {
       fullName: json['full_name'] ?? 'Guest User',
       referralCode: json['referral_code'] ?? 'N/A',
       profilePicture: json['profile_picture'],
+      idVerified: json['id_verified'] ?? 'unverified',
     );
   }
 }
@@ -111,7 +114,6 @@ class ProfileScreen extends ConsumerWidget {
 
                   SizedBox(height: 10.h),
 
-                  // ✅ Edit Profile — GoRouter + isDetailViewProvider
                   _buildProfileItem(
                     context,
                     Icons.edit_outlined,
@@ -125,24 +127,29 @@ class ProfileScreen extends ConsumerWidget {
                   ),
 
                   _buildProfileItem(
-  context,
-  Icons.account_balance_wallet_rounded,
-  "My Wallet",
-  isDark: isDark,
-  onTap: () {
-    HapticFeedback.lightImpact();
-    ref.read(isDetailViewProvider.notifier).state = true;
-    ref.read(detailViewTitleProvider.notifier).state = 'My Wallet';
-    context.push('/wallet');
-  },
-),
+                    context,
+                    Icons.account_balance_wallet_rounded,
+                    "My Wallet",
+                    isDark: isDark,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      ref.read(isDetailViewProvider.notifier).state = true;
+                      ref.read(detailViewTitleProvider.notifier).state = 'My Wallet';
+                      context.push('/wallet');
+                    },
+                  ),
 
                   _buildProfileItem(
                     context,
                     Icons.history_rounded,
                     "History",
                     isDark: isDark,
-                    onTap: () {},
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      ref.read(isDetailViewProvider.notifier).state = true;
+                      ref.read(detailViewTitleProvider.notifier).state = 'History';
+                      context.push('/wallet');
+                    },
                   ),
 
                   _buildProfileItem(
@@ -193,6 +200,7 @@ class ProfileScreen extends ConsumerWidget {
     final String name = user?.fullName ?? "No Name";
     final String id = user?.referralCode ?? "N/A";
     final String? img = user?.profilePicture;
+    final bool isVerified = user?.idVerified == 'verified';
 
     return Column(
       children: [
@@ -218,12 +226,25 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         SizedBox(height: 12.h),
-        Text(
-          name,
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                name,
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            SizedBox(width: 6.w),
+            Icon(
+              isVerified ? Icons.verified : Icons.cancel,
+              color: isVerified ? Colors.greenAccent : Colors.redAccent,
+              size: 20.sp,
+            ),
+          ],
         ),
         SizedBox(height: 8.h),
         GestureDetector(
@@ -338,7 +359,7 @@ class ProfileScreen extends ConsumerWidget {
   void _copyAffiliateId(BuildContext context, String id) {
     Clipboard.setData(ClipboardData(text: id));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('ID কপি হয়েছে!'), behavior: SnackBarBehavior.floating),
+      const SnackBar(content: Text('ID কপি হয়েছে!'), behavior: SnackBarBehavior.floating),
     );
   }
 
