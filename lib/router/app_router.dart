@@ -20,7 +20,7 @@ import '../main.dart';
 import '../features/voucher_balance/voucher_balance_page.dart';
 import '../features/reselling/product_details_page.dart';
 import '../features/referral/referral_page.dart';
-import '../features/matrix/matrix_income.dart'; // 👈 Matrix Income page
+import '../features/matrix/matrix_income.dart';
 import '../features/wallet/wallet_page.dart';
 
 // ==================== HELPERS ====================
@@ -61,10 +61,6 @@ final GoRouter appRouter = GoRouter(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
-_detailRoute(
-  path: '/wallet',
-  builder: (context, state) => const WalletPage(),
-),
     GoRoute(
       path: '/notifications',
       builder: (context, state) => const NotificationScreen(),
@@ -109,6 +105,11 @@ _detailRoute(
           path: '/royalty-salary',
           builder: (context, state) => const RoyaltySalaryPage(),
         ),
+        // ✅ wallet ShellRoute-এর ভেতরে
+        _detailRoute(
+          path: '/wallet',
+          builder: (context, state) => const WalletPage(),
+        ),
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
@@ -121,7 +122,6 @@ _detailRoute(
           path: '/referral',
           builder: (context, state) => const ReferralPage(),
         ),
-        // 👇 Matrix Income — নতুন route
         _detailRoute(
           path: '/matrix-income',
           builder: (context, state) => const MatrixIncomePage(),
