@@ -13,11 +13,13 @@ class UserProfile {
   final String fullName;
   final String referralCode;
   final String? profilePicture;
+  final String idVerified; // ← নতুন
 
   UserProfile({
     required this.fullName,
     required this.referralCode,
     this.profilePicture,
+    required this.idVerified,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class UserProfile {
       fullName: json['full_name'] ?? 'Guest User',
       referralCode: json['referral_code'] ?? 'N/A',
       profilePicture: json['profile_picture'],
+      idVerified: json['id_verified'] ?? 'unverified', // ← নতুন
     );
   }
 }
@@ -192,7 +195,7 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 5. Matrix Income 👈 নতুন যোগ করা
+                  // 5. Matrix Income
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -208,7 +211,25 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 6. Leaderboard
+                  // 6. My Wallet
+                  if (isLoggedIn)
+                    _drawerItem(
+                      context,
+                      Icons.account_balance_wallet_rounded,
+                      "My Wallet",
+                      iconColor: Colors.green,
+                      textColor: textColor,
+                      subTextColor: subTextColor,
+                      splashColor: splashColor,
+                      onTap: () {
+                        Navigator.pop(context);
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'My Wallet';
+                        context.push('/wallet');
+                      },
+                    ),
+
+                  // 7. Leaderboard
                   _drawerItem(
                     context,
                     Icons.emoji_events_rounded,
@@ -228,7 +249,7 @@ class AppDrawer extends ConsumerWidget {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 7. Support Center
+                  // 8. Support Center
                   _drawerItem(
                     context,
                     Icons.support_agent_rounded,
@@ -242,7 +263,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 8. Facebook
+                  // 9. Facebook
                   _drawerItem(
                     context,
                     Icons.facebook_rounded,
@@ -257,7 +278,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 9. YouTube
+                  // 10. YouTube
                   _drawerItem(
                     context,
                     Icons.smart_display_rounded,
@@ -272,7 +293,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 10. Telegram
+                  // 11. Telegram
                   _drawerItem(
                     context,
                     Icons.telegram_rounded,
@@ -287,7 +308,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 11. Website
+                  // 12. Website
                   _drawerItem(
                     context,
                     Icons.language_rounded,
@@ -307,7 +328,7 @@ class AppDrawer extends ConsumerWidget {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 12. Privacy Policy
+                  // 13. Privacy Policy
                   _drawerItem(
                     context,
                     Icons.privacy_tip_rounded,
@@ -321,7 +342,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 13. Terms & Conditions
+                  // 14. Terms & Conditions
                   _drawerItem(
                     context,
                     Icons.description_rounded,
@@ -335,7 +356,7 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
 
-                  // 14. About Us
+                  // 15. About Us
                   _drawerItem(
                     context,
                     Icons.info_rounded,
@@ -389,6 +410,7 @@ class AppDrawer extends ConsumerWidget {
     final String name = user?.fullName ?? "No Name";
     final String id = user?.referralCode ?? "N/A";
     final String? img = user?.profilePicture;
+    final bool isVerified = user?.idVerified == 'verified';
 
     return Column(
       children: [
@@ -414,12 +436,25 @@ class AppDrawer extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          name,
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                name,
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              isVerified ? Icons.verified : Icons.cancel,
+              color: isVerified ? Colors.greenAccent : Colors.redAccent,
+              size: 20,
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         GestureDetector(
