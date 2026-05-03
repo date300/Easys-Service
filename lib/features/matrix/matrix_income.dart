@@ -101,7 +101,7 @@ class MatrixApiService {
 
   static Future<MatrixMyStatus> fetchMyStatus(String token) async {
     final response = await http.get(
-      Uri.parse('$_baseUrl/matrix/status'),
+      Uri.parse('$_baseUrl/matrix/my-status'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
