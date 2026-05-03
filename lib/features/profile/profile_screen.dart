@@ -14,7 +14,7 @@ class UserProfile {
   final String fullName;
   final String referralCode;
   final String? profilePicture;
-  final String idVerified; // নতুন
+  final String idVerified; // ????
 
   UserProfile({
     required this.fullName,
@@ -359,7 +359,7 @@ class ProfileScreen extends ConsumerWidget {
   void _copyAffiliateId(BuildContext context, String id) {
     Clipboard.setData(ClipboardData(text: id));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('ID কপি হয়েছে!'), behavior: SnackBarBehavior.floating),
+      const SnackBar(content: Text('ID ??? ?????!'), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -371,7 +371,7 @@ class ProfileScreen extends ConsumerWidget {
         title: Text('Select Language', style: GoogleFonts.poppins(color: isDark ? Colors.white : Colors.black)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(title: Text('English', style: TextStyle(color: isDark ? Colors.white : Colors.black)), onTap: () => Navigator.pop(c)),
-          ListTile(title: Text('বাংলা', style: TextStyle(color: isDark ? Colors.white : Colors.black)), onTap: () => Navigator.pop(c)),
+          ListTile(title: Text('?????', style: TextStyle(color: isDark ? Colors.white : Colors.black)), onTap: () => Navigator.pop(c)),
         ]),
       ),
     );
