@@ -109,16 +109,9 @@ class ReferralApiService {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      if (json['status'] == 'success' && json['data'] != null) {
-        final data = json['data'];
-        if (data is Map<String, dynamic>) {
-          if (data.containsKey('referral_code')) {
-            return UserProfile.fromJson(data);
-          }
-          if (data['user'] != null && data['user'] is Map<String, dynamic>) {
-            return UserProfile.fromJson(data['user']);
-          }
-        }
+      if (json['status'] == 'success' && json['user'] != null) {
+        // সরাসরি user অবজেক্ট থেকে প্রোফাইল তৈরি
+        return UserProfile.fromJson(json['user']);
       }
       throw Exception('Invalid profile data');
     } else if (response.statusCode == 401) {
