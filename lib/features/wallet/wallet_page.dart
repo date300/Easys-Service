@@ -22,7 +22,7 @@ class WalletBalance {
 class IncomeRecord {
   final int id;
   final double amount;
-  final String type; // 'referral', 'matrix', 'royalty'
+  final String type;
   final String description;
   final DateTime createdAt;
   IncomeRecord({required this.id, required this.amount, required this.type, required this.description, required this.createdAt});
@@ -44,16 +44,12 @@ class WalletApiService {
 
   static Future<WalletBalance> fetchBalance(String token) async {
     final res = await http.get(Uri.parse('$_baseUrl/user/profile'),
-        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}).timeout(const Duration(seconds: 15));
+        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'})
+        .timeout(const Duration(seconds: 15));
     if (res.statusCode == 200) {
       final json = jsonDecode(res.body);
-      if (json['status'] == 'success' && json['data'] != null) {
-        final data = json['data'];
-        // data could be direct or nested under 'user'
-        if (data is Map<String, dynamic>) {
-          if (data.containsKey('balance')) return WalletBalance.fromJson(data);
-          if (data['user'] != null && data['user'] is Map) return WalletBalance.fromJson(data['user']);
-        }
+      if (json['status'] == 'success' && json['user'] != null) {
+        return WalletBalance.fromJson(json['user']);
       }
       throw Exception('Invalid profile data');
     } else {
@@ -95,7 +91,7 @@ class WalletPage extends StatefulWidget {
 }
 
 class _WalletPageState extends State<WalletPage> {
-  static const Color accentColor = Color(0xFF10B981); // Emerald
+  static const Color accentColor = Color(0xFF10B981);
 
   WalletBalance? _balance;
   bool _isLoadingBalance = true;
@@ -104,7 +100,7 @@ class _WalletPageState extends State<WalletPage> {
   List<IncomeRecord> _records = [];
   bool _isLoadingHistory = true;
   String? _historyError;
-  String _activeFilter = 'all'; // all, referral, matrix, royalty
+  String _activeFilter = 'all';
 
   String _token = '';
   bool _hasMore = true;
@@ -208,7 +204,7 @@ class _WalletPageState extends State<WalletPage> {
           child: NotificationListener<ScrollNotification>(
             onNotification: (scroll) {
               if (scroll is ScrollEndNotification && scroll.metrics.pixels >= scroll.metrics.maxScrollExtent - 50) {
-                _fetchHistory(); // load more
+                _fetchHistory();
               }
               return false;
             },
