@@ -81,7 +81,7 @@ class WalletApiService {
 }
 
 // ==========================================
-// 3. Wallet Page (Updated Design)
+// 3. Wallet Page with Sky-blue Design
 // ==========================================
 
 class WalletPage extends StatefulWidget {
@@ -91,13 +91,14 @@ class WalletPage extends StatefulWidget {
 }
 
 class _WalletPageState extends State<WalletPage> {
-  static const Color accentColor = Color(0xFF10B981);
+  // Sky-blue colors
+  static const Color skyLight = Color(0xFF4FC3F7); // light sky
+  static const Color skyDark = Color(0xFF0288D1);  // deep sky
 
   WalletBalance? _balance;
   bool _isLoadingBalance = true;
   String? _balanceError;
 
-  // Income stats for the rows
   double _todayIncome = 0.0;
   double _yesterdayIncome = 0.0;
   double _last7DaysIncome = 0.0;
@@ -139,11 +140,10 @@ class _WalletPageState extends State<WalletPage> {
   Future<void> _fetchIncomeStats() async {
     setState(() { _isLoadingStats = true; _statsError = null; });
     try {
-      // Fetch all recent records (no filter, large limit) to compute daily sums
       final records = await WalletApiService.fetchIncomeHistory(
         _token,
-        type: null,           // all types
-        limit: 500,          // ensure we get enough records
+        type: null,
+        limit: 500,
         offset: 0,
       );
       if (mounted) {
@@ -200,7 +200,7 @@ class _WalletPageState extends State<WalletPage> {
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          color: accentColor,
+          color: skyDark,
           backgroundColor: cardColor,
           onRefresh: () async {
             HapticFeedback.mediumImpact();
@@ -210,12 +210,13 @@ class _WalletPageState extends State<WalletPage> {
             padding: EdgeInsets.fromLTRB(hPadding, 8.h, hPadding, 40.h),
             physics: const BouncingScrollPhysics(),
             children: [
-              // ========== Percentage & synced info ==========
-              _buildPercentageBlock(textColor),
+              // ========== Wallet header ==========
+              _buildHeader(textColor, subTextColor, isSmall),
+              SizedBox(height: 14.h),
+              // ========== Balance card (sky gradient) ==========
+              _buildBalanceCard(isSmall)
+                  .animate().fadeIn(delay: 80.ms).slideY(begin: 0.03),
               SizedBox(height: 12.h),
-              // ========== Balance label & amount ==========
-              _buildBalanceSection(textColor, subTextColor),
-              SizedBox(height: 10.h),
               // ========== Synced notice ==========
               Text(
                 'অ্যাসপ অ্যাকাউন্ট থেকে সিঙ্ক হয়েছে',
@@ -225,7 +226,7 @@ class _WalletPageState extends State<WalletPage> {
               // ========== Withdraw button ==========
               _buildWithdrawButton(isSmall),
               SizedBox(height: 24.h),
-              // ========== Transaction History header ==========
+              // ========== Transaction History ==========
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -235,29 +236,22 @@ class _WalletPageState extends State<WalletPage> {
                     color: textColor,
                   )),
                   TextButton(
-                    onPressed: () { /* TODO: View all transactions */ },
-                    child: Text('সব দেখুন', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 12.sp, color: accentColor)),
+                    onPressed: () { /* TODO: View all */ },
+                    child: Text('সব দেখুন', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 12.sp, color: skyDark)),
                   ),
                 ],
               ),
               SizedBox(height: 12.h),
-              // ========== Income rows ==========
               if (_isLoadingStats)
                 ...List.generate(3, (_) => _buildStatsShimmer(isSmall, cardColor))
               else if (_statsError != null)
                 _buildErrorCard(_statsError!, () => _fetchIncomeStats(), isSmall, textColor)
               else ...[
-                _buildIncomeRow('আজকের আয়', _todayIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {
-                  // TODO: navigate to today's detail
-                }),
+                _buildIncomeRow('আজকের আয়', _todayIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {}),
                 SizedBox(height: 8.h),
-                _buildIncomeRow('গতকালের আয়', _yesterdayIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {
-                  // TODO: navigate to yesterday's detail
-                }),
+                _buildIncomeRow('গতকালের আয়', _yesterdayIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {}),
                 SizedBox(height: 8.h),
-                _buildIncomeRow('গত ৭ দিনের আয়', _last7DaysIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {
-                  // TODO: navigate to weekly detail
-                }),
+                _buildIncomeRow('গত ৭ দিনের আয়', _last7DaysIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {}),
               ],
             ],
           ),
@@ -266,89 +260,155 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  // ==================== Percentage (840.01%) ====================
-  Widget _buildPercentageBlock(Color textColor) {
-    // This value should be replaced with real data from your backend.
-    const String percentage = '840.01%';
-    return Center(
-      child: Text(
-        percentage,
-        style: GoogleFonts.poppins(
-          fontSize: 42.sp,
-          fontWeight: FontWeight.w800,
-          color: accentColor,
-          letterSpacing: -1,
+  // Header without percentage
+  Widget _buildHeader(Color textColor, Color subTextColor, bool isSmall) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Wallet', style: GoogleFonts.poppins(fontSize: isSmall ? 24.sp : 26.sp, fontWeight: FontWeight.w700, color: textColor)),
+            Text('Balance', style: GoogleFonts.poppins(fontSize: isSmall ? 24.sp : 26.sp, fontWeight: FontWeight.w300, color: textColor)),
+          ],
         ),
-      ),
-    ).animate().fadeIn(delay: 60.ms).scale(begin: const Offset(0.95, 0.95));
+        Container(
+          width: 32.w, height: 32.w,
+          decoration: BoxDecoration(color: skyLight.withOpacity(0.15), shape: BoxShape.circle),
+          child: Icon(CupertinoIcons.money_dollar_circle_fill, color: skyDark, size: isSmall ? 18.sp : 20.sp),
+        ),
+      ],
+    ).animate().fadeIn(delay: 40.ms);
   }
 
-  // ==================== Balance ====================
-  Widget _buildBalanceSection(Color textColor, Color subTextColor) {
+  // Balance card with sky-blue gradient (Wallet style like screenshot)
+  Widget _buildBalanceCard(bool isSmall) {
     final balance = _balance?.balance ?? 0.0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('বর্তমান ব্যালেন্স', style: GoogleFonts.poppins(
-          fontSize: 13.sp,
-          color: subTextColor,
-        )),
-        SizedBox(height: 2.h),
-        if (_isLoadingBalance)
-          _buildShimmerBalance()
-        else if (_balanceError != null)
-          GestureDetector(
-            onTap: () { _fetchBalance(); },
-            child: Row(
-              children: [
-                Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: 16.sp),
-                SizedBox(width: 6.w),
-                Text('লোড ব্যর্থ', style: GoogleFonts.poppins(color: Colors.red, fontSize: 14.sp)),
-              ],
-            ),
-          )
-        else
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: isSmall ? 16.w : 20.w, vertical: isSmall ? 16.h : 18.h),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [skyLight, skyDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: skyDark.withOpacity(0.3),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('৳', style: GoogleFonts.poppins(color: textColor, fontSize: 22.sp, fontWeight: FontWeight.w600)),
-              SizedBox(width: 2.w),
+              Icon(CupertinoIcons.money_dollar_circle, color: Colors.white.withOpacity(0.7), size: isSmall ? 12.sp : 14.sp),
+              SizedBox(width: 5.w),
               Text(
-                balance.toStringAsFixed(2),
+                'বর্তমান ব্যালেন্স',
                 style: GoogleFonts.poppins(
-                  fontSize: 26.sp,
-                  fontWeight: FontWeight.w700,
-                  color: textColor,
-                  letterSpacing: -1,
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: isSmall ? 10.sp : 11.sp,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
+              const Spacer(),
+              if (!_isLoadingBalance)
+                GestureDetector(
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    await _fetchBalance();
+                  },
+                  child: Row(
+                    children: [
+                      Icon(CupertinoIcons.arrow_clockwise, color: Colors.white.withOpacity(0.55), size: isSmall ? 10.sp : 11.sp),
+                      SizedBox(width: 3.w),
+                      Text('Refresh', style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.55), fontSize: isSmall ? 9.sp : 10.sp)),
+                    ],
+                  ),
+                ),
             ],
           ),
-      ],
-    ).animate().fadeIn(delay: 120.ms);
+          SizedBox(height: 8.h),
+          if (_isLoadingBalance)
+            _buildShimmer(isSmall)
+          else if (_balanceError != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(CupertinoIcons.exclamationmark_circle, color: Colors.white.withOpacity(0.8), size: isSmall ? 14.sp : 16.sp),
+                    SizedBox(width: 6.w),
+                    Text('Failed to load', style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.8), fontSize: isSmall ? 14.sp : 16.sp)),
+                  ],
+                ),
+                SizedBox(height: 6.h),
+                GestureDetector(
+                  onTap: () async {
+                    HapticFeedback.mediumImpact();
+                    await _fetchBalance();
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Text('Retry', style: GoogleFonts.poppins(color: Colors.white, fontSize: isSmall ? 10.sp : 11.sp)),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('৳', style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.6), fontSize: isSmall ? 16.sp : 18.sp)),
+                SizedBox(width: 3.w),
+                Text(
+                  balance.toStringAsFixed(2),
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: isSmall ? 28.sp : 32.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -1.2,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildShimmerBalance() => Container(
-    height: 28.h,
+  Widget _buildShimmer(bool isSmall) => Container(
+    height: isSmall ? 34.h : 38.h,
     width: 140.w,
     decoration: BoxDecoration(
-      color: Colors.grey.withOpacity(0.2),
+      color: Colors.white.withOpacity(0.2),
       borderRadius: BorderRadius.circular(8.r),
     ),
-  ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms, color: Colors.white.withOpacity(0.3));
+  ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms, color: Colors.white.withOpacity(0.35));
 
-  // ==================== Withdraw Button ====================
+  // Withdraw button
   Widget _buildWithdrawButton(bool isSmall) {
     return SizedBox(
       width: double.infinity,
       height: 44.h,
       child: CupertinoButton(
         padding: EdgeInsets.zero,
-        color: accentColor,
+        color: skyDark,
         borderRadius: BorderRadius.circular(12.r),
         onPressed: () {
-          // TODO: Implement withdraw functionality
           HapticFeedback.mediumImpact();
+          // TODO: withdraw logic
         },
         child: Text(
           'উইথড্র',
@@ -362,7 +422,7 @@ class _WalletPageState extends State<WalletPage> {
     ).animate().fadeIn(delay: 180.ms);
   }
 
-  // ==================== Income Row (Today / Yesterday / Week) ====================
+  // Income row
   Widget _buildIncomeRow(
     String title,
     double amount,
