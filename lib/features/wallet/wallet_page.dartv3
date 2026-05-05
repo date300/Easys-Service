@@ -59,12 +59,16 @@ class WalletPage extends StatefulWidget {
 }
 
 class _WalletPageState extends State<WalletPage> {
-  static const Color _accent      = Color(0xFF29B6F6);
-  static const Color _accentLight = Color(0xFF4FC3F7);
-  static const Color _accentDeep  = Color(0xFF0277BD);
+  // ✅ App-এর অফিসিয়াল color palette (main.dart এর সাথে মিলানো)
+  static const Color _accent      = Color(0xFF29B6F6); // skyBlue — AppTopBar এর মতো
+  static const Color _accentLight = Color(0xFF4FC3F7); // একটু হালকা
+  static const Color _accentDeep  = Color(0xFF0277BD); // গাঢ় নীল
 
+  // ✅ Dark mode background — scaffoldBackgroundColor এর মতো
   static const Color _darkBg      = Color(0xFF121212);
+  // ✅ Dark mode card — AppBar/Card color এর মতো
   static const Color _darkCard    = Color(0xFF1E1E1E);
+  // ✅ Light mode
   static const Color _lightBg     = Color(0xFFF5F5F5);
   static const Color _lightCard   = Colors.white;
   static const Color _ink         = Color(0xFF0C1A26);
@@ -106,6 +110,7 @@ class _WalletPageState extends State<WalletPage> {
   @override
   Widget build(BuildContext context) {
     final isDark    = Theme.of(context).brightness == Brightness.dark;
+    // ✅ main.dart এর color এর সাথে হুবহু মিলছে
     final bgColor   = isDark ? _darkBg   : _lightBg;
     final cardColor = isDark ? _darkCard : _lightCard;
     final textColor = isDark ? Colors.white : _ink;
@@ -129,7 +134,7 @@ class _WalletPageState extends State<WalletPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Balance Card
+              // ✅ Balance Card
               _buildBalanceCard(isSmall, cardColor, textColor, subColor)
                   .animate()
                   .fadeIn(delay: 60.ms)
@@ -137,7 +142,7 @@ class _WalletPageState extends State<WalletPage> {
 
               SizedBox(height: 16.h),
 
-              // Action Buttons
+              // ✅ Action Buttons
               _buildActionButtons(isSmall)
                   .animate()
                   .fadeIn(delay: 130.ms)
@@ -145,7 +150,7 @@ class _WalletPageState extends State<WalletPage> {
 
               SizedBox(height: 14.h),
 
-              // Income Menu
+              // ✅ Income Menu
               ..._buildIncomeMenu(isSmall, cardColor, textColor, isDark),
             ],
           ),
@@ -169,6 +174,7 @@ class _WalletPageState extends State<WalletPage> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(22.r),
+        // ✅ Dark mode এ subtle border — 1E1E1E card কে 121212 bg থেকে আলাদা করে
         border: Border.all(
           color: _accent.withOpacity(0.12),
           width: 1,
@@ -187,8 +193,8 @@ class _WalletPageState extends State<WalletPage> {
           _buildWalletIllustration(isSmall),
           SizedBox(height: 20.h),
           Text(
-            'My Wallet',
-            style: GoogleFonts.poppins(
+            'আমার ওয়ালেট',
+            style: GoogleFonts.hindSiliguri(
               fontSize: isSmall ? 20.sp : 22.sp,
               fontWeight: FontWeight.w700,
               color: textColor,
@@ -197,8 +203,8 @@ class _WalletPageState extends State<WalletPage> {
           ),
           SizedBox(height: 5.h),
           Text(
-            'View all your earnings here',
-            style: GoogleFonts.poppins(
+            'আপনার সকল আয় এখানে জমা হয়',
+            style: GoogleFonts.hindSiliguri(
               fontSize: isSmall ? 11.sp : 12.sp,
               color: subColor,
               fontWeight: FontWeight.w400,
@@ -286,7 +292,7 @@ class _WalletPageState extends State<WalletPage> {
                         : _error != null
                             ? _errorWidget(isSmall)
                             : Text(
-                                '\$${(_balance?.balance ?? 0).toStringAsFixed(2)}',
+                                '${(_balance?.balance ?? 0).toStringAsFixed(2)}৳',
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: isSmall ? 26.sp : 30.sp,
@@ -307,7 +313,7 @@ class _WalletPageState extends State<WalletPage> {
                 width:  cW.w,
                 height: cH.h,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
+                  color: const Color(0xFF1E1E1E), // ✅ dark card color
                   borderRadius: BorderRadius.only(
                     topLeft:     Radius.circular(10.r),
                     bottomLeft:  Radius.circular(10.r),
@@ -380,8 +386,8 @@ class _WalletPageState extends State<WalletPage> {
             border: Border.all(color: Colors.white.withOpacity(0.35)),
           ),
           child: Text(
-            'Tap to Retry',
-            style: GoogleFonts.poppins(
+            'আবার চেষ্টা করুন',
+            style: GoogleFonts.hindSiliguri(
               color: Colors.white,
               fontSize: isSmall ? 12.sp : 13.sp,
               fontWeight: FontWeight.w700,
@@ -398,7 +404,7 @@ class _WalletPageState extends State<WalletPage> {
       children: [
         Expanded(
           child: _actionBtn(
-            label: 'Withdraw',
+            label: 'উত্তোলন',
             icon:  CupertinoIcons.arrow_up_circle_fill,
             isSmall: isSmall,
             onTap: () {
@@ -410,7 +416,7 @@ class _WalletPageState extends State<WalletPage> {
         SizedBox(width: 10.w),
         Expanded(
           child: _actionBtn(
-            label: 'History',
+            label: 'লেনদেন',
             icon:  CupertinoIcons.list_bullet_below_rectangle,
             isSmall: isSmall,
             onTap: () {
@@ -434,6 +440,7 @@ class _WalletPageState extends State<WalletPage> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 15.h),
         decoration: BoxDecoration(
+          // ✅ App accent color দিয়ে gradient
           gradient: const LinearGradient(
             colors: [_accentLight, _accent],
             begin: Alignment.topLeft,
@@ -456,7 +463,7 @@ class _WalletPageState extends State<WalletPage> {
             SizedBox(width: 5.w),
             Text(
               label,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.hindSiliguri(
                 color: Colors.white,
                 fontSize: isSmall ? 13.sp : 14.sp,
                 fontWeight: FontWeight.w700,
@@ -478,9 +485,9 @@ class _WalletPageState extends State<WalletPage> {
     bool isDark,
   ) {
     final items = [
-      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,         'delay': 160},
-      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill,       'delay': 210},
-      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,             'delay': 260},
+      {'label': 'আজকের আয়',       'icon': CupertinoIcons.sun_max_fill,         'delay': 160},
+      {'label': 'সাপ্তাহিক আয়',  'icon': CupertinoIcons.moon_stars_fill,       'delay': 210},
+      {'label': 'মাস ও বছরের আয়', 'icon': CupertinoIcons.calendar,             'delay': 260},
     ];
 
     return items.map((item) {
@@ -517,8 +524,9 @@ class _WalletPageState extends State<WalletPage> {
         margin:  EdgeInsets.only(bottom: 10.h),
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: cardColor, // ✅ 1E1E1E dark / white light
           borderRadius: BorderRadius.circular(16.r),
+          // ✅ Dark mode এ subtle border
           border: isDark
               ? Border.all(color: Colors.white.withOpacity(0.05), width: 1)
               : null,
@@ -538,6 +546,7 @@ class _WalletPageState extends State<WalletPage> {
               width:  isSmall ? 40.w : 44.w,
               height: isSmall ? 40.w : 44.w,
               decoration: BoxDecoration(
+                // ✅ Accent color দিয়ে icon background
                 color: _accent.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
@@ -551,7 +560,7 @@ class _WalletPageState extends State<WalletPage> {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.hindSiliguri(
                   fontSize: isSmall ? 14.sp : 15.sp,
                   fontWeight: FontWeight.w600,
                   color: textColor,
