@@ -110,8 +110,7 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Status bar transparent রাখো
-  // Scaffold backgroundColor দিয়ে status bar এলাকা fill হবে
+  // ✅ FIX 1: Status bar transparent করো — AppTopBar নিজে color দেবে
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -152,17 +151,18 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.light,
       colorSchemeSeed: const Color(0xFF29B6F6),
-      // ✅ AppTopBar skyBlue এর সাথে মিলছে → status bar same color দেখাবে
-      scaffoldBackgroundColor: const Color(0xFF29B6F6),
+      scaffoldBackgroundColor: Colors.white,
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF29B6F6),
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        // ✅ FIX 2: Light theme status bar style
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
         ),
       ),
       cardTheme: CardThemeData(
@@ -183,18 +183,18 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorSchemeSeed: const Color(0xFF29B6F6),
-      // ✅ AppTopBar darkHeader (0xFF1E1E1E) এর সাথে মিলছে
-      // → status bar এলাকায় এই color দেখাবে, AppTopBar এর সাথে seamless হবে
-      scaffoldBackgroundColor: const Color(0xFF1E1E1E),
+      scaffoldBackgroundColor: const Color(0xFF121212),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF1E1E1E),
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        // ✅ FIX 2: Dark theme status bar style
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
         ),
       ),
       cardTheme: CardThemeData(
@@ -271,16 +271,18 @@ class MainWrapper extends ConsumerWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // ✅ FIX 3: Scaffold backgroundColor AppTopBar এর color এর সাথে মিলাও
+    final scaffoldBgColor = isDark
+        ? const Color(0xFF1E1E1E) // AppTopBar darkHeader এর সাথে মিলছে
+        : const Color(0xFF29B6F6); // AppTopBar skyBlue এর সাথে মিলছে
+
     Widget bodyContainer() {
       double bodyRadius = isMobile ? 32.r : 24;
       return Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          // ✅ body content এর background
-          // Dark: 0xFF121212 (scaffold থেকে আলাদা — এটাই content area)
-          // Light: white
-          color: isDark ? const Color(0xFF121212) : Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(bodyRadius),
             topRight: Radius.circular(bodyRadius),
@@ -305,14 +307,18 @@ class MainWrapper extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        // ✅ backgroundColor থিম থেকে আসে:
-        // Dark mode  → 0xFF1E1E1E (AppTopBar darkHeader এর মতো)
-        // Light mode → 0xFF29B6F6 (AppTopBar skyBlue এর মতো)
-        // SafeArea top:true হওয়ায় status bar এলাকায় এই scaffold color দেখায়
-        // → AppTopBar এর সাথে seamless একই color!
+        backgroundColor: scaffoldBgColor,
+        drawer: (isDetailView || isEditProfile)
+            ? null
+            : AppDrawer(
+                isLoggedIn: isLoggedIn,
+                isDesktop: isDesktop,
+                isTablet: isTablet,
+              ),
         body: SafeArea(
-          // ✅ আগের মতোই রাখা — white gap সমস্যা নেই
-          top: !isEditProfile,
+          // ✅ FIX 4: top: false — AppTopBar নিজেই statusBarHeight হিসাব করে
+          // SafeArea top: true হলে status bar এলাকায় scaffold color দেখায়
+          top: false,
           child: Row(
             children: [
               if ((isDesktop || isTablet) && !isDetailView && !isEditProfile)
@@ -338,13 +344,6 @@ class MainWrapper extends ConsumerWidget {
             ],
           ),
         ),
-        drawer: (isDetailView || isEditProfile)
-            ? null
-            : AppDrawer(
-                isLoggedIn: isLoggedIn,
-                isDesktop: isDesktop,
-                isTablet: isTablet,
-              ),
         bottomNavigationBar:
             (isMobile && (!isDetailView || isEditProfile))
                 ? AppBottomNavBar(
@@ -356,3 +355,4 @@ class MainWrapper extends ConsumerWidget {
     );
   }
 }
+
