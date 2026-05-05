@@ -59,12 +59,19 @@ class WalletPage extends StatefulWidget {
 }
 
 class _WalletPageState extends State<WalletPage> {
-  // ── Sky Blue Palette ───────────────────────────────────
-  static const Color _accent      = Color(0xFF0EA5E9); // sky-500
-  static const Color _accentLight = Color(0xFF38BDF8); // sky-400
-  static const Color _accentDeep  = Color(0xFF075985); // sky-800
-  static const Color _ink         = Color(0xFF0C1A26); // near-black
-  // ──────────────────────────────────────────────────────
+  // ✅ App-এর অফিসিয়াল color palette (main.dart এর সাথে মিলানো)
+  static const Color _accent      = Color(0xFF29B6F6); // skyBlue — AppTopBar এর মতো
+  static const Color _accentLight = Color(0xFF4FC3F7); // একটু হালকা
+  static const Color _accentDeep  = Color(0xFF0277BD); // গাঢ় নীল
+
+  // ✅ Dark mode background — scaffoldBackgroundColor এর মতো
+  static const Color _darkBg      = Color(0xFF121212);
+  // ✅ Dark mode card — AppBar/Card color এর মতো
+  static const Color _darkCard    = Color(0xFF1E1E1E);
+  // ✅ Light mode
+  static const Color _lightBg     = Color(0xFFF5F5F5);
+  static const Color _lightCard   = Colors.white;
+  static const Color _ink         = Color(0xFF0C1A26);
 
   WalletBalance? _balance;
   bool _isLoading = true;
@@ -102,60 +109,59 @@ class _WalletPageState extends State<WalletPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark     = Theme.of(context).brightness == Brightness.dark;
-    final bgColor    = isDark ? const Color(0xFF060D17) : const Color(0xFFF0F9FF);
-    final cardColor  = isDark ? const Color(0xFF0F1E2E) : Colors.white;
-    final textColor  = isDark ? Colors.white            : _ink;
-    final subColor   = isDark ? const Color(0xFF7BA3BE) : const Color(0xFF94A3B8);
-    final isSmall    = MediaQuery.of(context).size.width < 360;
+    final isDark    = Theme.of(context).brightness == Brightness.dark;
+    // ✅ main.dart এর color এর সাথে হুবহু মিলছে
+    final bgColor   = isDark ? _darkBg   : _lightBg;
+    final cardColor = isDark ? _darkCard : _lightCard;
+    final textColor = isDark ? Colors.white : _ink;
+    final subColor  = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575);
+    final isSmall   = MediaQuery.of(context).size.width < 360;
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: _accent,
-          backgroundColor: cardColor,
-          onRefresh: () async {
-            HapticFeedback.mediumImpact();
-            await _fetchBalance();
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 48.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Top Balance Card ──────────────────────────
-                _buildBalanceCard(isSmall, cardColor, textColor, subColor)
-                    .animate()
-                    .fadeIn(delay: 60.ms)
-                    .slideY(begin: 0.04, curve: Curves.easeOut),
+      body: RefreshIndicator(
+        color: _accent,
+        backgroundColor: cardColor,
+        onRefresh: () async {
+          HapticFeedback.mediumImpact();
+          await _fetchBalance();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 48.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ✅ Balance Card
+              _buildBalanceCard(isSmall, cardColor, textColor, subColor)
+                  .animate()
+                  .fadeIn(delay: 60.ms)
+                  .slideY(begin: 0.04, curve: Curves.easeOut),
 
-                SizedBox(height: 16.h),
+              SizedBox(height: 16.h),
 
-                // ── Action Buttons ────────────────────────────
-                _buildActionButtons(isSmall)
-                    .animate()
-                    .fadeIn(delay: 130.ms)
-                    .slideY(begin: 0.04, curve: Curves.easeOut),
+              // ✅ Action Buttons
+              _buildActionButtons(isSmall)
+                  .animate()
+                  .fadeIn(delay: 130.ms)
+                  .slideY(begin: 0.04, curve: Curves.easeOut),
 
-                SizedBox(height: 14.h),
+              SizedBox(height: 14.h),
 
-                // ── Income Menu ───────────────────────────────
-                ..._buildIncomeMenu(isSmall, cardColor, textColor),
-              ],
-            ),
+              // ✅ Income Menu
+              ..._buildIncomeMenu(isSmall, cardColor, textColor, isDark),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  //  TOP BALANCE CARD
-  // ════════════════════════════════════════════════════════
+  // ──────────────────────────────────────────
+  //  BALANCE CARD
+  // ──────────────────────────────────────────
   Widget _buildBalanceCard(
     bool isSmall,
     Color cardColor,
@@ -168,6 +174,11 @@ class _WalletPageState extends State<WalletPage> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(22.r),
+        // ✅ Dark mode এ subtle border — 1E1E1E card কে 121212 bg থেকে আলাদা করে
+        border: Border.all(
+          color: _accent.withOpacity(0.12),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: _accent.withOpacity(0.08),
@@ -182,7 +193,7 @@ class _WalletPageState extends State<WalletPage> {
           _buildWalletIllustration(isSmall),
           SizedBox(height: 20.h),
           Text(
-            'বর্তমান ব্যালান্স',
+            'আমার ওয়ালেট',
             style: GoogleFonts.hindSiliguri(
               fontSize: isSmall ? 20.sp : 22.sp,
               fontWeight: FontWeight.w700,
@@ -192,7 +203,7 @@ class _WalletPageState extends State<WalletPage> {
           ),
           SizedBox(height: 5.h),
           Text(
-            'অ্যাপ অ্যাকাউন্ট থেকে সিঙ্ক হয়েছে',
+            'আপনার সকল আয় এখানে জমা হয়',
             style: GoogleFonts.hindSiliguri(
               fontSize: isSmall ? 11.sp : 12.sp,
               color: subColor,
@@ -204,17 +215,15 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  //  WALLET ILLUSTRATION  (cartoon-style, sky blue)
-  // ════════════════════════════════════════════════════════
+  // ──────────────────────────────────────────
+  //  WALLET ILLUSTRATION
+  // ──────────────────────────────────────────
   Widget _buildWalletIllustration(bool isSmall) {
-    // Dimensions
-    final double wW   = isSmall ? 210 : 245; // wallet body width
-    final double wH   = isSmall ? 170 : 198; // wallet body height
-    final double cW   = isSmall ? 52  : 60;  // clasp width
-    final double cH   = isSmall ? 70  : 82;  // clasp height
-    final double peek = isSmall ? 22  : 26;  // top peek for back card
-    // Total bounding box (clasp protrudes ~55% of cW beyond wallet right edge)
+    final double wW   = isSmall ? 210 : 245;
+    final double wH   = isSmall ? 170 : 198;
+    final double cW   = isSmall ? 52  : 60;
+    final double cH   = isSmall ? 70  : 82;
+    final double peek = isSmall ? 22  : 26;
     final double totalW = wW + cW * 0.56;
     final double totalH = wH + peek;
 
@@ -225,7 +234,7 @@ class _WalletPageState extends State<WalletPage> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // ── Back card peeking top-left ─────────────────
+            // Back card
             Positioned(
               top:  0,
               left: (wW * 0.13).w,
@@ -238,13 +247,16 @@ class _WalletPageState extends State<WalletPage> {
                   decoration: BoxDecoration(
                     color: _accentDeep,
                     borderRadius: BorderRadius.circular(13.r),
-                    border: Border.all(color: _ink, width: 3.2),
+                    border: Border.all(
+                      color: Colors.black.withOpacity(0.4),
+                      width: 3.2,
+                    ),
                   ),
                 ),
               ),
             ),
 
-            // ── Main wallet body ───────────────────────────
+            // Main wallet body
             Positioned(
               bottom: 0,
               left:   0,
@@ -258,7 +270,10 @@ class _WalletPageState extends State<WalletPage> {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(22.r),
-                  border: Border.all(color: _ink, width: 3.5),
+                  border: Border.all(
+                    color: Colors.black.withOpacity(0.3),
+                    width: 3.5,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: _accent.withOpacity(0.35),
@@ -268,7 +283,6 @@ class _WalletPageState extends State<WalletPage> {
                     ),
                   ],
                 ),
-                // Balance text (bottom-left area of wallet)
                 child: Padding(
                   padding: EdgeInsets.only(left: 20.w, top: 10.h),
                   child: Align(
@@ -280,7 +294,7 @@ class _WalletPageState extends State<WalletPage> {
                             : Text(
                                 '${(_balance?.balance ?? 0).toStringAsFixed(2)}৳',
                                 style: GoogleFonts.poppins(
-                                  color: _ink,
+                                  color: Colors.white,
                                   fontSize: isSmall ? 26.sp : 30.sp,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -1.2,
@@ -291,7 +305,7 @@ class _WalletPageState extends State<WalletPage> {
               ),
             ),
 
-            // ── Clasp (right, overlapping wallet right edge) ─
+            // Clasp
             Positioned(
               right:  0,
               bottom: (wH * 0.20).h,
@@ -299,17 +313,20 @@ class _WalletPageState extends State<WalletPage> {
                 width:  cW.w,
                 height: cH.h,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFF1E1E1E), // ✅ dark card color
                   borderRadius: BorderRadius.only(
                     topLeft:     Radius.circular(10.r),
                     bottomLeft:  Radius.circular(10.r),
                     topRight:    Radius.circular(18.r),
                     bottomRight: Radius.circular(18.r),
                   ),
-                  border: Border.all(color: _ink, width: 3.5),
+                  border: Border.all(
+                    color: Colors.black.withOpacity(0.3),
+                    width: 3.5,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: Colors.black.withOpacity(0.2),
                       blurRadius: 8,
                       offset: const Offset(3, 2),
                     ),
@@ -324,14 +341,16 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  // Double-ring clasp button
   Widget _claspButton() => Container(
         width:  32.w,
         height: 32.w,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: _ink, width: 3),
-          color: Colors.white,
+          border: Border.all(
+            color: Colors.black.withOpacity(0.3),
+            width: 3,
+          ),
+          color: const Color(0xFF1E1E1E),
         ),
         child: Center(
           child: Container(
@@ -367,9 +386,9 @@ class _WalletPageState extends State<WalletPage> {
             border: Border.all(color: Colors.white.withOpacity(0.35)),
           ),
           child: Text(
-            'Retry',
-            style: GoogleFonts.poppins(
-              color: _ink,
+            'আবার চেষ্টা করুন',
+            style: GoogleFonts.hindSiliguri(
+              color: Colors.white,
               fontSize: isSmall ? 12.sp : 13.sp,
               fontWeight: FontWeight.w700,
             ),
@@ -377,15 +396,15 @@ class _WalletPageState extends State<WalletPage> {
         ),
       );
 
-  // ════════════════════════════════════════════════════════
+  // ──────────────────────────────────────────
   //  ACTION BUTTONS
-  // ════════════════════════════════════════════════════════
+  // ──────────────────────────────────────────
   Widget _buildActionButtons(bool isSmall) {
     return Row(
       children: [
         Expanded(
           child: _actionBtn(
-            label: 'উইথড্র',
+            label: 'উত্তোলন',
             icon:  CupertinoIcons.arrow_up_circle_fill,
             isSmall: isSmall,
             onTap: () {
@@ -397,7 +416,7 @@ class _WalletPageState extends State<WalletPage> {
         SizedBox(width: 10.w),
         Expanded(
           child: _actionBtn(
-            label: 'ট্রানজেকশন হিস্ট্রি',
+            label: 'লেনদেন',
             icon:  CupertinoIcons.list_bullet_below_rectangle,
             isSmall: isSmall,
             onTap: () {
@@ -421,6 +440,7 @@ class _WalletPageState extends State<WalletPage> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 15.h),
         decoration: BoxDecoration(
+          // ✅ App accent color দিয়ে gradient
           gradient: const LinearGradient(
             colors: [_accentLight, _accent],
             begin: Alignment.topLeft,
@@ -455,18 +475,19 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  //  INCOME MENU  (আজকের আয় / গতকালের আয় / গত ৭ দিনের আয়)
-  // ════════════════════════════════════════════════════════
+  // ──────────────────────────────────────────
+  //  INCOME MENU
+  // ──────────────────────────────────────────
   List<Widget> _buildIncomeMenu(
     bool isSmall,
     Color cardColor,
     Color textColor,
+    bool isDark,
   ) {
     final items = [
       {'label': 'আজকের আয়',       'icon': CupertinoIcons.sun_max_fill,         'delay': 160},
-      {'label': 'গতকালের আয়',     'icon': CupertinoIcons.moon_stars_fill,       'delay': 210},
-      {'label': 'গত ৭ দিনের আয়', 'icon': CupertinoIcons.calendar,              'delay': 260},
+      {'label': 'সাপ্তাহিক আয়',  'icon': CupertinoIcons.moon_stars_fill,       'delay': 210},
+      {'label': 'মাস ও বছরের আয়', 'icon': CupertinoIcons.calendar,             'delay': 260},
     ];
 
     return items.map((item) {
@@ -476,6 +497,7 @@ class _WalletPageState extends State<WalletPage> {
         isSmall:   isSmall,
         cardColor: cardColor,
         textColor: textColor,
+        isDark:    isDark,
         onTap: () {
           HapticFeedback.lightImpact();
           // TODO: navigate to detail screen
@@ -493,6 +515,7 @@ class _WalletPageState extends State<WalletPage> {
     required bool     isSmall,
     required Color    cardColor,
     required Color    textColor,
+    required bool     isDark,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -501,8 +524,12 @@ class _WalletPageState extends State<WalletPage> {
         margin:  EdgeInsets.only(bottom: 10.h),
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: cardColor, // ✅ 1E1E1E dark / white light
           borderRadius: BorderRadius.circular(16.r),
+          // ✅ Dark mode এ subtle border
+          border: isDark
+              ? Border.all(color: Colors.white.withOpacity(0.05), width: 1)
+              : null,
           boxShadow: [
             BoxShadow(
               color: _accent.withOpacity(0.06),
@@ -519,17 +546,17 @@ class _WalletPageState extends State<WalletPage> {
               width:  isSmall ? 40.w : 44.w,
               height: isSmall ? 40.w : 44.w,
               decoration: BoxDecoration(
-                color: _accent.withOpacity(0.10),
+                // ✅ Accent color দিয়ে icon background
+                color: _accent.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
-                  color: _accent.withOpacity(0.18),
+                  color: _accent.withOpacity(0.20),
                   width: 0.8,
                 ),
               ),
               child: Icon(icon, color: _accent, size: isSmall ? 18.sp : 20.sp),
             ),
             SizedBox(width: 12.w),
-            // Label
             Expanded(
               child: Text(
                 label,
@@ -545,7 +572,7 @@ class _WalletPageState extends State<WalletPage> {
               width:  30.w,
               height: 30.w,
               decoration: BoxDecoration(
-                color: _accent.withOpacity(0.09),
+                color: _accent.withOpacity(0.10),
                 shape: BoxShape.circle,
               ),
               child: Icon(
