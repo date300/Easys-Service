@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,7 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ????? ?????????? ?????? ??? ?????????? ???????
 import 'router/app_router.dart';
 import 'widgets/app_bottom_nav_bar.dart';
 import 'widgets/app_nav_rail.dart';
@@ -17,7 +17,8 @@ import 'widgets/app_drawer.dart';
 // THEME PROVIDERS
 // ============================================
 
-final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
+final themeModeProvider =
+    StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
   return ThemeModeController();
 });
 
@@ -29,7 +30,6 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     final savedTheme = prefs.getString('app_theme');
-    
     if (savedTheme != null) {
       state = _stringToThemeMode(savedTheme);
     }
@@ -37,7 +37,6 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
 
   Future<void> setTheme(ThemeMode mode) async {
     if (state == mode) return;
-    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('app_theme', _themeModeToString(mode));
     state = mode;
@@ -45,17 +44,23 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
 
   String _themeModeToString(ThemeMode mode) {
     switch (mode) {
-      case ThemeMode.light: return 'light';
-      case ThemeMode.dark: return 'dark';
-      default: return 'system';
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      default:
+        return 'system';
     }
   }
 
   ThemeMode _stringToThemeMode(String value) {
     switch (value) {
-      case 'light': return ThemeMode.light;
-      case ThemeMode.dark: return ThemeMode.dark;
-      default: return ThemeMode.system;
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
     }
   }
 }
@@ -64,7 +69,8 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
 // AUTH PROVIDERS
 // ============================================
 
-final authProvider = StateNotifierProvider<AuthController, bool>((ref) {
+final authProvider =
+    StateNotifierProvider<AuthController, bool>((ref) {
   return AuthController();
 });
 
@@ -103,6 +109,16 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ FIX 1: Status bar transparent করো — AppTopBar নিজে color দেবে
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -121,23 +137,15 @@ class MyApp extends ConsumerWidget {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'Easy Service',
-          
-          // ? Light Theme
           theme: _buildLightTheme(),
-          
-          // ? Dark Theme
           darkTheme: _buildDarkTheme(),
-          
-          // ? Dynamic Theme Mode
           themeMode: themeMode,
-          
           routerConfig: appRouter,
         );
       },
     );
   }
 
-  // ? Light Theme Configuration
   ThemeData _buildLightTheme() {
     return ThemeData(
       useMaterial3: true,
@@ -150,11 +158,17 @@ class MyApp extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        // ✅ FIX 2: Light theme status bar style
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
       ),
-      // ? FIXED: CardTheme ? CardThemeData
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
@@ -164,7 +178,6 @@ class MyApp extends ConsumerWidget {
     );
   }
 
-  // ? Dark Theme Configuration
   ThemeData _buildDarkTheme() {
     return ThemeData(
       useMaterial3: true,
@@ -177,12 +190,18 @@ class MyApp extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        // ✅ FIX 2: Dark theme status bar style
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
       ),
-      // ? FIXED: CardTheme ? CardThemeData
       cardTheme: CardThemeData(
         elevation: 2,
         color: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF1E1E1E),
@@ -213,7 +232,7 @@ class MainWrapper extends ConsumerWidget {
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/reselling')) return 1;
     if (location.startsWith('/microjobs')) return 2;
-    if (location.startsWith('/profile')) return 3; // Campaign রিমুভ করে Profile কে ৩ নম্বরে আনা হয়েছে
+    if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
@@ -225,7 +244,7 @@ class MainWrapper extends ConsumerWidget {
       case 0: context.go('/home'); break;
       case 1: context.go('/reselling'); break;
       case 2: context.go('/microjobs'); break;
-      case 3: context.go('/profile'); break; // ৩ নম্বর ইনডেক্সে এখন Profile রাউট হবে
+      case 3: context.go('/profile'); break;
     }
   }
 
@@ -242,7 +261,8 @@ class MainWrapper extends ConsumerWidget {
     final isPaymentPage = location == '/payment';
 
     final isDetailView = isPaymentPage || ref.watch(isDetailViewProvider);
-    final detailTitle = isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
+    final detailTitle =
+        isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
 
     final animatedChild = child
         .animate(key: ValueKey(location))
@@ -250,7 +270,11 @@ class MainWrapper extends ConsumerWidget {
         .moveY(begin: 10, end: 0);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? const Color(0xFF121212) : const Color(0xFF29B6F6);
+
+    // ✅ FIX 3: Scaffold backgroundColor AppTopBar এর color এর সাথে মিলাও
+    final scaffoldBgColor = isDark
+        ? const Color(0xFF1E1E1E) // AppTopBar darkHeader এর সাথে মিলছে
+        : const Color(0xFF29B6F6); // AppTopBar skyBlue এর সাথে মিলছে
 
     Widget bodyContainer() {
       double bodyRadius = isMobile ? 32.r : 24;
@@ -283,7 +307,7 @@ class MainWrapper extends ConsumerWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: backgroundColor,
+        backgroundColor: scaffoldBgColor,
         drawer: (isDetailView || isEditProfile)
             ? null
             : AppDrawer(
@@ -292,7 +316,9 @@ class MainWrapper extends ConsumerWidget {
                 isTablet: isTablet,
               ),
         body: SafeArea(
-          top: !isEditProfile,
+          // ✅ FIX 4: top: false — AppTopBar নিজেই statusBarHeight হিসাব করে
+          // SafeArea top: true হলে status bar এলাকায় scaffold color দেখায়
+          top: false,
           child: Row(
             children: [
               if ((isDesktop || isTablet) && !isDetailView && !isEditProfile)
@@ -318,13 +344,15 @@ class MainWrapper extends ConsumerWidget {
             ],
           ),
         ),
-        bottomNavigationBar: (isMobile && (!isDetailView || isEditProfile))
-            ? AppBottomNavBar(
-                currentIndex: currentIndex,
-                onTap: (i) => _onNavTap(context, ref, i),
-              )
-            : null,
+        bottomNavigationBar:
+            (isMobile && (!isDetailView || isEditProfile))
+                ? AppBottomNavBar(
+                    currentIndex: currentIndex,
+                    onTap: (i) => _onNavTap(context, ref, i),
+                  )
+                : null,
       ),
     );
   }
 }
+
