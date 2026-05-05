@@ -81,7 +81,7 @@ class WalletApiService {
 }
 
 // ==========================================
-// 3. Wallet Page
+// 3. Wallet Page (Updated Design)
 // ==========================================
 
 class WalletPage extends StatefulWidget {
@@ -97,15 +97,14 @@ class _WalletPageState extends State<WalletPage> {
   bool _isLoadingBalance = true;
   String? _balanceError;
 
-  List<IncomeRecord> _records = [];
-  bool _isLoadingHistory = true;
-  String? _historyError;
-  String _activeFilter = 'all';
+  // Income stats for the rows
+  double _todayIncome = 0.0;
+  double _yesterdayIncome = 0.0;
+  double _last7DaysIncome = 0.0;
+  bool _isLoadingStats = true;
+  String? _statsError;
 
   String _token = '';
-  bool _hasMore = true;
-  int _offset = 0;
-  static const int _limit = 20;
 
   @override
   void initState() {
@@ -120,10 +119,11 @@ class _WalletPageState extends State<WalletPage> {
       setState(() {
         _balanceError = 'Token not found';
         _isLoadingBalance = false;
+        _isLoadingStats = false;
       });
       return;
     }
-    await Future.wait([_fetchBalance(), _fetchHistory(reset: true)]);
+    await Future.wait([_fetchBalance(), _fetchIncomeStats()]);
   }
 
   Future<void> _fetchBalance() async {
@@ -136,41 +136,50 @@ class _WalletPageState extends State<WalletPage> {
     }
   }
 
-  Future<void> _fetchHistory({bool reset = false}) async {
-    if (reset) {
-      setState(() { _offset = 0; _records = []; _hasMore = true; _isLoadingHistory = true; _historyError = null; });
-    } else {
-      if (!_hasMore || _isLoadingHistory) return;
-      setState(() { _isLoadingHistory = true; });
-    }
+  Future<void> _fetchIncomeStats() async {
+    setState(() { _isLoadingStats = true; _statsError = null; });
     try {
-      final newRecords = await WalletApiService.fetchIncomeHistory(
+      // Fetch all recent records (no filter, large limit) to compute daily sums
+      final records = await WalletApiService.fetchIncomeHistory(
         _token,
-        type: _activeFilter == 'all' ? null : _activeFilter,
-        limit: _limit,
-        offset: _offset,
+        type: null,           // all types
+        limit: 500,          // ensure we get enough records
+        offset: 0,
       );
       if (mounted) {
-        setState(() {
-          _records.addAll(newRecords);
-          _offset += newRecords.length;
-          _hasMore = newRecords.length == _limit;
-          _isLoadingHistory = false;
-          _historyError = null;
-        });
+        _computeStats(records);
+        setState(() { _isLoadingStats = false; });
       }
     } catch (e) {
       if (mounted) setState(() {
-        _historyError = e.toString().replaceAll('Exception: ', '');
-        _isLoadingHistory = false;
+        _statsError = e.toString().replaceAll('Exception: ', '');
+        _isLoadingStats = false;
       });
     }
   }
 
-  void _onFilterChanged(String filter) {
-    if (_activeFilter == filter) return;
-    _activeFilter = filter;
-    _fetchHistory(reset: true);
+  void _computeStats(List<IncomeRecord> records) {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final yesterdayStart = todayStart.subtract(const Duration(days: 1));
+    final weekStart = todayStart.subtract(const Duration(days: 7));
+
+    double today = 0, yesterday = 0, week = 0;
+    for (var rec in records) {
+      final date = rec.createdAt;
+      if (date.isAfter(todayStart) || date.isAtSameMomentAs(todayStart)) {
+        today += rec.amount;
+        week += rec.amount;
+      } else if (date.isAfter(yesterdayStart) && date.isBefore(todayStart)) {
+        yesterday += rec.amount;
+        week += rec.amount;
+      } else if (date.isAfter(weekStart) || date.isAtSameMomentAs(weekStart)) {
+        week += rec.amount;
+      }
+    }
+    _todayIncome = today;
+    _yesterdayIncome = yesterday;
+    _last7DaysIncome = week;
   }
 
   @override
@@ -181,13 +190,10 @@ class _WalletPageState extends State<WalletPage> {
     final textColor = isDark ? Colors.white : const Color(0xFF000000);
     final subTextColor = isDark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93);
     final borderColor = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
-    final shadowColor = isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.04);
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 1024;
-    final isTablet = screenWidth >= 600 && screenWidth < 1024;
     final isSmall = screenWidth < 360;
-    final hPadding = isDesktop ? 32.w : isTablet ? 20.w : isSmall ? 12.w : 16.w;
+    final hPadding = isSmall ? 12.w : 16.w;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -198,269 +204,247 @@ class _WalletPageState extends State<WalletPage> {
           backgroundColor: cardColor,
           onRefresh: () async {
             HapticFeedback.mediumImpact();
-            await _fetchBalance();
-            await _fetchHistory(reset: true);
+            await Future.wait([_fetchBalance(), _fetchIncomeStats()]);
           },
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (scroll) {
-              if (scroll is ScrollEndNotification && scroll.metrics.pixels >= scroll.metrics.maxScrollExtent - 50) {
-                _fetchHistory();
-              }
-              return false;
-            },
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(hPadding, 8.h, hPadding, 40.h),
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _buildHeader(textColor, subTextColor, isSmall, isDesktop),
-                SizedBox(height: 14.h),
-                _buildBalanceCard(isSmall)
-                    .animate().fadeIn(delay: 80.ms).slideY(begin: 0.03),
-                SizedBox(height: 20.h),
-                _buildFilterChips(isSmall, cardColor, textColor, subTextColor, borderColor)
-                    .animate().fadeIn(delay: 120.ms).slideY(begin: 0.03),
-                SizedBox(height: 10.h),
-                if (_isLoadingHistory && _records.isEmpty)
-                  ...List.generate(4, (_) => _buildShimmerItem(isSmall, cardColor))
-                else if (_historyError != null && _records.isEmpty)
-                  _buildErrorCard(_historyError!, () => _fetchHistory(reset: true), isSmall, cardColor, textColor)
-                else if (_records.isEmpty)
-                  _buildEmptyCard('No income records yet', isSmall, cardColor, shadowColor, borderColor, textColor, subTextColor)
-                else ...
-                  _records.map((r) => _buildIncomeTile(r, isSmall, cardColor, shadowColor, borderColor, textColor, subTextColor)).toList(),
-                if (_isLoadingHistory && _records.isNotEmpty)
-                  Padding(padding: EdgeInsets.symmetric(vertical: 10.h), child: const CupertinoActivityIndicator()),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ==================== HEADER ====================
-  Widget _buildHeader(Color textColor, Color subTextColor, bool isSmall, bool isDesktop) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Wallet', style: GoogleFonts.poppins(fontSize: isSmall ? 24.sp : isDesktop ? 30.sp : 26.sp, fontWeight: FontWeight.w700, color: textColor, height: 1.1)),
-            Text('Balance', style: GoogleFonts.poppins(fontSize: isSmall ? 24.sp : isDesktop ? 30.sp : 26.sp, fontWeight: FontWeight.w300, color: textColor, height: 1.1)),
-          ],
-        ),
-        Container(
-          width: 32.w, height: 32.w,
-          decoration: BoxDecoration(color: accentColor.withOpacity(0.08), shape: BoxShape.circle),
-          child: Icon(CupertinoIcons.money_dollar_circle_fill, color: accentColor, size: isSmall ? 18.sp : 20.sp),
-        ),
-      ],
-    ).animate().fadeIn(delay: 40.ms);
-  }
-
-  // ==================== BALANCE CARD ====================
-  Widget _buildBalanceCard(bool isSmall) {
-    final balance = _balance?.balance ?? 0.0;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: isSmall ? 16.w : 20.w, vertical: isSmall ? 16.h : 18.h),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF059669)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [BoxShadow(color: accentColor.withOpacity(0.3), blurRadius: 24, offset: const Offset(0, 10), spreadRadius: -4)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(hPadding, 8.h, hPadding, 40.h),
+            physics: const BouncingScrollPhysics(),
             children: [
-              Icon(CupertinoIcons.money_dollar_circle, color: Colors.white.withOpacity(0.7), size: isSmall ? 12.sp : 14.sp),
-              SizedBox(width: 5.w),
-              Text('Available Balance', style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.7), fontSize: isSmall ? 10.sp : 11.sp, fontWeight: FontWeight.w500)),
-              const Spacer(),
-              if (!_isLoadingBalance)
-                GestureDetector(
-                  onTap: () async { HapticFeedback.lightImpact(); await _fetchBalance(); },
-                  child: Row(children: [
-                    Icon(CupertinoIcons.arrow_clockwise, color: Colors.white.withOpacity(0.55), size: isSmall ? 10.sp : 11.sp),
-                    SizedBox(width: 3.w),
-                    Text('Refresh', style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.55), fontSize: isSmall ? 9.sp : 10.sp)),
-                  ]),
-                ),
+              // ========== Percentage & synced info ==========
+              _buildPercentageBlock(textColor),
+              SizedBox(height: 12.h),
+              // ========== Balance label & amount ==========
+              _buildBalanceSection(textColor, subTextColor),
+              SizedBox(height: 10.h),
+              // ========== Synced notice ==========
+              Text(
+                'অ্যাসপ অ্যাকাউন্ট থেকে সিঙ্ক হয়েছে',
+                style: GoogleFonts.poppins(color: subTextColor, fontSize: isSmall ? 11.sp : 12.sp),
+              ),
+              SizedBox(height: 16.h),
+              // ========== Withdraw button ==========
+              _buildWithdrawButton(isSmall),
+              SizedBox(height: 24.h),
+              // ========== Transaction History header ==========
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('ট্রানজেকশন হিস্ট্রি', style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 14.sp : 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  )),
+                  TextButton(
+                    onPressed: () { /* TODO: View all transactions */ },
+                    child: Text('সব দেখুন', style: GoogleFonts.poppins(fontSize: isSmall ? 10.sp : 12.sp, color: accentColor)),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              // ========== Income rows ==========
+              if (_isLoadingStats)
+                ...List.generate(3, (_) => _buildStatsShimmer(isSmall, cardColor))
+              else if (_statsError != null)
+                _buildErrorCard(_statsError!, () => _fetchIncomeStats(), isSmall, textColor)
+              else ...[
+                _buildIncomeRow('আজকের আয়', _todayIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {
+                  // TODO: navigate to today's detail
+                }),
+                SizedBox(height: 8.h),
+                _buildIncomeRow('গতকালের আয়', _yesterdayIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {
+                  // TODO: navigate to yesterday's detail
+                }),
+                SizedBox(height: 8.h),
+                _buildIncomeRow('গত ৭ দিনের আয়', _last7DaysIncome, cardColor, textColor, subTextColor, borderColor, isSmall, () {
+                  // TODO: navigate to weekly detail
+                }),
+              ],
             ],
           ),
-          SizedBox(height: 8.h),
-          if (_isLoadingBalance)
-            _buildShimmer(isSmall)
-          else if (_balanceError != null)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(CupertinoIcons.exclamationmark_circle, color: Colors.white.withOpacity(0.8), size: isSmall ? 14.sp : 16.sp),
-                  SizedBox(width: 6.w),
-                  Text('Failed to load', style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.8), fontSize: isSmall ? 14.sp : 16.sp)),
-                ]),
-                SizedBox(height: 6.h),
-                GestureDetector(
-                  onTap: () async { HapticFeedback.mediumImpact(); await _fetchBalance(); },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(10.r)),
-                    child: Text('Retry', style: GoogleFonts.poppins(color: Colors.white, fontSize: isSmall ? 10.sp : 11.sp)),
-                  ),
-                ),
-              ],
-            )
-          else
-            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('\u09F3', style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.6), fontSize: isSmall ? 16.sp : 18.sp)),
-              SizedBox(width: 3.w),
-              Text(balance.toStringAsFixed(2), style: GoogleFonts.poppins(color: Colors.white, fontSize: isSmall ? 28.sp : 32.sp, fontWeight: FontWeight.w700, letterSpacing: -1.2)),
-            ]),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildShimmer(bool isSmall) => Container(
-    height: isSmall ? 34.h : 38.h,
-    width: 140.w,
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(8.r)),
-  ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms, color: Colors.white.withOpacity(0.35));
-
-  // ==================== FILTER CHIPS ====================
-  Widget _buildFilterChips(bool isSmall, Color cardColor, Color textColor, Color subTextColor, Color borderColor) {
-    final filters = [
-      {'label': 'All', 'value': 'all'},
-      {'label': 'Referral', 'value': 'referral'},
-      {'label': 'Matrix', 'value': 'matrix'},
-      {'label': 'Royalty', 'value': 'royalty'},
-    ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.zero,
-      child: Row(
-        children: filters.map((f) {
-          final selected = _activeFilter == f['value'];
-          return Padding(
-            padding: EdgeInsets.only(right: 6.w),
-            child: GestureDetector(
-              onTap: () => _onFilterChanged(f['value']!),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: selected ? accentColor : cardColor,
-                  borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(color: selected ? accentColor : borderColor, width: 0.5),
-                ),
-                child: Text(
-                  f['label']!,
-                  style: GoogleFonts.poppins(
-                    fontSize: isSmall ? 11.sp : 12.sp,
-                    fontWeight: FontWeight.w500,
-                    color: selected ? Colors.white : textColor,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
+  // ==================== Percentage (840.01%) ====================
+  Widget _buildPercentageBlock(Color textColor) {
+    // This value should be replaced with real data from your backend.
+    const String percentage = '840.01%';
+    return Center(
+      child: Text(
+        percentage,
+        style: GoogleFonts.poppins(
+          fontSize: 42.sp,
+          fontWeight: FontWeight.w800,
+          color: accentColor,
+          letterSpacing: -1,
+        ),
       ),
-    );
+    ).animate().fadeIn(delay: 60.ms).scale(begin: const Offset(0.95, 0.95));
   }
 
-  // ==================== INCOME TILE ====================
-  Widget _buildIncomeTile(IncomeRecord rec, bool isSmall, Color cardColor, Color shadowColor, Color borderColor, Color textColor, Color subTextColor) {
-    Color typeColor;
-    IconData icon;
-    switch (rec.type) {
-      case 'referral':
-        typeColor = const Color(0xFF8B5CF6);
-        icon = CupertinoIcons.person_2_fill;
-        break;
-      case 'matrix':
-        typeColor = const Color(0xFF6366F1);
-        icon = CupertinoIcons.cube_box_fill;
-        break;
-      case 'royalty':
-        typeColor = const Color(0xFFF59E0B);
-        icon = CupertinoIcons.star_fill;
-        break;
-      default:
-        typeColor = Colors.grey;
-        icon = CupertinoIcons.money_dollar;
-    }
-    return Container(
-      padding: EdgeInsets.all(isSmall ? 12.w : 14.w),
-      margin: EdgeInsets.only(bottom: 6.h),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: borderColor, width: 0.5),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 12, offset: const Offset(0, 4), spreadRadius: -2)],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: isSmall ? 36.w : 40.w,
-            height: isSmall ? 36.w : 40.w,
-            decoration: BoxDecoration(color: typeColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10.r)),
-            child: Icon(icon, color: typeColor, size: isSmall ? 16.sp : 18.sp),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  // ==================== Balance ====================
+  Widget _buildBalanceSection(Color textColor, Color subTextColor) {
+    final balance = _balance?.balance ?? 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('বর্তমান ব্যালেন্স', style: GoogleFonts.poppins(
+          fontSize: 13.sp,
+          color: subTextColor,
+        )),
+        SizedBox(height: 2.h),
+        if (_isLoadingBalance)
+          _buildShimmerBalance()
+        else if (_balanceError != null)
+          GestureDetector(
+            onTap: () { _fetchBalance(); },
+            child: Row(
               children: [
-                Text(rec.description, style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.w600, color: textColor), maxLines: 1, overflow: TextOverflow.ellipsis),
-                SizedBox(height: 2.h),
-                Text('${rec.createdAt.day}/${rec.createdAt.month}/${rec.createdAt.year}', style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, color: subTextColor)),
+                Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: 16.sp),
+                SizedBox(width: 6.w),
+                Text('লোড ব্যর্থ', style: GoogleFonts.poppins(color: Colors.red, fontSize: 14.sp)),
               ],
             ),
-          ),
-          Column(
+          )
+        else
+          Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('\u09F3 ${rec.amount.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: isSmall ? 13.sp : 15.sp, fontWeight: FontWeight.w700, color: textColor)),
-              SizedBox(height: 2.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                decoration: BoxDecoration(color: typeColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6.r)),
-                child: Text(rec.type.toUpperCase(), style: GoogleFonts.poppins(fontSize: isSmall ? 8.sp : 9.sp, color: typeColor, fontWeight: FontWeight.w500)),
+              Text('৳', style: GoogleFonts.poppins(color: textColor, fontSize: 22.sp, fontWeight: FontWeight.w600)),
+              SizedBox(width: 2.w),
+              Text(
+                balance.toStringAsFixed(2),
+                style: GoogleFonts.poppins(
+                  fontSize: 26.sp,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                  letterSpacing: -1,
+                ),
               ),
             ],
           ),
-        ],
+      ],
+    ).animate().fadeIn(delay: 120.ms);
+  }
+
+  Widget _buildShimmerBalance() => Container(
+    height: 28.h,
+    width: 140.w,
+    decoration: BoxDecoration(
+      color: Colors.grey.withOpacity(0.2),
+      borderRadius: BorderRadius.circular(8.r),
+    ),
+  ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms, color: Colors.white.withOpacity(0.3));
+
+  // ==================== Withdraw Button ====================
+  Widget _buildWithdrawButton(bool isSmall) {
+    return SizedBox(
+      width: double.infinity,
+      height: 44.h,
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
+        color: accentColor,
+        borderRadius: BorderRadius.circular(12.r),
+        onPressed: () {
+          // TODO: Implement withdraw functionality
+          HapticFeedback.mediumImpact();
+        },
+        child: Text(
+          'উইথড্র',
+          style: GoogleFonts.poppins(
+            fontSize: isSmall ? 14.sp : 16.sp,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    ).animate().fadeIn(delay: 180.ms);
+  }
+
+  // ==================== Income Row (Today / Yesterday / Week) ====================
+  Widget _buildIncomeRow(
+    String title,
+    double amount,
+    Color cardColor,
+    Color textColor,
+    Color subTextColor,
+    Color borderColor,
+    bool isSmall,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: borderColor, width: 0.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+              spreadRadius: -2,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: isSmall ? 13.sp : 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                ),
+              ),
+            ),
+            Text(
+              '৳ ${amount.toStringAsFixed(2)}',
+              style: GoogleFonts.poppins(
+                fontSize: isSmall ? 13.sp : 14.sp,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Icon(
+              CupertinoIcons.chevron_right,
+              size: 18.sp,
+              color: subTextColor,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildShimmerItem(bool isSmall, Color cardColor) => Container(
-    height: 60.h, margin: EdgeInsets.only(bottom: 6.h),
-    decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14.r)),
+  Widget _buildStatsShimmer(bool isSmall, Color cardColor) => Container(
+    height: 54.h,
+    margin: EdgeInsets.only(bottom: 8.h),
+    decoration: BoxDecoration(
+      color: cardColor,
+      borderRadius: BorderRadius.circular(14.r),
+    ),
   ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms, color: Colors.grey.withOpacity(0.3));
 
-  Widget _buildErrorCard(String msg, VoidCallback retry, bool isSmall, Color cardColor, Color textColor) => Container(
-    padding: EdgeInsets.all(16.w), margin: EdgeInsets.only(bottom: 6.h),
-    decoration: BoxDecoration(color: Colors.red.withOpacity(0.05), borderRadius: BorderRadius.circular(14.r), border: Border.all(color: Colors.red.withOpacity(0.2))),
+  Widget _buildErrorCard(String msg, VoidCallback retry, bool isSmall, Color textColor) => Container(
+    padding: EdgeInsets.all(16.w),
+    margin: EdgeInsets.only(bottom: 8.h),
+    decoration: BoxDecoration(
+      color: Colors.red.withOpacity(0.05),
+      borderRadius: BorderRadius.circular(14.r),
+      border: Border.all(color: Colors.red.withOpacity(0.2)),
+    ),
     child: Column(children: [
       Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: isSmall ? 24.sp : 28.sp),
       SizedBox(height: 8.h),
       Text(msg, style: GoogleFonts.poppins(fontSize: isSmall ? 11.sp : 12.sp, color: Colors.red), textAlign: TextAlign.center),
       SizedBox(height: 10.h),
       GestureDetector(onTap: retry, child: Container(padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(10.r)), child: Text('Retry', style: GoogleFonts.poppins(color: Colors.white)))),
-    ]),
-  );
-
-  Widget _buildEmptyCard(String text, bool isSmall, Color cardColor, Color shadowColor, Color borderColor, Color textColor, Color subTextColor) => Container(
-    padding: EdgeInsets.all(24.w), margin: EdgeInsets.only(bottom: 6.h),
-    decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14.r), border: Border.all(color: borderColor, width: 0.5)),
-    child: Column(children: [
-      Icon(CupertinoIcons.tray, color: subTextColor, size: isSmall ? 32.sp : 36.sp),
-      SizedBox(height: 8.h),
-      Text(text, style: GoogleFonts.poppins(fontSize: isSmall ? 12.sp : 13.sp, color: subTextColor)),
     ]),
   );
 }
