@@ -105,7 +105,7 @@ final GoRouter appRouter = GoRouter(
           path: '/royalty-salary',
           builder: (context, state) => const RoyaltySalaryPage(),
         ),
-        // wallet ShellRoute-?? ?????
+        // ✅ wallet ShellRoute-এর ভেতরে
         _detailRoute(
           path: '/wallet',
           builder: (context, state) => const WalletPage(),
@@ -140,8 +140,9 @@ final GoRouter appRouter = GoRouter(
             final period = state.uri.queryParameters['period'] ?? 'daily';
             return IncomeDetailPage(period: period);
           },
-        ), // ✅ FIXED: Removed the extra ");" that was here
+        ),
 
+        ),
         _detailRoute(
           path: '/product/:id',
           builder: (context, state) => ProductDetailsPage(
