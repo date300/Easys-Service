@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod যুক�
 import 'package:go_router/go_router.dart'; // GoRouter যুক্ত করা হয়েছে
 
 // আপনার main.dart থেকে প্রোভাইডারগুলো ইম্পোর্ট করে নিবেন
-import '../main.dart'; 
+import '../../main.dart'; 
 
 // ==========================================
 // 1. Models
