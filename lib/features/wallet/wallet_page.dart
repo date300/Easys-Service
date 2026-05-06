@@ -534,13 +534,14 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
+  // ================== FIXED LIST ==================
   List<Widget> _buildIncomeMenu(
     bool isSmall, Color cardColor, Color textColor, bool isDark,
   ) {
     final items = [
-      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,   'delay': 160, 'period': 'daily'},
-      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill', 'delay': 210, 'period': 'weekly'},
-      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,        'delay': 260, 'period': 'summary'},
+      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,         'delay': 160, 'period': 'daily'},
+      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill,      'delay': 210, 'period': 'weekly'},
+      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,             'delay': 260, 'period': 'summary'},
     ];
 
     return items.map((item) {
@@ -695,11 +696,10 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
-      appBar: null, // explicitly no AppBar
+      appBar: null,
       body: SafeArea(
         child: Column(
           children: [
-            // Custom header row
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               child: Row(
@@ -731,7 +731,6 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
               ),
             ),
             const Divider(height: 1),
-            // Content
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: _accent))
