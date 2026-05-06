@@ -168,6 +168,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     http.Response response, {
     required bool replace,
     int newOffset = 0,
+    void Function(int)? onUnreadCount,
   }) {
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
@@ -177,6 +178,10 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
       final updated = replace
           ? fetched
           : [...state.notifications, ...fetched];
+
+      // AppTopBar badge sync
+      final unreadCount = updated.where((n) => !n.isRead).length;
+      onUnreadCount?.call(unreadCount);
 
       state = state.copyWith(
         notifications: updated,
