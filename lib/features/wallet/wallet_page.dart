@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ==========================================
-// 1. Model
+// 1. Models
 // ==========================================
 
 class WalletBalance {
@@ -17,6 +17,28 @@ class WalletBalance {
   WalletBalance({required this.balance});
   factory WalletBalance.fromJson(Map<String, dynamic> json) =>
       WalletBalance(balance: double.tryParse(json['balance'].toString()) ?? 0.0);
+}
+
+class Transaction {
+  final int id;
+  final double amount;
+  final String type;
+  final String description;
+  final String createdAt;
+  Transaction({
+    required this.id,
+    required this.amount,
+    required this.type,
+    required this.description,
+    required this.createdAt,
+  });
+  factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
+    id: json['id'],
+    amount: double.tryParse(json['amount'].toString()) ?? 0.0,
+    type: json['type'] ?? '',
+    description: json['description'] ?? '',
+    createdAt: json['created_at'] ?? '',
+  );
 }
 
 // ==========================================
@@ -27,21 +49,113 @@ class WalletApiService {
   static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
 
   static Future<WalletBalance> fetchBalance(String token) async {
-    final res = await http
-        .get(
-          Uri.parse('$_baseUrl/user/profile'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        )
-        .timeout(const Duration(seconds: 15));
+    final res = await http.get(
+      Uri.parse('$_baseUrl/wallet/balance'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
     if (res.statusCode == 200) {
       final json = jsonDecode(res.body);
-      if (json['status'] == 'success' && json['user'] != null) {
-        return WalletBalance.fromJson(json['user']);
+      if (json['status'] == 'success' && json['data'] != null) {
+        return WalletBalance.fromJson(json['data']);
       }
-      throw Exception('Invalid profile data');
+      throw Exception('Invalid balance data');
+    } else {
+      throw Exception('Server error: ${res.statusCode}');
+    }
+  }
+
+  static Future<double> fetchDailyIncome(String token) async {
+    final res = await http.get(
+      Uri.parse('$_baseUrl/wallet/income/daily'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
+    if (res.statusCode == 200) {
+      final json = jsonDecode(res.body);
+      if (json['status'] == 'success' && json['data'] != null) {
+        return double.tryParse(json['data']['total_income'].toString()) ?? 0.0;
+      }
+      throw Exception('Invalid data');
+    } else {
+      throw Exception('Server error: ${res.statusCode}');
+    }
+  }
+
+  static Future<double> fetchWeeklyIncome(String token) async {
+    final res = await http.get(
+      Uri.parse('$_baseUrl/wallet/income/weekly'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
+    if (res.statusCode == 200) {
+      final json = jsonDecode(res.body);
+      if (json['status'] == 'success' && json['data'] != null) {
+        return double.tryParse(json['data']['total_income'].toString()) ?? 0.0;
+      }
+      throw Exception('Invalid data');
+    } else {
+      throw Exception('Server error: ${res.statusCode}');
+    }
+  }
+
+  static Future<double> fetchMonthlyIncome(String token) async {
+    final res = await http.get(
+      Uri.parse('$_baseUrl/wallet/income/monthly'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
+    if (res.statusCode == 200) {
+      final json = jsonDecode(res.body);
+      if (json['status'] == 'success' && json['data'] != null) {
+        return double.tryParse(json['data']['total_income'].toString()) ?? 0.0;
+      }
+      throw Exception('Invalid data');
+    } else {
+      throw Exception('Server error: ${res.statusCode}');
+    }
+  }
+
+  static Future<Map<String, double>> fetchIncomeSummary(String token) async {
+    final res = await http.get(
+      Uri.parse('$_baseUrl/wallet/income/summary'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
+    if (res.statusCode == 200) {
+      final json = jsonDecode(res.body);
+      if (json['status'] == 'success' && json['data'] != null) {
+        return {
+          'daily': double.tryParse(json['data']['daily_income'].toString()) ?? 0.0,
+          'weekly': double.tryParse(json['data']['weekly_income'].toString()) ?? 0.0,
+          'monthly': double.tryParse(json['data']['monthly_income'].toString()) ?? 0.0,
+        };
+      }
+      throw Exception('Invalid data');
+    } else {
+      throw Exception('Server error: ${res.statusCode}');
+    }
+  }
+
+  static Future<List<Transaction>> fetchTransactions(
+    String token, {
+    String? type,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final params = <String, String>{
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+    };
+    if (type != null) params['type'] = type;
+    final uri = Uri.parse('$_baseUrl/wallet/transactions').replace(queryParameters: params);
+    final res = await http.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 15));
+    if (res.statusCode == 200) {
+      final json = jsonDecode(res.body);
+      if (json['status'] == 'success' && json['data'] != null) {
+        return (json['data'] as List)
+            .map((e) => Transaction.fromJson(e))
+            .toList();
+      }
+      throw Exception('Invalid data');
     } else {
       throw Exception('Server error: ${res.statusCode}');
     }
@@ -49,7 +163,7 @@ class WalletApiService {
 }
 
 // ==========================================
-// 3. Wallet Page
+// 3. Wallet Page (Main)
 // ==========================================
 
 class WalletPage extends StatefulWidget {
@@ -62,7 +176,6 @@ class _WalletPageState extends State<WalletPage> {
   static const Color _accent      = Color(0xFF29B6F6);
   static const Color _accentLight = Color(0xFF4FC3F7);
   static const Color _accentDeep  = Color(0xFF0277BD);
-
   static const Color _darkBg      = Color(0xFF121212);
   static const Color _darkCard    = Color(0xFF1E1E1E);
   static const Color _lightBg     = Color(0xFFF5F5F5);
@@ -129,23 +242,16 @@ class _WalletPageState extends State<WalletPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Balance Card
               _buildBalanceCard(isSmall, cardColor, textColor, subColor)
                   .animate()
                   .fadeIn(delay: 60.ms)
                   .slideY(begin: 0.04, curve: Curves.easeOut),
-
               SizedBox(height: 16.h),
-
-              // Action Buttons
               _buildActionButtons(isSmall)
                   .animate()
                   .fadeIn(delay: 130.ms)
                   .slideY(begin: 0.04, curve: Curves.easeOut),
-
               SizedBox(height: 14.h),
-
-              // Income Menu
               ..._buildIncomeMenu(isSmall, cardColor, textColor, isDark),
             ],
           ),
@@ -154,14 +260,8 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  // ──────────────────────────────────────────
-  //  BALANCE CARD
-  // ──────────────────────────────────────────
   Widget _buildBalanceCard(
-    bool isSmall,
-    Color cardColor,
-    Color textColor,
-    Color subColor,
+    bool isSmall, Color cardColor, Color textColor, Color subColor,
   ) {
     return Container(
       width: double.infinity,
@@ -169,10 +269,7 @@ class _WalletPageState extends State<WalletPage> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(22.r),
-        border: Border.all(
-          color: _accent.withOpacity(0.12),
-          width: 1,
-        ),
+        border: Border.all(color: _accent.withOpacity(0.12), width: 1),
         boxShadow: [
           BoxShadow(
             color: _accent.withOpacity(0.08),
@@ -186,22 +283,18 @@ class _WalletPageState extends State<WalletPage> {
         children: [
           _buildWalletIllustration(isSmall),
           SizedBox(height: 20.h),
-          Text(
-            'My Wallet',
+          Text('My Wallet',
             style: GoogleFonts.poppins(
               fontSize: isSmall ? 20.sp : 22.sp,
               fontWeight: FontWeight.w700,
               color: textColor,
-              height: 1.2,
             ),
           ),
           SizedBox(height: 5.h),
-          Text(
-            'View all your earnings here',
+          Text('View all your earnings here',
             style: GoogleFonts.poppins(
               fontSize: isSmall ? 11.sp : 12.sp,
               color: subColor,
-              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -209,9 +302,6 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  // ──────────────────────────────────────────
-  //  WALLET ILLUSTRATION
-  // ──────────────────────────────────────────
   Widget _buildWalletIllustration(bool isSmall) {
     final double wW   = isSmall ? 210 : 245;
     final double wH   = isSmall ? 170 : 198;
@@ -228,7 +318,6 @@ class _WalletPageState extends State<WalletPage> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Back card
             Positioned(
               top:  0,
               left: (wW * 0.13).w,
@@ -241,16 +330,11 @@ class _WalletPageState extends State<WalletPage> {
                   decoration: BoxDecoration(
                     color: _accentDeep,
                     borderRadius: BorderRadius.circular(13.r),
-                    border: Border.all(
-                      color: Colors.black.withOpacity(0.4),
-                      width: 3.2,
-                    ),
+                    border: Border.all(color: Colors.black.withOpacity(0.4), width: 3.2),
                   ),
                 ),
               ),
             ),
-
-            // Main wallet body
             Positioned(
               bottom: 0,
               left:   0,
@@ -264,10 +348,7 @@ class _WalletPageState extends State<WalletPage> {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(22.r),
-                  border: Border.all(
-                    color: Colors.black.withOpacity(0.3),
-                    width: 3.5,
-                  ),
+                  border: Border.all(color: Colors.black.withOpacity(0.3), width: 3.5),
                   boxShadow: [
                     BoxShadow(
                       color: _accent.withOpacity(0.35),
@@ -298,8 +379,6 @@ class _WalletPageState extends State<WalletPage> {
                 ),
               ),
             ),
-
-            // Clasp
             Positioned(
               right:  0,
               bottom: (wH * 0.20).h,
@@ -314,10 +393,7 @@ class _WalletPageState extends State<WalletPage> {
                     topRight:    Radius.circular(18.r),
                     bottomRight: Radius.circular(18.r),
                   ),
-                  border: Border.all(
-                    color: Colors.black.withOpacity(0.3),
-                    width: 3.5,
-                  ),
+                  border: Border.all(color: Colors.black.withOpacity(0.3), width: 3.5),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.2),
@@ -340,20 +416,14 @@ class _WalletPageState extends State<WalletPage> {
         height: 32.w,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.black.withOpacity(0.3),
-            width: 3,
-          ),
+          border: Border.all(color: Colors.black.withOpacity(0.3), width: 3),
           color: const Color(0xFF1E1E1E),
         ),
         child: Center(
           child: Container(
             width:  12.w,
             height: 12.w,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: _accent,
-            ),
+            decoration: const BoxDecoration(shape: BoxShape.circle, color: _accent),
           ),
         ),
       );
@@ -379,8 +449,7 @@ class _WalletPageState extends State<WalletPage> {
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(color: Colors.white.withOpacity(0.35)),
           ),
-          child: Text(
-            'Tap to Retry',
+          child: Text('Tap to Retry',
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: isSmall ? 12.sp : 13.sp,
@@ -390,9 +459,6 @@ class _WalletPageState extends State<WalletPage> {
         ),
       );
 
-  // ──────────────────────────────────────────
-  //  ACTION BUTTONS
-  // ──────────────────────────────────────────
   Widget _buildActionButtons(bool isSmall) {
     return Row(
       children: [
@@ -403,7 +469,7 @@ class _WalletPageState extends State<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              // TODO: navigate to withdraw screen
+              // TODO: Withdraw page
             },
           ),
         ),
@@ -415,7 +481,8 @@ class _WalletPageState extends State<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              // TODO: navigate to transaction history
+              Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const TransactionListPage()));
             },
           ),
         ),
@@ -454,8 +521,7 @@ class _WalletPageState extends State<WalletPage> {
           children: [
             Icon(icon, color: Colors.white, size: isSmall ? 14.sp : 16.sp),
             SizedBox(width: 5.w),
-            Text(
-              label,
+            Text(label,
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontSize: isSmall ? 13.sp : 14.sp,
@@ -468,19 +534,13 @@ class _WalletPageState extends State<WalletPage> {
     );
   }
 
-  // ──────────────────────────────────────────
-  //  INCOME MENU
-  // ──────────────────────────────────────────
   List<Widget> _buildIncomeMenu(
-    bool isSmall,
-    Color cardColor,
-    Color textColor,
-    bool isDark,
+    bool isSmall, Color cardColor, Color textColor, bool isDark,
   ) {
     final items = [
-      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,         'delay': 160},
-      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill,       'delay': 210},
-      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,             'delay': 260},
+      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,   'delay': 160, 'period': 'daily'},
+      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill, 'delay': 210, 'period': 'weekly'},
+      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,        'delay': 260, 'period': 'summary'},
     ];
 
     return items.map((item) {
@@ -493,7 +553,8 @@ class _WalletPageState extends State<WalletPage> {
         isDark:    isDark,
         onTap: () {
           HapticFeedback.lightImpact();
-          // TODO: navigate to detail screen
+          Navigator.push(context,
+            MaterialPageRoute(builder: (_) => IncomeDetailPage(period: item['period'] as String)));
         },
       )
           .animate()
@@ -503,12 +564,12 @@ class _WalletPageState extends State<WalletPage> {
   }
 
   Widget _menuItem({
-    required String   label,
+    required String label,
     required IconData icon,
-    required bool     isSmall,
-    required Color    cardColor,
-    required Color    textColor,
-    required bool     isDark,
+    required bool isSmall,
+    required Color cardColor,
+    required Color textColor,
+    required bool isDark,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -519,9 +580,7 @@ class _WalletPageState extends State<WalletPage> {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16.r),
-          border: isDark
-              ? Border.all(color: Colors.white.withOpacity(0.05), width: 1)
-              : null,
+          border: isDark ? Border.all(color: Colors.white.withOpacity(0.05)) : null,
           boxShadow: [
             BoxShadow(
               color: _accent.withOpacity(0.06),
@@ -533,24 +592,19 @@ class _WalletPageState extends State<WalletPage> {
         ),
         child: Row(
           children: [
-            // Icon badge
             Container(
               width:  isSmall ? 40.w : 44.w,
               height: isSmall ? 40.w : 44.w,
               decoration: BoxDecoration(
                 color: _accent.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(
-                  color: _accent.withOpacity(0.20),
-                  width: 0.8,
-                ),
+                border: Border.all(color: _accent.withOpacity(0.20)),
               ),
               child: Icon(icon, color: _accent, size: isSmall ? 18.sp : 20.sp),
             ),
             SizedBox(width: 12.w),
             Expanded(
-              child: Text(
-                label,
+              child: Text(label,
                 style: GoogleFonts.poppins(
                   fontSize: isSmall ? 14.sp : 15.sp,
                   fontWeight: FontWeight.w600,
@@ -558,7 +612,6 @@ class _WalletPageState extends State<WalletPage> {
                 ),
               ),
             ),
-            // Arrow badge
             Container(
               width:  30.w,
               height: 30.w,
@@ -566,15 +619,357 @@ class _WalletPageState extends State<WalletPage> {
                 color: _accent.withOpacity(0.10),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                CupertinoIcons.chevron_right,
-                color: _accent,
-                size: isSmall ? 13.sp : 14.sp,
+              child: Icon(CupertinoIcons.chevron_right,
+                color: _accent, size: isSmall ? 13.sp : 14.sp),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 4. Income Detail Page
+// ==========================================
+
+class IncomeDetailPage extends StatefulWidget {
+  final String period; // 'daily', 'weekly', 'monthly', 'summary'
+  const IncomeDetailPage({super.key, required this.period});
+  @override
+  State<IncomeDetailPage> createState() => _IncomeDetailPageState();
+}
+
+class _IncomeDetailPageState extends State<IncomeDetailPage> {
+  static const Color _accent = Color(0xFF29B6F6);
+  bool _isLoading = true;
+  String? _error;
+  double _totalIncome = 0.0;
+  Map<String, double> _summary = {};
+  String _token = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString('jwt_token') ?? '';
+    if (_token.isEmpty) {
+      setState(() { _error = 'Token missing'; _isLoading = false; });
+      return;
+    }
+    try {
+      if (widget.period == 'daily') {
+        _totalIncome = await WalletApiService.fetchDailyIncome(_token);
+      } else if (widget.period == 'weekly') {
+        _totalIncome = await WalletApiService.fetchWeeklyIncome(_token);
+      } else if (widget.period == 'monthly') {
+        _totalIncome = await WalletApiService.fetchMonthlyIncome(_token);
+      } else if (widget.period == 'summary') {
+        _summary = await WalletApiService.fetchIncomeSummary(_token);
+      }
+      setState(() { _isLoading = false; });
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceAll('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String title;
+    switch (widget.period) {
+      case 'daily': title = 'Today\'s Income'; break;
+      case 'weekly': title = 'Last 7 Days Income'; break;
+      case 'monthly': title = 'This Month Income'; break;
+      case 'summary': title = 'Income Summary'; break;
+      default: title = 'Income';
+    }
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF121212)
+          : const Color(0xFFF5F5F5),
+      appBar: AppBar(title: Text(title), centerTitle: true, backgroundColor: _accent),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: _accent))
+          : _error != null
+              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+              : widget.period == 'summary'
+                  ? _buildSummary()
+                  : _buildSingleTotal(title),
+    );
+  }
+
+  Widget _buildSingleTotal(String title) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(title,
+              style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.w600)),
+            SizedBox(height: 16.h),
+            Container(
+              padding: EdgeInsets.all(20.w),
+              decoration: BoxDecoration(
+                color: _accent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Text(
+                '\$${_totalIncome.toStringAsFixed(2)}',
+                style: GoogleFonts.poppins(
+                  fontSize: 32.sp,
+                  fontWeight: FontWeight.w900,
+                  color: _accent,
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSummary() {
+    return Padding(
+      padding: EdgeInsets.all(24.w),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _summaryCard('Today', _summary['daily'] ?? 0),
+          SizedBox(height: 12.h),
+          _summaryCard('This Week', _summary['weekly'] ?? 0),
+          SizedBox(height: 12.h),
+          _summaryCard('This Month', _summary['monthly'] ?? 0),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryCard(String label, double amount) {
+    return Container(
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        boxShadow: [
+          BoxShadow(
+            color: _accent.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w500)),
+          Text('\$${amount.toStringAsFixed(2)}',
+            style: GoogleFonts.poppins(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w700,
+              color: _accent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 5. Transaction List Page
+// ==========================================
+
+class TransactionListPage extends StatefulWidget {
+  const TransactionListPage({super.key});
+  @override
+  State<TransactionListPage> createState() => _TransactionListPageState();
+}
+
+class _TransactionListPageState extends State<TransactionListPage> {
+  static const Color _accent = Color(0xFF29B6F6);
+  List<Transaction> _transactions = [];
+  bool _isLoading = true;
+  String? _error;
+  String _token = '';
+  int _offset = 0;
+  bool _hasMore = true;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_scrollListener);
+    _loadInitial();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 100 &&
+        !_isLoading &&
+        _hasMore) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadInitial() async {
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString('jwt_token') ?? '';
+    if (_token.isEmpty) {
+      setState(() { _error = 'Token missing'; _isLoading = false; });
+      return;
+    }
+    await _fetchTransactions(reset: true);
+  }
+
+  Future<void> _fetchTransactions({bool reset = false}) async {
+    if (reset) {
+      _offset = 0;
+      _hasMore = true;
+    }
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      final newList = await WalletApiService.fetchTransactions(
+        _token,
+        limit: 20,
+        offset: _offset,
+      );
+      if (mounted) {
+        setState(() {
+          if (reset) _transactions = newList;
+          else _transactions.addAll(newList);
+          _offset += newList.length;
+          _hasMore = newList.length == 20;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoading || !_hasMore) return;
+    await _fetchTransactions();
+  }
+
+  Future<void> _refresh() async {
+    await _fetchTransactions(reset: true);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF121212)
+          : const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        title: const Text('Transaction History'),
+        centerTitle: true,
+        backgroundColor: _accent,
+      ),
+      body: _isLoading && _transactions.isEmpty
+          ? const Center(child: CircularProgressIndicator(color: _accent))
+          : _error != null && _transactions.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                      SizedBox(height: 12.h),
+                      ElevatedButton(
+                        onPressed: _refresh,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _refresh,
+                  color: _accent,
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: EdgeInsets.all(16.w),
+                    itemCount: _transactions.length + (_hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _transactions.length) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: CircularProgressIndicator(color: _accent),
+                          ),
+                        );
+                      }
+                      final t = _transactions[index];
+                      return Card(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1E1E1E)
+                            : Colors.white,
+                        margin: EdgeInsets.only(bottom: 8.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w, vertical: 8.h,
+                          ),
+                          title: Text(
+                            t.description,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${t.type} • ${_formatDate(t.createdAt)}',
+                            style: GoogleFonts.poppins(fontSize: 12.sp),
+                          ),
+                          trailing: Text(
+                            '\$${t.amount.toStringAsFixed(2)}',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15.sp,
+                              color: _accent,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+    );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso);
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return iso;
+    }
   }
 }
