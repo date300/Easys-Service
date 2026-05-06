@@ -742,7 +742,8 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
           ],
         ),
       ),
-    ).animate().scale(duration: 400.ms, curve: Curves.backOut);
+ ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
+
   }
 
   Widget _buildSummary() {
