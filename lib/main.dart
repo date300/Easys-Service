@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,9 +12,6 @@ import 'widgets/app_bottom_nav_bar.dart';
 import 'widgets/app_nav_rail.dart';
 import 'widgets/app_top_bar.dart';
 import 'widgets/app_drawer.dart';
-
-// ✅ notification_screen থেকে initNotificationService import করো
-import 'modules/notifications/notification_screen.dart';
 
 // ============================================
 // THEME PROVIDERS
@@ -111,14 +107,11 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 // MAIN
 // ============================================
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Notification + Workmanager init
-  // Web এ kIsWeb check করে নিজেই skip করবে
-  // Android এ heads-up notification ও background polling চালু হবে
-  await initNotificationService();
-
+  // ✅ Status bar transparent রাখো
+  // Scaffold backgroundColor দিয়ে status bar এলাকা fill হবে
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -159,6 +152,7 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.light,
       colorSchemeSeed: const Color(0xFF29B6F6),
+      // ✅ AppTopBar skyBlue এর সাথে মিলছে → status bar same color দেখাবে
       scaffoldBackgroundColor: const Color(0xFF29B6F6),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
       appBarTheme: const AppBarTheme(
@@ -189,6 +183,8 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorSchemeSeed: const Color(0xFF29B6F6),
+      // ✅ AppTopBar darkHeader (0xFF1E1E1E) এর সাথে মিলছে
+      // → status bar এলাকায় এই color দেখাবে, AppTopBar এর সাথে seamless হবে
       scaffoldBackgroundColor: const Color(0xFF1E1E1E),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       appBarTheme: const AppBarTheme(
@@ -243,6 +239,7 @@ class MainWrapper extends ConsumerWidget {
   void _onNavTap(BuildContext context, WidgetRef ref, int index) {
     ref.read(isDetailViewProvider.notifier).state = false;
     ref.read(detailViewTitleProvider.notifier).state = '';
+
     switch (index) {
       case 0: context.go('/home'); break;
       case 1: context.go('/reselling'); break;
@@ -280,6 +277,9 @@ class MainWrapper extends ConsumerWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
+          // ✅ body content এর background
+          // Dark: 0xFF121212 (scaffold থেকে আলাদা — এটাই content area)
+          // Light: white
           color: isDark ? const Color(0xFF121212) : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(bodyRadius),
@@ -305,7 +305,13 @@ class MainWrapper extends ConsumerWidget {
         }
       },
       child: Scaffold(
+        // ✅ backgroundColor থিম থেকে আসে:
+        // Dark mode  → 0xFF1E1E1E (AppTopBar darkHeader এর মতো)
+        // Light mode → 0xFF29B6F6 (AppTopBar skyBlue এর মতো)
+        // SafeArea top:true হওয়ায় status bar এলাকায় এই scaffold color দেখায়
+        // → AppTopBar এর সাথে seamless একই color!
         body: SafeArea(
+          // ✅ আগের মতোই রাখা — white gap সমস্যা নেই
           top: !isEditProfile,
           child: Row(
             children: [
