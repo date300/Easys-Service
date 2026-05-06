@@ -539,7 +539,7 @@ class _WalletPageState extends State<WalletPage> {
   ) {
     final items = [
       {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,   'delay': 160, 'period': 'daily'},
-      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill, 'delay': 210, 'period': 'weekly'},
+      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill', 'delay': 210, 'period': 'weekly'},
       {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,        'delay': 260, 'period': 'summary'},
     ];
 
@@ -630,11 +630,11 @@ class _WalletPageState extends State<WalletPage> {
 }
 
 // ==========================================
-// 4. Income Detail Page
+// 4. Income Detail Page (NO APP BAR)
 // ==========================================
 
 class IncomeDetailPage extends StatefulWidget {
-  final String period; // 'daily', 'weekly', 'monthly', 'summary'
+  final String period;
   const IncomeDetailPage({super.key, required this.period});
   @override
   State<IncomeDetailPage> createState() => _IncomeDetailPageState();
@@ -680,40 +680,81 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
     }
   }
 
+  String get _title {
+    switch (widget.period) {
+      case 'daily': return 'Today\'s Income';
+      case 'weekly': return 'Last 7 Days Income';
+      case 'monthly': return 'This Month Income';
+      case 'summary': return 'Income Summary';
+      default: return 'Income';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    String title;
-    switch (widget.period) {
-      case 'daily': title = 'Today\'s Income'; break;
-      case 'weekly': title = 'Last 7 Days Income'; break;
-      case 'monthly': title = 'This Month Income'; break;
-      case 'summary': title = 'Income Summary'; break;
-      default: title = 'Income';
-    }
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF121212)
-          : const Color(0xFFF5F5F5),
-      appBar: AppBar(title: Text(title), centerTitle: true, backgroundColor: _accent),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _accent))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-              : widget.period == 'summary'
-                  ? _buildSummary()
-                  : _buildSingleTotal(title),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+      appBar: null, // explicitly no AppBar
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Custom header row
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40.w,
+                      height: 40.w,
+                      decoration: BoxDecoration(
+                        color: _accent.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.arrow_back, color: _accent, size: 20.sp),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Text(
+                      _title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Content
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: _accent))
+                  : _error != null
+                      ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+                      : widget.period == 'summary'
+                          ? _buildSummary()
+                          : _buildSingleTotal(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildSingleTotal(String title) {
+  Widget _buildSingleTotal() {
     return Center(
       child: Padding(
         padding: EdgeInsets.all(24.w),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(title,
+            Text(_title,
               style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.w600)),
             SizedBox(height: 16.h),
             Container(
@@ -741,7 +782,6 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
     return Padding(
       padding: EdgeInsets.all(24.w),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           _summaryCard('Today', _summary['daily'] ?? 0),
           SizedBox(height: 12.h),
@@ -787,7 +827,7 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
 }
 
 // ==========================================
-// 5. Transaction List Page
+// 5. Transaction List Page (NO APP BAR)
 // ==========================================
 
 class TransactionListPage extends StatefulWidget {
@@ -880,87 +920,121 @@ class _TransactionListPageState extends State<TransactionListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF121212)
-          : const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: const Text('Transaction History'),
-        centerTitle: true,
-        backgroundColor: _accent,
-      ),
-      body: _isLoading && _transactions.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: _accent))
-          : _error != null && _transactions.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
-                      SizedBox(height: 12.h),
-                      ElevatedButton(
-                        onPressed: _refresh,
-                        child: const Text('Retry'),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+      appBar: null,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40.w,
+                      height: 40.w,
+                      decoration: BoxDecoration(
+                        color: _accent.withOpacity(0.1),
+                        shape: BoxShape.circle,
                       ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _refresh,
-                  color: _accent,
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics(),
+                      child: Icon(Icons.arrow_back, color: _accent, size: 20.sp),
                     ),
-                    padding: EdgeInsets.all(16.w),
-                    itemCount: _transactions.length + (_hasMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _transactions.length) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20.0),
-                            child: CircularProgressIndicator(color: _accent),
-                          ),
-                        );
-                      }
-                      final t = _transactions[index];
-                      return Card(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF1E1E1E)
-                            : Colors.white,
-                        margin: EdgeInsets.only(bottom: 8.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16.w, vertical: 8.h,
-                          ),
-                          title: Text(
-                            t.description,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                          subtitle: Text(
-                            '${t.type} • ${_formatDate(t.createdAt)}',
-                            style: GoogleFonts.poppins(fontSize: 12.sp),
-                          ),
-                          trailing: Text(
-                            '\$${t.amount.toStringAsFixed(2)}',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15.sp,
-                              color: _accent,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
                   ),
-                ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Text(
+                      'Transaction History',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: _isLoading && _transactions.isEmpty
+                  ? const Center(child: CircularProgressIndicator(color: _accent))
+                  : _error != null && _transactions.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(_error!, style: const TextStyle(color: Colors.red)),
+                              SizedBox(height: 12.h),
+                              ElevatedButton(
+                                onPressed: _refresh,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _refresh,
+                          color: _accent,
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            padding: EdgeInsets.all(16.w),
+                            itemCount: _transactions.length + (_hasMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _transactions.length) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20.0),
+                                    child: CircularProgressIndicator(color: _accent),
+                                  ),
+                                );
+                              }
+                              final t = _transactions[index];
+                              return Card(
+                                color: isDark
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white,
+                                margin: EdgeInsets.only(bottom: 8.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: ListTile(
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16.w, vertical: 8.h,
+                                  ),
+                                  title: Text(
+                                    t.description,
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '${t.type} • ${_formatDate(t.createdAt)}',
+                                    style: GoogleFonts.poppins(fontSize: 12.sp),
+                                  ),
+                                  trailing: Text(
+                                    '\$${t.amount.toStringAsFixed(2)}',
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15.sp,
+                                      color: _accent,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
