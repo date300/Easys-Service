@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,28 +7,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart'; // ✅ নতুন
 
 import 'router/app_router.dart';
 import 'widgets/app_bottom_nav_bar.dart';
 import 'widgets/app_nav_rail.dart';
 import 'widgets/app_top_bar.dart';
 import 'widgets/app_drawer.dart';
-import 'services/notification_service.dart'; // ✅ নতুন
 
-// ============================================================
-// BACKGROUND TASK — অ্যাপ বন্ধ থাকলেও এটা চলবে
-// এটা অবশ্যই main() এর বাইরে top-level function হতে হবে
-// ============================================================
-
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((taskName, inputData) async {
-    // ✅ Background এ নতুন notification আছে কিনা check করো
-    await NotificationService.checkAndNotify();
-    return Future.value(true);
-  });
-}
+// ✅ notification_screen থেকে initNotificationService import করো
+import 'modules/notifications/notification_screen.dart';
 
 // ============================================
 // THEME PROVIDERS
@@ -126,28 +114,11 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Notification service initialize করো
-  await NotificationService.init();
+  // ✅ Notification + Workmanager init
+  // Web এ kIsWeb check করে নিজেই skip করবে
+  // Android এ heads-up notification ও background polling চালু হবে
+  await initNotificationService();
 
-  // ✅ Workmanager setup — background polling চালু করো
-  await Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: false, // Release এ false রাখো
-  );
-
-  // ✅ প্রতি ১৫ মিনিটে একবার নতুন notification check করবে
-  // (Android minimum 15 minutes, এর কম দেওয়া যায় না)
-  await Workmanager().registerPeriodicTask(
-    'easy_service_notif_check',   // unique task name
-    'fetchNewNotifications',       // task identifier
-    frequency: const Duration(minutes: 15),
-    constraints: Constraints(
-      networkType: NetworkType.connected, // শুধু internet থাকলে চলবে
-    ),
-    existingWorkPolicy: ExistingWorkPolicy.keep, // আগে থেকে থাকলে নতুন করে রেজিস্টার করবে না
-  );
-
-  // Status bar transparent
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -272,7 +243,6 @@ class MainWrapper extends ConsumerWidget {
   void _onNavTap(BuildContext context, WidgetRef ref, int index) {
     ref.read(isDetailViewProvider.notifier).state = false;
     ref.read(detailViewTitleProvider.notifier).state = '';
-
     switch (index) {
       case 0: context.go('/home'); break;
       case 1: context.go('/reselling'); break;
