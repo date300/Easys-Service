@@ -16,7 +16,7 @@ const String _baseUrl = 'https://easy.ltcminematrix.com/api';
 
 Future<String?> _getToken() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('auth_token');
+  return prefs.getString('jwt_token');
 }
 
 // ==================== NOTIFICATION MODEL ====================
