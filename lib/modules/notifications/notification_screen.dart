@@ -1,83 +1,249 @@
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Notification Model
+// ==================== CONSTANTS ====================
+
+const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+
+// ==================== TOKEN HELPER ====================
+
+Future<String?> _getToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('auth_token');
+}
+
+// ==================== NOTIFICATION MODEL ====================
+// Backend fields: id, message_en, message_bn, previous_balance,
+//                 amount_added, new_balance, source, is_read, created_at
+
 class NotificationItem {
-  final String id;
-  final String title;
-  final String message;
-  final DateTime timestamp;
+  final int id;
+  final String messageEn;
+  final String messageBn;
+  final double previousBalance;
+  final double amountAdded;
+  final double newBalance;
+  final String source;
   final bool isRead;
-  final NotificationType type;
+  final DateTime createdAt;
 
-  NotificationItem({
+  const NotificationItem({
     required this.id,
-    required this.title,
-    required this.message,
-    required this.timestamp,
-    this.isRead = false,
-    required this.type,
+    required this.messageEn,
+    required this.messageBn,
+    required this.previousBalance,
+    required this.amountAdded,
+    required this.newBalance,
+    required this.source,
+    required this.isRead,
+    required this.createdAt,
   });
 
-  NotificationItem copyWith({
-    String? id,
-    String? title,
-    String? message,
-    DateTime? timestamp,
-    bool? isRead,
-    NotificationType? type,
-  }) {
+  factory NotificationItem.fromJson(Map<String, dynamic> json) {
     return NotificationItem(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      message: message ?? this.message,
-      timestamp: timestamp ?? this.timestamp,
+      id: json['id'] as int,
+      messageEn: json['message_en']?.toString() ?? '',
+      messageBn: json['message_bn']?.toString() ?? '',
+      previousBalance: double.tryParse(json['previous_balance'].toString()) ?? 0,
+      amountAdded: double.tryParse(json['amount_added'].toString()) ?? 0,
+      newBalance: double.tryParse(json['new_balance'].toString()) ?? 0,
+      source: json['source']?.toString() ?? 'system',
+      isRead: (json['is_read'] == 1 || json['is_read'] == true),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+          DateTime.now(),
+    );
+  }
+
+  NotificationItem copyWith({bool? isRead}) {
+    return NotificationItem(
+      id: id,
+      messageEn: messageEn,
+      messageBn: messageBn,
+      previousBalance: previousBalance,
+      amountAdded: amountAdded,
+      newBalance: newBalance,
+      source: source,
       isRead: isRead ?? this.isRead,
-      type: type ?? this.type,
+      createdAt: createdAt,
+    );
+  }
+
+  // Source থেকে type বের করা
+  NotificationType get type {
+    final s = source.toLowerCase();
+    if (s.contains('referral')) return NotificationType.referral;
+    if (s.contains('matrix')) return NotificationType.matrix;
+    if (s.contains('royalty')) return NotificationType.royalty;
+    return NotificationType.system;
+  }
+}
+
+enum NotificationType { referral, matrix, royalty, system }
+
+// ==================== API STATE ====================
+
+enum ApiStatus { idle, loading, success, error }
+
+class NotificationState {
+  final List<NotificationItem> notifications;
+  final ApiStatus status;
+  final String? errorMessage;
+  final bool hasMore;
+  final int offset;
+
+  const NotificationState({
+    this.notifications = const [],
+    this.status = ApiStatus.idle,
+    this.errorMessage,
+    this.hasMore = true,
+    this.offset = 0,
+  });
+
+  NotificationState copyWith({
+    List<NotificationItem>? notifications,
+    ApiStatus? status,
+    String? errorMessage,
+    bool? hasMore,
+    int? offset,
+  }) {
+    return NotificationState(
+      notifications: notifications ?? this.notifications,
+      status: status ?? this.status,
+      errorMessage: errorMessage ?? this.errorMessage,
+      hasMore: hasMore ?? this.hasMore,
+      offset: offset ?? this.offset,
     );
   }
 }
 
-enum NotificationType {
-  order,
-  promotion,
-  system,
-  message,
-}
+// ==================== PROVIDER ====================
 
-// Provider
 final notificationsProvider =
-    StateNotifierProvider<NotificationNotifier, List<NotificationItem>>((ref) {
+    StateNotifierProvider<NotificationNotifier, NotificationState>((ref) {
   return NotificationNotifier();
 });
 
-class NotificationNotifier extends StateNotifier<List<NotificationItem>> {
-  NotificationNotifier() : super([]);
+class NotificationNotifier extends StateNotifier<NotificationState> {
+  NotificationNotifier() : super(const NotificationState());
 
-  // খালি — API থেকে পরে fetch করা হবে
-  void loadNotifications() {
-    state = [];
+  static const int _limit = 20;
+
+  // ── Fetch notifications (initial load) ──────────────────────────────────
+  Future<void> loadNotifications() async {
+    state = state.copyWith(status: ApiStatus.loading, offset: 0);
+    try {
+      final token = await _getToken();
+      final uri = Uri.parse('$_baseUrl/user/notifications?limit=$_limit&offset=0');
+      final response = await http.get(uri, headers: _authHeader(token));
+      _handleListResponse(response, replace: true);
+    } catch (e) {
+      state = state.copyWith(
+        status: ApiStatus.error,
+        errorMessage: 'Connection failed. Please try again.',
+      );
+    }
   }
 
-  void markAsRead(String id) {
-    state = state.map((n) => n.id == id ? n.copyWith(isRead: true) : n).toList();
+  // ── Load more (pagination) ───────────────────────────────────────────────
+  Future<void> loadMore() async {
+    if (!state.hasMore || state.status == ApiStatus.loading) return;
+    try {
+      final token = await _getToken();
+      final newOffset = state.offset + _limit;
+      final uri = Uri.parse(
+          '$_baseUrl/user/notifications?limit=$_limit&offset=$newOffset');
+      final response = await http.get(uri, headers: _authHeader(token));
+      _handleListResponse(response, replace: false, newOffset: newOffset);
+    } catch (_) {/* silent */ }
   }
 
-  void markAllAsRead() {
-    state = state.map((n) => n.copyWith(isRead: true)).toList();
+  void _handleListResponse(
+    http.Response response, {
+    required bool replace,
+    int newOffset = 0,
+  }) {
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      final List data = body['data'] ?? [];
+      final fetched = data.map((e) => NotificationItem.fromJson(e)).toList();
+
+      final updated = replace
+          ? fetched
+          : [...state.notifications, ...fetched];
+
+      state = state.copyWith(
+        notifications: updated,
+        status: ApiStatus.success,
+        hasMore: fetched.length == _limit,
+        offset: replace ? 0 : newOffset,
+      );
+    } else {
+      state = state.copyWith(
+        status: ApiStatus.error,
+        errorMessage: 'Failed to load notifications.',
+      );
+    }
   }
 
-  void deleteNotification(String id) {
-    state = state.where((n) => n.id != id).toList();
+  // ── Mark single as read ─────────────────────────────────────────────────
+  Future<void> markAsRead(int id) async {
+    // Optimistic update
+    state = state.copyWith(
+      notifications: state.notifications
+          .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
+          .toList(),
+    );
+    try {
+      final token = await _getToken();
+      await http.post(
+        Uri.parse('$_baseUrl/user/notifications/mark-read'),
+        headers: _authHeader(token, json: true),
+        body: jsonEncode({'notification_id': id}),
+      );
+    } catch (_) {/* optimistic — ignore error */ }
+  }
+
+  // ── Mark all as read ────────────────────────────────────────────────────
+  Future<void> markAllAsRead() async {
+    // Optimistic update
+    state = state.copyWith(
+      notifications:
+          state.notifications.map((n) => n.copyWith(isRead: true)).toList(),
+    );
+    try {
+      final token = await _getToken();
+      await http.post(
+        Uri.parse('$_baseUrl/user/notifications/mark-read'),
+        headers: _authHeader(token, json: true),
+        body: jsonEncode({'all': true}),
+      );
+    } catch (_) {/* optimistic — ignore error */ }
+  }
+
+  // ── Delete local only (backend এ delete endpoint নেই) ──────────────────
+  void deleteNotification(int id) {
+    state = state.copyWith(
+      notifications: state.notifications.where((n) => n.id != id).toList(),
+    );
   }
 
   void clearAll() {
-    state = [];
+    state = state.copyWith(notifications: []);
+  }
+
+  // ── Header builder ──────────────────────────────────────────────────────
+  Map<String, String> _authHeader(String? token, {bool json = false}) {
+    return {
+      'Authorization': 'Bearer ${token ?? ''}',
+      if (json) 'Content-Type': 'application/json',
+    };
   }
 }
 
@@ -95,41 +261,60 @@ class NotificationScreen extends ConsumerStatefulWidget {
 class _NotificationScreenState extends ConsumerState<NotificationScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    Future.microtask(() {
-      ref.read(notificationsProvider.notifier).loadNotifications();
+
+    // Initial load
+    Future.microtask(
+      () => ref.read(notificationsProvider.notifier).loadNotifications(),
+    );
+
+    // Pagination — scroll to bottom হলে আরও load
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        ref.read(notificationsProvider.notifier).loadMore();
+      }
     });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final notifications = ref.watch(notificationsProvider);
-    final unreadCount = notifications.where((n) => !n.isRead).length;
+    final notifState = ref.watch(notificationsProvider);
+    final unreadCount =
+        notifState.notifications.where((n) => !n.isRead).length;
 
-    // ── Dark / Light থিম কালার (হোমপেজের মতো) ──
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final kBackground = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
-    final kCardBg    = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final kTextDark  = isDark ? Colors.white            : const Color(0xFF0F172A);
-    final kTextMid   = isDark ? Colors.grey.shade400    : const Color(0xFF475569);
-    final kBorder    = isDark ? const Color(0xFF333333) : Colors.grey.shade200;
-    final kAppBarBg  = isDark ? const Color(0xFF1A1A1A) : Colors.white;
-    final kTabBg     = isDark ? const Color(0xFF1A1A1A) : Colors.white;
-    final kUnreadBg  = isDark ? const Color(0xFF1A2733) : const Color(0xFFE3F2FD);
+    final kBackground =
+        isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final kCardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final kTextDark =
+        isDark ? Colors.white : const Color(0xFF0F172A);
+    final kTextMid =
+        isDark ? Colors.grey.shade400 : const Color(0xFF475569);
+    final kBorder =
+        isDark ? const Color(0xFF333333) : Colors.grey.shade200;
+    final kAppBarBg =
+        isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final kTabBg =
+        isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final kUnreadBg =
+        isDark ? const Color(0xFF1A2733) : const Color(0xFFE3F2FD);
     final kUnreadBorder = isDark
         ? NotificationScreen.kPrimary.withOpacity(0.4)
         : NotificationScreen.kPrimary.withOpacity(0.3);
-    final kShadow    = isDark
+    final kShadow = isDark
         ? Colors.black.withOpacity(0.3)
         : Colors.black.withOpacity(0.05);
 
@@ -138,7 +323,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // AppBar
             _buildAppBar(
               unreadCount: unreadCount,
               isDark: isDark,
@@ -156,41 +340,26 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                 labelColor: NotificationScreen.kPrimary,
                 unselectedLabelColor: kTextMid,
                 indicatorColor: NotificationScreen.kPrimary,
-                labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                labelStyle:
+                    GoogleFonts.poppins(fontWeight: FontWeight.w600),
                 unselectedLabelStyle: GoogleFonts.poppins(),
-                tabs: const [
-                  Tab(text: 'All'),
-                  Tab(text: 'Unread'),
+                tabs: [
+                  Tab(text: 'All (${notifState.notifications.length})'),
+                  Tab(text: 'Unread ($unreadCount)'),
                 ],
               ),
             ),
 
-            // Content
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildNotificationList(
-                    notifications,
-                    isDark: isDark,
-                    kCardBg: kCardBg,
-                    kTextDark: kTextDark,
-                    kTextMid: kTextMid,
-                    kBorder: kBorder,
-                    kUnreadBg: kUnreadBg,
-                    kUnreadBorder: kUnreadBorder,
-                  ),
-                  _buildNotificationList(
-                    notifications.where((n) => !n.isRead).toList(),
-                    isDark: isDark,
-                    kCardBg: kCardBg,
-                    kTextDark: kTextDark,
-                    kTextMid: kTextMid,
-                    kBorder: kBorder,
-                    kUnreadBg: kUnreadBg,
-                    kUnreadBorder: kUnreadBorder,
-                  ),
-                ],
+              child: _buildContent(
+                notifState: notifState,
+                isDark: isDark,
+                kCardBg: kCardBg,
+                kTextDark: kTextDark,
+                kTextMid: kTextMid,
+                kBorder: kBorder,
+                kUnreadBg: kUnreadBg,
+                kUnreadBorder: kUnreadBorder,
               ),
             ),
           ],
@@ -199,122 +368,94 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     );
   }
 
-  // ── AppBar ──
-  Widget _buildAppBar({
-    required int unreadCount,
+  // ── Content (loading / error / list) ────────────────────────────────────
+  Widget _buildContent({
+    required NotificationState notifState,
     required bool isDark,
-    required Color kAppBarBg,
+    required Color kCardBg,
     required Color kTextDark,
     required Color kTextMid,
-    required Color kShadow,
+    required Color kBorder,
+    required Color kUnreadBg,
+    required Color kUnreadBorder,
   }) {
-    final kIconBg = isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100;
+    // Initial loading spinner
+    if (notifState.status == ApiStatus.loading &&
+        notifState.notifications.isEmpty) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: NotificationScreen.kPrimary,
+        ),
+      );
+    }
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: kAppBarBg,
-        boxShadow: [
-          BoxShadow(color: kShadow, blurRadius: 10, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Back button
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              padding: EdgeInsets.all(8.r),
-              decoration: BoxDecoration(
-                color: kIconBg,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new,
-                size: 18.sp,
-                color: kTextDark,
+    // Error state
+    if (notifState.status == ApiStatus.error &&
+        notifState.notifications.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.wifi_off_rounded,
+                size: 60.sp, color: kTextMid.withOpacity(0.5)),
+            SizedBox(height: 16.h),
+            Text(
+              notifState.errorMessage ?? 'Something went wrong',
+              style: GoogleFonts.poppins(color: kTextMid),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16.h),
+            ElevatedButton.icon(
+              onPressed: () =>
+                  ref.read(notificationsProvider.notifier).loadNotifications(),
+              icon: const Icon(Icons.refresh),
+              label: Text('Retry', style: GoogleFonts.poppins()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: NotificationScreen.kPrimary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
               ),
             ),
-          ),
+          ],
+        ),
+      );
+    }
 
-          SizedBox(width: 12.w),
-
-          // Title
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Notifications',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                    color: kTextDark,
-                  ),
-                ),
-                if (unreadCount > 0)
-                  Text(
-                    '$unreadCount unread',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.sp,
-                      color: NotificationScreen.kPrimary,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // Menu
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: kTextMid),
-            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
-            onSelected: (value) {
-              switch (value) {
-                case 'mark_all':
-                  ref.read(notificationsProvider.notifier).markAllAsRead();
-                  break;
-                case 'clear':
-                  _showClearConfirmDialog(isDark: isDark);
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'mark_all',
-                child: Row(
-                  children: [
-                    Icon(Icons.done_all, size: 20, color: kTextDark),
-                    SizedBox(width: 12.w),
-                    Text(
-                      'Mark all as read',
-                      style: GoogleFonts.poppins(color: kTextDark),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'clear',
-                child: Row(
-                  children: [
-                    const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                    SizedBox(width: 12.w),
-                    Text(
-                      'Clear all',
-                      style: GoogleFonts.poppins(color: Colors.red),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildNotificationList(
+          notifState.notifications,
+          notifState: notifState,
+          isDark: isDark,
+          kCardBg: kCardBg,
+          kTextDark: kTextDark,
+          kTextMid: kTextMid,
+          kBorder: kBorder,
+          kUnreadBg: kUnreadBg,
+          kUnreadBorder: kUnreadBorder,
+        ),
+        _buildNotificationList(
+          notifState.notifications.where((n) => !n.isRead).toList(),
+          notifState: notifState,
+          isDark: isDark,
+          kCardBg: kCardBg,
+          kTextDark: kTextDark,
+          kTextMid: kTextMid,
+          kBorder: kBorder,
+          kUnreadBg: kUnreadBg,
+          kUnreadBorder: kUnreadBorder,
+        ),
+      ],
     );
   }
 
-  // ── Notification List ──
+  // ── Notification List ────────────────────────────────────────────────────
   Widget _buildNotificationList(
     List<NotificationItem> notifications, {
+    required NotificationState notifState,
     required bool isDark,
     required Color kCardBg,
     required Color kTextDark,
@@ -327,25 +468,48 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       return _buildEmptyState(kTextMid: kTextMid);
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.all(16.r),
-      itemCount: notifications.length,
-      itemBuilder: (context, index) {
-        return _buildNotificationCard(
-          notifications[index],
-          isDark: isDark,
-          kCardBg: kCardBg,
-          kTextDark: kTextDark,
-          kTextMid: kTextMid,
-          kBorder: kBorder,
-          kUnreadBg: kUnreadBg,
-          kUnreadBorder: kUnreadBorder,
-        );
-      },
+    return RefreshIndicator(
+      color: NotificationScreen.kPrimary,
+      onRefresh: () =>
+          ref.read(notificationsProvider.notifier).loadNotifications(),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: EdgeInsets.all(16.r),
+        itemCount: notifications.length + (notifState.hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          // Bottom loader
+          if (index == notifications.length) {
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              child: Center(
+                child: SizedBox(
+                  width: 24.w,
+                  height: 24.w,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: NotificationScreen.kPrimary,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return _buildNotificationCard(
+            notifications[index],
+            isDark: isDark,
+            kCardBg: kCardBg,
+            kTextDark: kTextDark,
+            kTextMid: kTextMid,
+            kBorder: kBorder,
+            kUnreadBg: kUnreadBg,
+            kUnreadBorder: kUnreadBorder,
+          );
+        },
+      ),
     );
   }
 
-  // ── Notification Card ──
+  // ── Notification Card ────────────────────────────────────────────────────
   Widget _buildNotificationCard(
     NotificationItem notification, {
     required bool isDark,
@@ -356,11 +520,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     required Color kUnreadBg,
     required Color kUnreadBorder,
   }) {
-    final Color typeColor = _getTypeColor(notification.type);
-    final IconData typeIcon = _getTypeIcon(notification.type);
+    final typeColor = _getTypeColor(notification.type);
+    final typeIcon = _getTypeIcon(notification.type);
 
     return Dismissible(
-      key: Key(notification.id),
+      key: Key(notification.id.toString()),
       direction: DismissDirection.endToStart,
       background: Container(
         margin: EdgeInsets.only(bottom: 12.h),
@@ -373,11 +537,27 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       onDismissed: (_) {
-        ref.read(notificationsProvider.notifier).deleteNotification(notification.id);
+        ref
+            .read(notificationsProvider.notifier)
+            .deleteNotification(notification.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Notification removed',
+                style: GoogleFonts.poppins(fontSize: 13.sp)),
+            backgroundColor: const Color(0xFF1E1E1E),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       },
       child: GestureDetector(
         onTap: () {
-          ref.read(notificationsProvider.notifier).markAsRead(notification.id);
+          if (!notification.isRead) {
+            ref
+                .read(notificationsProvider.notifier)
+                .markAsRead(notification.id);
+          }
+          _showNotificationDetail(notification,
+              isDark: isDark, kTextDark: kTextDark, kTextMid: kTextMid);
         },
         child: Container(
           margin: EdgeInsets.only(bottom: 12.h),
@@ -401,7 +581,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icon
+              // Type Icon
               Container(
                 padding: EdgeInsets.all(12.r),
                 decoration: BoxDecoration(
@@ -422,7 +602,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                       children: [
                         Expanded(
                           child: Text(
-                            notification.title,
+                            _getTitle(notification.type),
                             style: GoogleFonts.poppins(
                               fontSize: 14.sp,
                               fontWeight: notification.isRead
@@ -447,7 +627,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                     SizedBox(height: 4.h),
 
                     Text(
-                      notification.message,
+                      notification.messageEn,
                       style: GoogleFonts.poppins(
                         fontSize: 12.sp,
                         color: kTextMid,
@@ -457,10 +637,31 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 6.h),
+
+                    // Amount badge
+                    if (notification.amountAdded > 0)
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          '+${notification.amountAdded.toStringAsFixed(0)} BDT',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.sp,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+
+                    SizedBox(height: 6.h),
 
                     Text(
-                      _formatTime(notification.timestamp),
+                      _formatTime(notification.createdAt),
                       style: GoogleFonts.poppins(
                         fontSize: 11.sp,
                         color: isDark
@@ -478,17 +679,257 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     );
   }
 
-  // ── Empty State ──
+  // ── Detail Bottom Sheet ──────────────────────────────────────────────────
+  void _showNotificationDetail(
+    NotificationItem n, {
+    required bool isDark,
+    required Color kTextDark,
+    required Color kTextMid,
+  }) {
+    final kBgSheet = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kBgSheet,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.all(24.r),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              _getTitle(n.type),
+              style: GoogleFonts.poppins(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: kTextDark,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              n.messageEn,
+              style: GoogleFonts.poppins(
+                  fontSize: 13.sp, color: kTextMid, height: 1.6),
+            ),
+            if (n.messageBn.isNotEmpty) ...[
+              SizedBox(height: 6.h),
+              Text(
+                n.messageBn,
+                style: GoogleFonts.poppins(
+                    fontSize: 13.sp, color: kTextMid, height: 1.6),
+              ),
+            ],
+            SizedBox(height: 16.h),
+            // Balance info row
+            if (n.amountAdded > 0)
+              Container(
+                padding: EdgeInsets.all(12.r),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _balanceInfo(
+                        'Previous', n.previousBalance, kTextDark, kTextMid),
+                    Icon(Icons.arrow_forward_ios,
+                        size: 14.sp, color: Colors.green),
+                    _balanceInfo('+Added', n.amountAdded, Colors.green, kTextMid,
+                        valueColor: Colors.green),
+                    Icon(Icons.arrow_forward_ios,
+                        size: 14.sp, color: Colors.green),
+                    _balanceInfo('New', n.newBalance, kTextDark, kTextMid),
+                  ],
+                ),
+              ),
+            SizedBox(height: 12.h),
+            Text(
+              DateFormat('d MMM y • hh:mm a').format(n.createdAt),
+              style: GoogleFonts.poppins(
+                  fontSize: 11.sp, color: Colors.grey.shade400),
+            ),
+            SizedBox(height: 8.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _balanceInfo(
+    String label,
+    double amount,
+    Color labelColor,
+    Color subColor, {
+    Color? valueColor,
+  }) {
+    return Column(
+      children: [
+        Text(label,
+            style: GoogleFonts.poppins(fontSize: 10.sp, color: subColor)),
+        SizedBox(height: 2.h),
+        Text(
+          '${amount.toStringAsFixed(0)} ৳',
+          style: GoogleFonts.poppins(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? labelColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── AppBar ────────────────────────────────────────────────────────────────
+  Widget _buildAppBar({
+    required int unreadCount,
+    required bool isDark,
+    required Color kAppBarBg,
+    required Color kTextDark,
+    required Color kTextMid,
+    required Color kShadow,
+  }) {
+    final kIconBg = isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: kAppBarBg,
+        boxShadow: [
+          BoxShadow(
+              color: kShadow, blurRadius: 10, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: Container(
+              padding: EdgeInsets.all(8.r),
+              decoration: BoxDecoration(
+                color: kIconBg,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(Icons.arrow_back_ios_new,
+                  size: 18.sp, color: kTextDark),
+            ),
+          ),
+
+          SizedBox(width: 12.w),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Notifications',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                    color: kTextDark,
+                  ),
+                ),
+                if (unreadCount > 0)
+                  Text(
+                    '$unreadCount unread',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.sp,
+                      color: NotificationScreen.kPrimary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // Refresh button
+          GestureDetector(
+            onTap: () =>
+                ref.read(notificationsProvider.notifier).loadNotifications(),
+            child: Container(
+              padding: EdgeInsets.all(8.r),
+              decoration: BoxDecoration(
+                color: kIconBg,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(Icons.refresh, size: 20.sp, color: kTextMid),
+            ),
+          ),
+
+          SizedBox(width: 8.w),
+
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: kTextMid),
+            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+            onSelected: (value) {
+              switch (value) {
+                case 'mark_all':
+                  ref.read(notificationsProvider.notifier).markAllAsRead();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('All marked as read',
+                          style: GoogleFonts.poppins(fontSize: 13.sp)),
+                      backgroundColor: NotificationScreen.kPrimary,
+                    ),
+                  );
+                  break;
+                case 'clear':
+                  _showClearConfirmDialog(isDark: isDark);
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'mark_all',
+                child: Row(
+                  children: [
+                    Icon(Icons.done_all, size: 20, color: kTextDark),
+                    SizedBox(width: 12.w),
+                    Text('Mark all as read',
+                        style: GoogleFonts.poppins(color: kTextDark)),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'clear',
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete_outline,
+                        size: 20, color: Colors.red),
+                    SizedBox(width: 12.w),
+                    Text('Clear all',
+                        style: GoogleFonts.poppins(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Empty State ──────────────────────────────────────────────────────────
   Widget _buildEmptyState({required Color kTextMid}) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.notifications_off_outlined,
-            size: 80.sp,
-            color: kTextMid.withOpacity(0.4),
-          ),
+          Icon(Icons.notifications_off_outlined,
+              size: 80.sp, color: kTextMid.withOpacity(0.4)),
           SizedBox(height: 16.h),
           Text(
             'No notifications yet',
@@ -511,30 +952,43 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     );
   }
 
-  // ── Helpers ──
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  String _getTitle(NotificationType type) {
+    switch (type) {
+      case NotificationType.referral:
+        return 'Referral Commission';
+      case NotificationType.matrix:
+        return 'Matrix Bonus';
+      case NotificationType.royalty:
+        return 'Royalty Income';
+      case NotificationType.system:
+        return 'System Notification';
+    }
+  }
+
   Color _getTypeColor(NotificationType type) {
     switch (type) {
-      case NotificationType.order:
+      case NotificationType.referral:
         return Colors.green;
-      case NotificationType.promotion:
+      case NotificationType.matrix:
         return Colors.orange;
+      case NotificationType.royalty:
+        return const Color(0xFF29B6F6);
       case NotificationType.system:
         return Colors.purple;
-      case NotificationType.message:
-        return Colors.blue;
     }
   }
 
   IconData _getTypeIcon(NotificationType type) {
     switch (type) {
-      case NotificationType.order:
-        return Icons.shopping_bag_outlined;
-      case NotificationType.promotion:
-        return Icons.local_offer_outlined;
+      case NotificationType.referral:
+        return Icons.people_outline;
+      case NotificationType.matrix:
+        return Icons.grid_view_outlined;
+      case NotificationType.royalty:
+        return Icons.workspace_premium_outlined;
       case NotificationType.system:
         return Icons.settings_outlined;
-      case NotificationType.message:
-        return Icons.chat_bubble_outline;
     }
   }
 
@@ -559,31 +1013,26 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         title: Text(
           'Clear all notifications?',
           style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: kTextDark,
-          ),
+              fontWeight: FontWeight.bold, color: kTextDark),
         ),
         content: Text(
-          'This action cannot be undone.',
+          'This will remove all notifications from this device.',
           style: GoogleFonts.poppins(color: kTextDark.withOpacity(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.poppins(color: NotificationScreen.kPrimary),
-            ),
+            child: Text('Cancel',
+                style: GoogleFonts.poppins(
+                    color: NotificationScreen.kPrimary)),
           ),
           TextButton(
             onPressed: () {
               ref.read(notificationsProvider.notifier).clearAll();
               Navigator.pop(context);
             },
-            child: Text(
-              'Clear',
-              style: GoogleFonts.poppins(color: Colors.red),
-            ),
+            child: Text('Clear',
+                style: GoogleFonts.poppins(color: Colors.red)),
           ),
         ],
       ),
