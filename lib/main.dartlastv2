@@ -6,28 +6,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart'; // ✅ নতুন
 
 import 'router/app_router.dart';
 import 'widgets/app_bottom_nav_bar.dart';
 import 'widgets/app_nav_rail.dart';
 import 'widgets/app_top_bar.dart';
 import 'widgets/app_drawer.dart';
-import 'services/notification_service.dart'; // ✅ নতুন
-
-// ============================================================
-// BACKGROUND TASK — অ্যাপ বন্ধ থাকলেও এটা চলবে
-// এটা অবশ্যই main() এর বাইরে top-level function হতে হবে
-// ============================================================
-
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((taskName, inputData) async {
-    // ✅ Background এ নতুন notification আছে কিনা check করো
-    await NotificationService.checkAndNotify();
-    return Future.value(true);
-  });
-}
 
 // ============================================
 // THEME PROVIDERS
@@ -123,31 +107,11 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 // MAIN
 // ============================================
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Notification service initialize করো
-  await NotificationService.init();
-
-  // ✅ Workmanager setup — background polling চালু করো
-  await Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: false, // Release এ false রাখো
-  );
-
-  // ✅ প্রতি ১৫ মিনিটে একবার নতুন notification check করবে
-  // (Android minimum 15 minutes, এর কম দেওয়া যায় না)
-  await Workmanager().registerPeriodicTask(
-    'easy_service_notif_check',   // unique task name
-    'fetchNewNotifications',       // task identifier
-    frequency: const Duration(minutes: 15),
-    constraints: Constraints(
-      networkType: NetworkType.connected, // শুধু internet থাকলে চলবে
-    ),
-    existingWorkPolicy: ExistingWorkPolicy.keep, // আগে থেকে থাকলে নতুন করে রেজিস্টার করবে না
-  );
-
-  // Status bar transparent
+  // ✅ Status bar transparent রাখো
+  // Scaffold backgroundColor দিয়ে status bar এলাকা fill হবে
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -188,6 +152,7 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.light,
       colorSchemeSeed: const Color(0xFF29B6F6),
+      // ✅ AppTopBar skyBlue এর সাথে মিলছে → status bar same color দেখাবে
       scaffoldBackgroundColor: const Color(0xFF29B6F6),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
       appBarTheme: const AppBarTheme(
@@ -218,6 +183,8 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorSchemeSeed: const Color(0xFF29B6F6),
+      // ✅ AppTopBar darkHeader (0xFF1E1E1E) এর সাথে মিলছে
+      // → status bar এলাকায় এই color দেখাবে, AppTopBar এর সাথে seamless হবে
       scaffoldBackgroundColor: const Color(0xFF1E1E1E),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       appBarTheme: const AppBarTheme(
@@ -310,6 +277,9 @@ class MainWrapper extends ConsumerWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
+          // ✅ body content এর background
+          // Dark: 0xFF121212 (scaffold থেকে আলাদা — এটাই content area)
+          // Light: white
           color: isDark ? const Color(0xFF121212) : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(bodyRadius),
@@ -335,7 +305,13 @@ class MainWrapper extends ConsumerWidget {
         }
       },
       child: Scaffold(
+        // ✅ backgroundColor থিম থেকে আসে:
+        // Dark mode  → 0xFF1E1E1E (AppTopBar darkHeader এর মতো)
+        // Light mode → 0xFF29B6F6 (AppTopBar skyBlue এর মতো)
+        // SafeArea top:true হওয়ায় status bar এলাকায় এই scaffold color দেখায়
+        // → AppTopBar এর সাথে seamless একই color!
         body: SafeArea(
+          // ✅ আগের মতোই রাখা — white gap সমস্যা নেই
           top: !isEditProfile,
           child: Row(
             children: [

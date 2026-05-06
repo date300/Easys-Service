@@ -4,16 +4,22 @@
     <!-- Network Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    
+
     <!-- Storage Permissions for Image Picker -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    
-    <!-- Camera Permission (if you want to take photos) -->
+
+    <!-- Camera Permission -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    
+
     <!-- For Android 13+ (API 33+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+
+    <!-- ✅ Notification Permissions (নতুন যোগ) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application
         android:label="Easy Service"
@@ -41,6 +47,21 @@
             </intent-filter>
         </activity>
 
+        <!-- ✅ Workmanager background service (নতুন যোগ) -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
+
+        <!-- ✅ Boot receiver — ফোন রিস্টার্ট হলেও background task চালু থাকবে -->
+        <receiver
+            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
@@ -52,7 +73,7 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
-        
+
         <!-- For Image Picker -->
         <intent>
             <action android:name="android.intent.action.GET_CONTENT" />
