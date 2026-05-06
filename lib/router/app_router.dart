@@ -125,6 +125,20 @@ final GoRouter appRouter = GoRouter(
         _detailRoute(
           path: '/matrix-income',
           builder: (context, state) => const MatrixIncomePage(),
+
+                // Transaction History Page (নতুন যুক্ত করুন)
+        _detailRoute(
+          path: '/transactions',
+          builder: (context, state) => const TransactionListPage(),
+        ),
+
+        // Income Details Page (নতুন যুক্ত করুন)
+        _detailRoute(
+          path: '/income-detail',
+          builder: (context, state) {
+            final period = state.uri.queryParameters['period'] ?? 'daily';
+            return IncomeDetailPage(period: period);
+          
         ),
         _detailRoute(
           path: '/product/:id',
