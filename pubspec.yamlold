@@ -18,40 +18,43 @@ dependencies:
   webview_flutter: ^4.10.0
   cupertino_icons: ^1.0.8
   lottie: ^3.1.0
+
   # --- Data & Local Storage ---
   http: ^1.1.0
-  dio: ^5.7.0                    # Advanced API Handling
-  shared_preferences: ^2.5.4     # Local storage (Duplicate removed)
+  dio: ^5.7.0
+  shared_preferences: ^2.5.4
 
   # --- UI & Design ---
-  flutter_screenutil: ^5.9.3     # Responsive UI across devices
-  google_fonts: ^6.2.1           # Professional typography
-  flutter_animate: ^4.5.0        # Smooth UI transitions
-  cached_network_image: ^3.4.1   # Efficient image loading
+  flutter_screenutil: ^5.9.3
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+  cached_network_image: ^3.4.1
 
   # --- Architecture & Navigation ---
-  flutter_riverpod: ^2.6.1       # Modern State Management
-  go_router: ^14.2.0             # Declarative Routing
+  flutter_riverpod: ^2.6.1
+  go_router: ^14.2.0
+
+  # --- Notifications ---
+  flutter_local_notifications: ^17.0.0   # Heads-up notification দেখানোর জন্য
+  permission_handler: ^11.0.0            # Android 13+ notification permission
+  workmanager: ^0.5.2                    # Background polling (অ্যাপ বন্ধ থাকলেও)
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0          # Updated to stable version
+  flutter_lints: ^3.0.0
   flutter_launcher_icons: ^0.14.1
 
 flutter:
   uses-material-design: true
 
-  # Assets management
   assets:
     - assets/images/
     - assets/ultra5G.png
     - assets/EasyService.png
-    # - assets/animations/       # Uncomment if you use Lottie JSON files here
 
-# App Icon Configuration
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/EasyService.png"
-  min_sdk_android: 21 
+  min_sdk_android: 21
