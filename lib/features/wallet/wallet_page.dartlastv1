@@ -7,10 +7,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod ????? ??? ?????
-import 'package:go_router/go_router.dart'; // GoRouter ????? ??? ?????
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod যুক্ত করা হয়েছে
+import 'package:go_router/go_router.dart'; // GoRouter যুক্ত করা হয়েছে
 
-// ????? main.dart ???? ?????????????? ???????? ??? ?????
+// আপনার main.dart থেকে প্রোভাইডারগুলো ইম্পোর্ট করে নিবেন
 import '../../main.dart'; 
 
 // ==========================================
@@ -372,7 +372,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
                         : _error != null
                             ? _errorWidget(isSmall)
                             : Text(
-                                '\৳${(_balance?.balance ?? 0).toStringAsFixed(2)}',
+                                '\$${(_balance?.balance ?? 0).toStringAsFixed(2)}',
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: isSmall ? 26.sp : 30.sp,
@@ -474,7 +474,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              // Withdraw ????? ???? ???? ????? ???? ?????
+              // Withdraw পেজের জন্য লজিক এখানে দিতে পারেন
             },
           ),
         ),
@@ -699,8 +699,8 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Detail View-? ???? ????? ?????? ????? ???? ????????? ???, 
-    // ??? ????? ????? SafeArea ?? Header ?? ????? ????
+    // Detail View-এ মেইন ফ্রেম যেহেতু ব্যাক বাটন হ্যান্ডেল করে, 
+    // তাই এখানে আলাদা SafeArea বা Header না দিলেও চলে।
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
       body: _isLoading
@@ -730,7 +730,7 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
             ),
             SizedBox(height: 24.h),
             Text(
-              '\৳${_totalIncome.toStringAsFixed(2)}',
+              '\$${_totalIncome.toStringAsFixed(2)}',
               style: GoogleFonts.poppins(
                 fontSize: 36.sp,
                 fontWeight: FontWeight.w900,
@@ -779,7 +779,7 @@ class _IncomeDetailPageState extends State<IncomeDetailPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600)),
-          Text('\৳${amount.toStringAsFixed(2)}',
+          Text('\$${amount.toStringAsFixed(2)}',
             style: GoogleFonts.poppins(
               fontSize: 18.sp,
               fontWeight: FontWeight.w800,
@@ -922,7 +922,7 @@ class _TransactionListPageState extends State<TransactionListPage> {
                       title: Text(t.description, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.sp)),
                       subtitle: Text(_formatDate(t.createdAt), style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey)),
                       trailing: Text(
-                        '\৳${t.amount.toStringAsFixed(2)}',
+                        '\$${t.amount.toStringAsFixed(2)}',
                         style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15.sp, color: _accent),
                       ),
                     ),
