@@ -22,6 +22,10 @@ import '../features/reselling/product_details_page.dart';
 import '../features/referral/referral_page.dart';
 import '../features/matrix/matrix_income.dart';
 import '../features/wallet/wallet_page.dart';
+import '../features/wallet/pages/transaction_list_page.dart';
+import '../features/wallet/pages/daily_income_page.dart';
+import '../features/wallet/pages/weekly_income_page.dart';
+import '../features/wallet/pages/monthly_income_page.dart';
 
 // ==================== HELPERS ====================
 
@@ -105,11 +109,30 @@ final GoRouter appRouter = GoRouter(
           path: '/royalty-salary',
           builder: (context, state) => const RoyaltySalaryPage(),
         ),
-        // wallet ShellRoute-?? ?????
         _detailRoute(
           path: '/wallet',
           builder: (context, state) => const WalletPage(),
         ),
+
+        // ─────────── Wallet Sub‑pages ───────────
+        _detailRoute(
+          path: '/transactions',
+          builder: (context, state) => const TransactionListPage(),
+        ),
+        _detailRoute(
+          path: '/daily-income',
+          builder: (context, state) => const DailyIncomePage(),
+        ),
+        _detailRoute(
+          path: '/weekly-income',
+          builder: (context, state) => const WeeklyIncomePage(),
+        ),
+        _detailRoute(
+          path: '/monthly-income',
+          builder: (context, state) => const MonthlyIncomePage(),
+        ),
+        // ─────────────────────────────────────────
+
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
@@ -126,22 +149,6 @@ final GoRouter appRouter = GoRouter(
           path: '/matrix-income',
           builder: (context, state) => const MatrixIncomePage(),
         ),
-
-        // Transaction History Page
-        _detailRoute(
-          path: '/transactions',
-          builder: (context, state) => const TransactionListPage(),
-        ),
-
-        // Income Details Page
-        _detailRoute(
-          path: '/income-detail',
-          builder: (context, state) {
-            final period = state.uri.queryParameters['period'] ?? 'daily';
-            return IncomeDetailPage(period: period);
-          },
-        ), // ✅ FIXED: Removed the extra ");" that was here
-
         _detailRoute(
           path: '/product/:id',
           builder: (context, state) => ProductDetailsPage(
