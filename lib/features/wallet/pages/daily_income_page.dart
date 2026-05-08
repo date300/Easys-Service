@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../wallet_page.dart'; // WalletApiService
+import '../wallet_page.dart';
 
 class DailyIncomePage extends StatefulWidget {
   const DailyIncomePage({super.key});
@@ -54,7 +54,10 @@ class _DailyIncomePageState extends State<DailyIncomePage> {
               ? Center(
                   child: Padding(
                     padding: EdgeInsets.all(24.w),
-                    child: Text(_error!, style: TextStyle(color: Colors.red, fontSize: 16.sp)),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: Colors.red, fontSize: 16.sp),
+                    ),
                   ),
                 )
               : Center(
@@ -69,11 +72,15 @@ class _DailyIncomePageState extends State<DailyIncomePage> {
                             color: _accent.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(CupertinoIcons.sun_max_fill, color: _accent, size: 60.sp),
+                          child: Icon(
+                            CupertinoIcons.sun_max_fill,
+                            color: _accent,
+                            size: 60.sp,
+                          ),
                         ),
                         SizedBox(height: 24.h),
                         Text(
-                          '\$${_totalIncome.toStringAsFixed(2)}',
+                          '৳ ${_totalIncome.toStringAsFixed(2)}',
                           style: GoogleFonts.poppins(
                             fontSize: 36.sp,
                             fontWeight: FontWeight.w900,
@@ -83,7 +90,10 @@ class _DailyIncomePageState extends State<DailyIncomePage> {
                         SizedBox(height: 8.h),
                         Text(
                           "Today's Earnings",
-                          style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey),
+                          style: GoogleFonts.poppins(
+                            fontSize: 14.sp,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),

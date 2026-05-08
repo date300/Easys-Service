@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../wallet_page.dart'; // WalletApiService
+import '../wallet_page.dart';
 
 class MonthlyIncomePage extends StatefulWidget {
   const MonthlyIncomePage({super.key});
@@ -52,7 +52,10 @@ class _MonthlyIncomePageState extends State<MonthlyIncomePage> {
               ? Center(
                   child: Padding(
                     padding: EdgeInsets.all(24.w),
-                    child: Text(_error!, style: TextStyle(color: Colors.red, fontSize: 16.sp)),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: Colors.red, fontSize: 16.sp),
+                    ),
                   ),
                 )
               : ListView(
@@ -85,9 +88,15 @@ class _MonthlyIncomePageState extends State<MonthlyIncomePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600)),
           Text(
-            '\$${amount.toStringAsFixed(2)}',
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            '৳ ${amount.toStringAsFixed(2)}',
             style: GoogleFonts.poppins(
               fontSize: 18.sp,
               fontWeight: FontWeight.w800,

@@ -362,7 +362,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
                         : _error != null
                             ? _errorWidget(isSmall)
                             : Text(
-                                '\$ ${(_balance?.balance ?? 0).toStringAsFixed(2)}', // ✅ FIXED
+                                '৳ ${(_balance?.balance ?? 0).toStringAsFixed(2)}',
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: isSmall ? 26.sp : 30.sp,
@@ -464,7 +464,6 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              // Withdraw action
             },
           ),
         ),

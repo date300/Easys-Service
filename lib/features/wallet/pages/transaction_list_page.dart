@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../wallet_page.dart'; // WalletApiService, Transaction
+import '../wallet_page.dart';
 
 class TransactionListPage extends StatefulWidget {
   const TransactionListPage({super.key});
@@ -111,7 +111,12 @@ class _TransactionListPageState extends State<TransactionListPage> {
                 itemCount: _transactions.length + (_hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == _transactions.length) {
-                    return const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()));
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
                   }
                   final t = _transactions[index];
                   return Card(
@@ -126,14 +131,33 @@ class _TransactionListPageState extends State<TransactionListPage> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
                       leading: Container(
                         padding: EdgeInsets.all(10.w),
-                        decoration: BoxDecoration(color: _accent.withOpacity(0.1), shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                          color: _accent.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
                         child: Icon(CupertinoIcons.doc_text_fill, color: _accent, size: 20.sp),
                       ),
-                      title: Text(t.description, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.sp)),
-                      subtitle: Text(_formatDate(t.createdAt), style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey)),
+                      title: Text(
+                        t.description,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.sp,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _formatDate(t.createdAt),
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.sp,
+                          color: Colors.grey,
+                        ),
+                      ),
                       trailing: Text(
-                        '\$${t.amount.toStringAsFixed(2)}',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15.sp, color: _accent),
+                        '৳ ${t.amount.toStringAsFixed(2)}',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15.sp,
+                          color: _accent,
+                        ),
                       ),
                     ),
                   );
