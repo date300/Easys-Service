@@ -110,6 +110,8 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ✅ Status bar transparent রাখো
+  // Scaffold backgroundColor দিয়ে status bar এলাকা fill হবে
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -150,6 +152,7 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.light,
       colorSchemeSeed: const Color(0xFF29B6F6),
+      // ✅ AppTopBar skyBlue এর সাথে মিলছে → status bar same color দেখাবে
       scaffoldBackgroundColor: const Color(0xFF29B6F6),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
       appBarTheme: const AppBarTheme(
@@ -180,6 +183,8 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorSchemeSeed: const Color(0xFF29B6F6),
+      // ✅ AppTopBar darkHeader (0xFF1E1E1E) এর সাথে মিলছে
+      // → status bar এলাকায় এই color দেখাবে, AppTopBar এর সাথে seamless হবে
       scaffoldBackgroundColor: const Color(0xFF1E1E1E),
       textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
       appBarTheme: const AppBarTheme(
@@ -272,6 +277,9 @@ class MainWrapper extends ConsumerWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
+          // ✅ body content এর background
+          // Dark: 0xFF121212 (scaffold থেকে আলাদা — এটাই content area)
+          // Light: white
           color: isDark ? const Color(0xFF121212) : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(bodyRadius),
@@ -290,10 +298,20 @@ class MainWrapper extends ConsumerWidget {
 
     return PopScope(
       canPop: !isDetailView,
-      // ✅ এখানে reset সরানো হয়েছে — app_router.dart-এর onExit handle করবে
-      onPopInvokedWithResult: (didPop, result) {},
+      onPopInvokedWithResult: (didPop, result) {
+        if (isDetailView && !didPop) {
+          ref.read(isDetailViewProvider.notifier).state = false;
+          ref.read(detailViewTitleProvider.notifier).state = '';
+        }
+      },
       child: Scaffold(
+        // ✅ backgroundColor থিম থেকে আসে:
+        // Dark mode  → 0xFF1E1E1E (AppTopBar darkHeader এর মতো)
+        // Light mode → 0xFF29B6F6 (AppTopBar skyBlue এর মতো)
+        // SafeArea top:true হওয়ায় status bar এলাকায় এই scaffold color দেখায়
+        // → AppTopBar এর সাথে seamless একই color!
         body: SafeArea(
+          // ✅ আগের মতোই রাখা — white gap সমস্যা নেই
           top: !isEditProfile,
           child: Row(
             children: [
