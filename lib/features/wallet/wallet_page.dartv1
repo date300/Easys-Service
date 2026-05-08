@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../main.dart';
+import '../../main.dart'; // isDetailViewProvider, detailViewTitleProvider
 
 // ========== Models ==========
 class WalletBalance {
@@ -475,8 +475,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              // ✅ isDetailViewProvider set করা নেই — wallet-এ ঢোকার সময়ই true আছে
-              // শুধু title update করো
+              ref.read(isDetailViewProvider.notifier).state = true;
               ref.read(detailViewTitleProvider.notifier).state = 'Transaction History';
               context.push('/transactions');
             },
@@ -534,9 +533,9 @@ class _WalletPageState extends ConsumerState<WalletPage> {
     bool isSmall, Color cardColor, Color textColor, bool isDark,
   ) {
     final items = [
-      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,    'delay': 160, 'route': '/daily-income'},
-      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill, 'delay': 210, 'route': '/weekly-income'},
-      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,        'delay': 260, 'route': '/monthly-income'},
+      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,         'delay': 160, 'route': '/daily-income'},
+      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill,      'delay': 210, 'route': '/weekly-income'},
+      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,             'delay': 260, 'route': '/monthly-income'},
     ];
 
     return items.map((item) {
@@ -549,8 +548,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
         isDark:    isDark,
         onTap: () {
           HapticFeedback.lightImpact();
-          // ✅ isDetailViewProvider set করা নেই — wallet-এ ঢোকার সময়ই true আছে
-          // শুধু title update করো
+          ref.read(isDetailViewProvider.notifier).state = true;
           ref.read(detailViewTitleProvider.notifier).state = item['label'] as String;
           context.push(item['route'] as String);
         },
