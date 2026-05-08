@@ -13,7 +13,7 @@ class UserProfile {
   final String fullName;
   final String referralCode;
   final String? profilePicture;
-  final String idVerified; // ← নতুন
+  final String idVerified;
 
   UserProfile({
     required this.fullName,
@@ -27,7 +27,7 @@ class UserProfile {
       fullName: json['full_name'] ?? 'Guest User',
       referralCode: json['referral_code'] ?? 'N/A',
       profilePicture: json['profile_picture'],
-      idVerified: json['id_verified'] ?? 'unverified', // ← নতুন
+      idVerified: json['id_verified'] ?? 'unverified',
     );
   }
 }
@@ -99,7 +99,6 @@ class AppDrawer extends ConsumerWidget {
         backgroundColor: drawerBackground,
         child: Column(
           children: [
-            // Header
             Container(
               width: double.infinity,
               padding: EdgeInsets.only(
@@ -123,7 +122,6 @@ class AppDrawer extends ConsumerWidget {
                   : _buildGuestHeader(context),
             ),
 
-            // Menu Items
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -164,7 +162,7 @@ class AppDrawer extends ConsumerWidget {
                       },
                     ),
 
-                  // 3. Royalty Salary
+                  // 3. Royalty Salary ✅
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -175,11 +173,13 @@ class AppDrawer extends ConsumerWidget {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        context.go('/royalty-salary');
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Royalty Salary';
+                        context.push('/royalty-salary');
                       },
                     ),
 
-                  // 4. My Referrals
+                  // 4. My Referrals ✅
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -191,11 +191,13 @@ class AppDrawer extends ConsumerWidget {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        context.go('/referral');
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'My Referrals';
+                        context.push('/referral');
                       },
                     ),
 
-                  // 5. Matrix Income
+                  // 5. Matrix Income ✅
                   if (isLoggedIn)
                     _drawerItem(
                       context,
@@ -207,7 +209,9 @@ class AppDrawer extends ConsumerWidget {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        context.go('/matrix-income');
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Matrix Income';
+                        context.push('/matrix-income');
                       },
                     ),
 
@@ -373,7 +377,6 @@ class AppDrawer extends ConsumerWidget {
               ),
             ),
 
-            // Logout
             if (isLoggedIn)
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 10, 15, 25),
