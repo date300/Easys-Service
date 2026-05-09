@@ -47,6 +47,52 @@ class MatrixMyStatus {
   }
 }
 
+class MatrixGlobalStatus {
+  final double matrixFund;
+  final MatrixNextPayout? nextPayout;
+  final int maxPayoutSteps;
+
+  MatrixGlobalStatus({
+    required this.matrixFund,
+    this.nextPayout,
+    required this.maxPayoutSteps,
+  });
+
+  factory MatrixGlobalStatus.fromJson(Map<String, dynamic> json) {
+    final data = json['data'];
+    return MatrixGlobalStatus(
+      matrixFund: double.tryParse(data['matrix_fund'].toString()) ?? 0.0,
+      nextPayout: data['next_payout'] != null
+          ? MatrixNextPayout.fromJson(data['next_payout'])
+          : null,
+      maxPayoutSteps: data['max_payout_steps'],
+    );
+  }
+}
+
+class MatrixNextPayout {
+  final int userId;
+  final String fullName;
+  final double expectedAmount;
+  final int currentPayoutCount;
+
+  MatrixNextPayout({
+    required this.userId,
+    required this.fullName,
+    required this.expectedAmount,
+    required this.currentPayoutCount,
+  });
+
+  factory MatrixNextPayout.fromJson(Map<String, dynamic> json) {
+    return MatrixNextPayout(
+      userId: json['user_id'],
+      fullName: json['full_name'] ?? '',
+      expectedAmount: double.tryParse(json['expected_amount'].toString()) ?? 0.0,
+      currentPayoutCount: json['current_payout_count'],
+    );
+  }
+}
+
 // ==========================================
 // 2. API Service
 // ==========================================
@@ -72,6 +118,23 @@ class MatrixApiService {
       throw Exception('Server error: ${response.statusCode}');
     }
   }
+
+  static Future<MatrixGlobalStatus> fetchGlobalStatus() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/matrix/status'),
+      headers: {'Content-Type': 'application/json'},
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      if (json['status'] == 'success') {
+        return MatrixGlobalStatus.fromJson(json);
+      }
+      throw Exception('API error');
+    } else {
+      throw Exception('Server error: ${response.statusCode}');
+    }
+  }
 }
 
 // ==========================================
@@ -88,8 +151,11 @@ class _MatrixIncomePageState extends State<MatrixIncomePage> {
   static const Color matrixBlue = Color(0xFF6366F1);
 
   MatrixMyStatus? _myStatus;
+  MatrixGlobalStatus? _globalStatus;
   bool _isLoadingMy = true;
+  bool _isLoadingGlobal = true;
   String? _myError;
+  String? _globalError;
 
   String _token = '';
 
@@ -109,7 +175,7 @@ class _MatrixIncomePageState extends State<MatrixIncomePage> {
       });
       return;
     }
-    await _fetchMyStatus();
+    await Future.wait([_fetchMyStatus(), _fetchGlobalStatus()]);
   }
 
   Future<void> _fetchMyStatus() async {
@@ -119,6 +185,16 @@ class _MatrixIncomePageState extends State<MatrixIncomePage> {
       if (mounted) setState(() { _myStatus = myStatus; _isLoadingMy = false; });
     } catch (e) {
       if (mounted) setState(() { _myError = e.toString().replaceAll('Exception: ', ''); _isLoadingMy = false; });
+    }
+  }
+
+  Future<void> _fetchGlobalStatus() async {
+    setState(() { _isLoadingGlobal = true; _globalError = null; });
+    try {
+      final globalStatus = await MatrixApiService.fetchGlobalStatus();
+      if (mounted) setState(() { _globalStatus = globalStatus; _isLoadingGlobal = false; });
+    } catch (e) {
+      if (mounted) setState(() { _globalError = e.toString().replaceAll('Exception: ', ''); _isLoadingGlobal = false; });
     }
   }
 
@@ -147,7 +223,7 @@ class _MatrixIncomePageState extends State<MatrixIncomePage> {
           backgroundColor: cardColor,
           onRefresh: () async {
             HapticFeedback.mediumImpact();
-            await _fetchMyStatus();
+            await Future.wait([_fetchMyStatus(), _fetchGlobalStatus()]);
           },
           child: ListView(
             padding: EdgeInsets.fromLTRB(hPadding, 8.h, hPadding, 40.h),
@@ -160,6 +236,11 @@ class _MatrixIncomePageState extends State<MatrixIncomePage> {
               SizedBox(height: 10.h),
               _buildNextPayoutCard(isSmall, cardColor, textColor, subTextColor)
                   .animate().fadeIn(delay: 120.ms).slideY(begin: 0.03),
+              if (_globalStatus != null) ...[
+                SizedBox(height: 10.h),
+                _buildGlobalFundCard(isSmall, cardColor, shadowColor, borderColor, textColor, subTextColor)
+                    .animate().fadeIn(delay: 160.ms).slideY(begin: 0.03),
+              ],
               SizedBox(height: 20.h),
               _buildProgressSection(isSmall, cardColor, shadowColor, borderColor, textColor, subTextColor)
                   .animate().fadeIn(delay: 200.ms).slideY(begin: 0.03),
@@ -234,6 +315,24 @@ class _MatrixIncomePageState extends State<MatrixIncomePage> {
           Text(_isLoadingMy ? '...' : '\u09F3 $nextAmount', style: GoogleFonts.poppins(fontSize: isSmall ? 14.sp : 16.sp, fontWeight: FontWeight.w700, color: matrixBlue)),
         ])),
         if (_isLoadingMy) CupertinoActivityIndicator(radius: 10.r) else Icon(CupertinoIcons.checkmark_alt, color: Colors.green, size: isSmall ? 20.sp : 24.sp),
+      ]),
+    );
+  }
+
+  Widget _buildGlobalFundCard(bool isSmall, Color cardColor, Color shadowColor, Color borderColor, Color textColor, Color subTextColor) {
+    final fund = _globalStatus?.matrixFund ?? 0.0;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isSmall ? 14.w : 16.w, vertical: isSmall ? 10.h : 12.h),
+      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(16.r), border: Border.all(color: borderColor, width: 0.5), boxShadow: [BoxShadow(color: shadowColor, blurRadius: 16, offset: const Offset(0, 6), spreadRadius: -4)]),
+      child: Row(children: [
+        Container(width: isSmall ? 34.w : 36.w, height: isSmall ? 34.w : 36.w, decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF4F46E5)]), borderRadius: BorderRadius.circular(10.r)), child: Icon(CupertinoIcons.globe, color: Colors.white, size: isSmall ? 16.sp : 18.sp)),
+        SizedBox(width: 12.w),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Global Matrix Fund', style: GoogleFonts.poppins(fontSize: isSmall ? 12.sp : 13.sp, fontWeight: FontWeight.w600, color: textColor)),
+          SizedBox(height: 1.h),
+          Text(_isLoadingGlobal ? 'Loading...' : '\u09F3${fund.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: isSmall ? 9.sp : 10.sp, color: subTextColor)),
+        ])),
+        if (_isLoadingGlobal) CupertinoActivityIndicator(radius: isSmall ? 6.r : 7.r) else Text('Live', style: GoogleFonts.poppins(color: Colors.green, fontSize: isSmall ? 10.sp : 11.sp)),
       ]),
     );
   }
