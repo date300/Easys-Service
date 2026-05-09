@@ -148,7 +148,7 @@ class ProfileScreen extends ConsumerWidget {
                       HapticFeedback.lightImpact();
                       ref.read(isDetailViewProvider.notifier).state = true;
                       ref.read(detailViewTitleProvider.notifier).state = 'History';
-                      context.push('/wallet');
+                      context.push('/transactions');
                     },
                   ),
 
