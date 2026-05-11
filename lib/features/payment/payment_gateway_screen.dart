@@ -1533,7 +1533,7 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
             child: Text(
               text,
               style: TextStyle(
-                FontSize: 14,
+                fontSize: 14,  // FIXED: was FontSize: 14
                 color: Colors.grey.shade700,
                 height: 1.4,
               ),
