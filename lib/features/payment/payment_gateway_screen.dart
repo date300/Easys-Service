@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ═══════════════════════════════════════════════════════════════
-// ১. মডেল
-// ═══════════════════════════════════════════════════════════════
+// ==========================================
+// 1. PAYMENT METHOD MODEL
+// ==========================================
+
 class PaymentMethod {
   final String id;
   final String name;
@@ -27,19 +29,18 @@ class PaymentMethod {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ২. JWT & AUTH HELPER
-// ═══════════════════════════════════════════════════════════════
-class AuthHelper {
-  static const String _tokenKey = 'jwt_token'; // আপনার স্টোরেজ কী অনুযায়ী চেঞ্জ করুন
+// ==========================================
+// 2. AUTH HELPER
+// ==========================================
 
-  /// SharedPreferences থেকে JWT টোকেন নেয়
+class AuthHelper {
+  static const String _tokenKey = 'jwt_token';
+
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_tokenKey);
   }
 
-  /// JWT পে-লোড ডিকোড করে userId বের করে
   static Future<int?> getUserId() async {
     final token = await getToken();
     if (token == null || token.isEmpty) return null;
@@ -51,11 +52,7 @@ class AuthHelper {
       final normalized = base64Url.normalize(parts[1]);
       final payload = jsonDecode(utf8.decode(base64Url.decode(normalized)));
 
-      // আপনার JWT স্ট্রাকচার অনুযায়ী যেকোনো একটি ক্লেইম হবে
-      final id = payload['userId'] ??
-          payload['id'] ??
-          payload['sub'] ??
-          payload['user_id'];
+      final id = payload['userId'] ?? payload['id'] ?? payload['sub'] ?? payload['user_id'];
       return id is int ? id : int.tryParse(id.toString());
     } catch (e) {
       debugPrint('JWT Decode Error: $e');
@@ -64,9 +61,10 @@ class AuthHelper {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ৩. API SERVICE
-// ═══════════════════════════════════════════════════════════════
+// ==========================================
+// 3. API SERVICE
+// ==========================================
+
 class PaymentApiService {
   static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
 
@@ -80,7 +78,7 @@ class PaymentApiService {
   }) async {
     final token = await AuthHelper.getToken();
     if (token == null) {
-      throw Exception('অনুগ্রহ করে আবার লগইন করুন। JWT টোকেন পাওয়া যায়নি।');
+      throw Exception('Authentication required. Please login again.');
     }
 
     final response = await http.post(
@@ -102,21 +100,21 @@ class PaymentApiService {
 
     final data = jsonDecode(response.body);
 
-    if (response.statusCode == 201 && data['success'] == true) {
+    if (response.statusCode == 201 && data['status'] == 'success') {
       return data;
     } else if (response.statusCode == 400) {
-      throw Exception(data['message'] ?? 'অবৈধ অনুরোধ।');
+      throw Exception(data['message'] ?? 'Invalid request');
     } else if (response.statusCode == 401) {
-      throw Exception('সেশন মেয়াদোত্তীর্ণ। আবার লগইন করুন।');
+      throw Exception('Session expired. Please login again.');
     } else {
-      throw Exception(data['message'] ?? data['error'] ?? 'সার্ভার ত্রুটি হয়েছে।');
+      throw Exception(data['message'] ?? data['error'] ?? 'Payment submission failed');
     }
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ৪. উইজেটসমূহ
-// ═══════════════════════════════════════════════════════════════
+// ==========================================
+// 4. UI COMPONENTS
+// ==========================================
 
 class AmountCard extends StatelessWidget {
   final double amount;
@@ -148,7 +146,7 @@ class AmountCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            purpose,
+            purpose == 'voucher' ? 'Voucher Deposit' : 'Account Verification',
             style: const TextStyle(
               color: Colors.white70,
               fontSize: 14,
@@ -160,7 +158,7 @@ class AmountCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               const Text(
-                '৳ ',
+                '\u09F3 ',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -360,8 +358,9 @@ class ProceedButton extends StatelessWidget {
 
 class PaymentResultDialog extends StatelessWidget {
   final bool success;
+  final String? message;
 
-  const PaymentResultDialog({super.key, required this.success});
+  const PaymentResultDialog({super.key, required this.success, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -395,9 +394,10 @@ class PaymentResultDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              success
-                  ? 'আপনার পেমেন্ট রিকোয়েস্ট গ্রহণ করা হয়েছে। অ্যাডমিন অনুমোদনের পর আপডেট পাবেন।'
-                  : 'কোনো সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+              message ??
+                  (success
+                      ? 'Your payment has been submitted for verification. Admin will review it shortly.'
+                      : 'Something went wrong. Please try again.'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -410,8 +410,10 @@ class PaymentResultDialog extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // dialog close
-                  Navigator.pop(context); // back to previous screen
+                  Navigator.pop(context);
+                  if (success) {
+                    context.pop(true);
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: success ? Colors.green : Colors.red,
@@ -434,9 +436,10 @@ class PaymentResultDialog extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ৫. BKASH PAYMENT FLOW (API ইন্টিগ্রেটেড)
-// ═══════════════════════════════════════════════════════════════
+// ==========================================
+// 5. BKASH PAYMENT FLOW
+// ==========================================
+
 class BkashPaymentFlow extends StatefulWidget {
   final PaymentMethod method;
   final double amount;
@@ -459,7 +462,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
   final _senderController = TextEditingController();
   bool _isLoading = false;
 
-  // ⚠️ এখানে আপনার মার্চেন্ট bKash নম্বর দিন
   final String _merchantNumber = '01XXXXXXXXX';
 
   @override
@@ -469,7 +471,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
     super.dispose();
   }
 
-  /// UI-তে দেখানো purpose কে API-র জন্য ম্যাপ করা
   String get _apiPurpose {
     final p = widget.purpose.toLowerCase();
     if (p.contains('verification')) return 'verification';
@@ -482,7 +483,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
 
     final userId = await AuthHelper.getUserId();
     if (userId == null) {
-      _showSnackBar('ইউজার আইডি পাওয়া যায়নি। আবার লগইন করুন।', isError: true);
+      _showSnackBar('User not found. Please login again.', isError: true);
       return;
     }
 
@@ -491,7 +492,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
     try {
       await PaymentApiService.submitPayment(
         userId: userId,
-        method: widget.method.id, // 'bkash'
+        method: widget.method.id,
         amount: widget.amount,
         trxId: _trxIdController.text.trim(),
         senderInfo: _senderController.text.trim(),
@@ -499,7 +500,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
       );
 
       if (mounted) {
-        Navigator.pop(context, true); // success = true
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -528,7 +529,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
   Future<void> _copyToClipboard(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (mounted) {
-      _showSnackBar('কপি করা হয়েছে: $text');
+      _showSnackBar('Copied: $text');
     }
   }
 
@@ -548,7 +549,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Amount Card ──
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -569,7 +569,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '৳ ${widget.amount.toStringAsFixed(2)}',
+                    '\u09F3 ${widget.amount.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 32,
@@ -581,7 +581,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
             ),
             const SizedBox(height: 28),
 
-            // ── Merchant Info ──
             Text(
               'Merchant Details',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -602,7 +601,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
             ),
             const SizedBox(height: 28),
 
-            // ── Instructions ──
             Text(
               'Instructions',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -610,14 +608,13 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
                   ),
             ),
             const SizedBox(height: 12),
-            _buildInstructionTile('1', 'bKash App খুলুন।'),
-            _buildInstructionTile('2', '"Send Money" তে যান।'),
-            _buildInstructionTile('3', 'নম্বরে টাকা পাঠান: $_merchantNumber'),
-            _buildInstructionTile('4', 'Amount: ৳${widget.amount.toStringAsFixed(2)}'),
-            _buildInstructionTile('5', 'নিচে TrxID এবং আপনার নম্বর লিখুন।'),
+            _buildInstructionTile('1', 'Open bKash App'),
+            _buildInstructionTile('2', 'Tap "Send Money"'),
+            _buildInstructionTile('3', 'Enter number: $_merchantNumber'),
+            _buildInstructionTile('4', 'Amount: \u09F3${widget.amount.toStringAsFixed(2)}'),
+            _buildInstructionTile('5', 'Enter TrxID and submit below'),
             const SizedBox(height: 28),
 
-            // ── Form ──
             Form(
               key: _formKey,
               child: Column(
@@ -632,10 +629,10 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
                     textInputAction: TextInputAction.next,
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'TrxID দিন';
+                        return 'TrxID is required';
                       }
                       if (v.trim().length < 5) {
-                        return 'সঠিক TrxID দিন';
+                        return 'Invalid TrxID';
                       }
                       return null;
                     },
@@ -651,10 +648,10 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
                     textInputAction: TextInputAction.done,
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'সেন্ডার নম্বর দিন';
+                        return 'Sender number is required';
                       }
                       if (!RegExp(r'^01[3-9]\d{8}$').hasMatch(v.trim())) {
-                        return 'সঠিক বাংলাদেশি মোবাইল নম্বর দিন';
+                        return 'Enter valid Bangladeshi number';
                       }
                       return null;
                     },
@@ -664,7 +661,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
             ),
             const SizedBox(height: 32),
 
-            // ── Submit Button ──
             SizedBox(
               width: double.infinity,
               height: 54,
@@ -822,10 +818,11 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ৬. NAGAD & BINANCE (Placeholder — একই ফরম্যাটে এক্সটেন্ড করুন)
-// ═══════════════════════════════════════════════════════════════
-class NagadPaymentFlow extends StatelessWidget {
+// ==========================================
+// 6. NAGAD PAYMENT FLOW
+// ==========================================
+
+class NagadPaymentFlow extends StatefulWidget {
   final PaymentMethod method;
   final double amount;
   final String purpose;
@@ -838,24 +835,376 @@ class NagadPaymentFlow extends StatelessWidget {
   });
 
   @override
+  State<NagadPaymentFlow> createState() => _NagadPaymentFlowState();
+}
+
+class _NagadPaymentFlowState extends State<NagadPaymentFlow> {
+  final _formKey = GlobalKey<FormState>();
+  final _trxIdController = TextEditingController();
+  final _senderController = TextEditingController();
+  bool _isLoading = false;
+
+  final String _merchantNumber = '01XXXXXXXXX';
+
+  @override
+  void dispose() {
+    _trxIdController.dispose();
+    _senderController.dispose();
+    super.dispose();
+  }
+
+  String get _apiPurpose {
+    final p = widget.purpose.toLowerCase();
+    if (p.contains('verification')) return 'verification';
+    if (p.contains('voucher')) return 'voucher';
+    return 'verification';
+  }
+
+  Future<void> _submitPayment() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final userId = await AuthHelper.getUserId();
+    if (userId == null) {
+      _showSnackBar('User not found. Please login again.', isError: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await PaymentApiService.submitPayment(
+        userId: userId,
+        method: widget.method.id,
+        amount: widget.amount,
+        trxId: _trxIdController.text.trim(),
+        senderInfo: _senderController.text.trim(),
+        purpose: _apiPurpose,
+      );
+
+      if (mounted) {
+        context.pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar(
+          e.toString().replaceAll('Exception: ', ''),
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnackBar(String msg, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Future<void> _copyToClipboard(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (mounted) {
+      _showSnackBar('Copied: $text');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
+        backgroundColor: widget.method.primaryColor,
+        elevation: 0,
         title: const Text('Nagad Payment'),
-        backgroundColor: method.primaryColor,
+        centerTitle: true,
         foregroundColor: Colors.white,
       ),
-      body: Center(
-        child: Text(
-          'Nagad integration coming soon...',
-          style: TextStyle(color: Colors.grey.shade600),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [widget.method.primaryColor, widget.method.secondaryColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Payable Amount',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '\u09F3 ${widget.amount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            Text(
+              'Merchant Details',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            _buildDetailTile(
+              icon: Icons.phone_android,
+              label: 'Nagad Number',
+              value: _merchantNumber,
+              onCopy: () => _copyToClipboard(_merchantNumber),
+            ),
+            _buildDetailTile(
+              icon: Icons.payment,
+              label: 'Payment Type',
+              value: 'Send Money',
+            ),
+            const SizedBox(height: 28),
+
+            Text(
+              'Instructions',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            _buildInstructionTile('1', 'Open Nagad App'),
+            _buildInstructionTile('2', 'Tap "Send Money"'),
+            _buildInstructionTile('3', 'Enter number: $_merchantNumber'),
+            _buildInstructionTile('4', 'Amount: \u09F3${widget.amount.toStringAsFixed(2)}'),
+            _buildInstructionTile('5', 'Enter TrxID and submit below'),
+            const SizedBox(height: 28),
+
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _trxIdController,
+                    decoration: _inputDecoration(
+                      'Transaction ID (TrxID)',
+                      Icons.confirmation_number_outlined,
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                    textInputAction: TextInputAction.next,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'TrxID is required';
+                      }
+                      if (v.trim().length < 5) {
+                        return 'Invalid TrxID';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _senderController,
+                    decoration: _inputDecoration(
+                      'Your Nagad Number',
+                      Icons.phone_android_outlined,
+                    ),
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.done,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Sender number is required';
+                      }
+                      if (!RegExp(r'^01[3-9]\d{8}$').hasMatch(v.trim())) {
+                        return 'Enter valid Bangladeshi number';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submitPayment,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: widget.method.primaryColor,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.orange.shade100,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 3,
+                  shadowColor: widget.method.primaryColor.withOpacity(0.4),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Submit Payment',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildDetailTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    VoidCallback? onCopy,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey.shade600),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onCopy != null)
+            IconButton(
+              onPressed: onCopy,
+              icon: const Icon(Icons.copy, size: 18),
+              color: const Color(0xFFFF6600),
+              tooltip: 'Copy',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstructionTile(String number, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6600).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Color(0xFFFF6600),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: Colors.grey),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFFF6600), width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red, width: 1),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
 }
 
-class BinancePaymentFlow extends StatelessWidget {
+// ==========================================
+// 7. BINANCE PAYMENT FLOW
+// ==========================================
+
+class BinancePaymentFlow extends StatefulWidget {
   final PaymentMethod method;
   final double amount;
   final String purpose;
@@ -868,26 +1217,373 @@ class BinancePaymentFlow extends StatelessWidget {
   });
 
   @override
+  State<BinancePaymentFlow> createState() => _BinancePaymentFlowState();
+}
+
+class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
+  final _formKey = GlobalKey<FormState>();
+  final _trxIdController = TextEditingController();
+  final _senderController = TextEditingController();
+  bool _isLoading = false;
+
+  final String _walletAddress = '0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+
+  @override
+  void dispose() {
+    _trxIdController.dispose();
+    _senderController.dispose();
+    super.dispose();
+  }
+
+  String get _apiPurpose {
+    final p = widget.purpose.toLowerCase();
+    if (p.contains('verification')) return 'verification';
+    if (p.contains('voucher')) return 'voucher';
+    return 'verification';
+  }
+
+  Future<void> _submitPayment() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final userId = await AuthHelper.getUserId();
+    if (userId == null) {
+      _showSnackBar('User not found. Please login again.', isError: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await PaymentApiService.submitPayment(
+        userId: userId,
+        method: widget.method.id,
+        amount: widget.amount,
+        trxId: _trxIdController.text.trim(),
+        senderInfo: _senderController.text.trim(),
+        purpose: _apiPurpose,
+      );
+
+      if (mounted) {
+        context.pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar(
+          e.toString().replaceAll('Exception: ', ''),
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnackBar(String msg, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Future<void> _copyToClipboard(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (mounted) {
+      _showSnackBar('Copied: $text');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
+        backgroundColor: widget.method.primaryColor,
+        elevation: 0,
         title: const Text('Binance Pay'),
-        backgroundColor: method.primaryColor,
+        centerTitle: true,
         foregroundColor: Colors.black,
       ),
-      body: Center(
-        child: Text(
-          'Binance Pay integration coming soon...',
-          style: TextStyle(color: Colors.grey.shade600),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [widget.method.primaryColor, widget.method.secondaryColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Payable Amount',
+                    style: TextStyle(color: Colors.black54, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '\u09F3 ${widget.amount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            Text(
+              'Wallet Details',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            _buildDetailTile(
+              icon: Icons.account_balance_wallet,
+              label: 'USDT (BEP20) Address',
+              value: _walletAddress,
+              onCopy: () => _copyToClipboard(_walletAddress),
+            ),
+            _buildDetailTile(
+              icon: Icons.paid,
+              label: 'Network',
+              value: 'BEP20 (BSC)',
+            ),
+            const SizedBox(height: 28),
+
+            Text(
+              'Instructions',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            _buildInstructionTile('1', 'Open Binance App'),
+            _buildInstructionTile('2', 'Go to Withdraw → USDT'),
+            _buildInstructionTile('3', 'Select BEP20 (BSC) Network'),
+            _buildInstructionTile('4', 'Paste wallet address above'),
+            _buildInstructionTile('5', 'Enter amount and send'),
+            _buildInstructionTile('6', 'Copy TxID and submit below'),
+            const SizedBox(height: 28),
+
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _trxIdController,
+                    decoration: _inputDecoration(
+                      'Transaction Hash (TxID)',
+                      Icons.confirmation_number_outlined,
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                    textInputAction: TextInputAction.next,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'TxID is required';
+                      }
+                      if (v.trim().length < 10) {
+                        return 'Invalid TxID';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _senderController,
+                    decoration: _inputDecoration(
+                      'Your Binance Email / UID',
+                      Icons.email_outlined,
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Sender info is required';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submitPayment,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF0B90B),
+                  foregroundColor: Colors.black,
+                  disabledBackgroundColor: Colors.yellow.shade100,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 3,
+                  shadowColor: const Color(0xFFF0B90B).withOpacity(0.4),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation(Colors.black),
+                        ),
+                      )
+                    : const Text(
+                        'Submit Payment',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildDetailTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    VoidCallback? onCopy,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey.shade600),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onCopy != null)
+            IconButton(
+              onPressed: onCopy,
+              icon: const Icon(Icons.copy, size: 18),
+              color: const Color(0xFFF0B90B),
+              tooltip: 'Copy',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstructionTile(String number, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0B90B).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Color(0xFFF0B90B),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: Colors.grey),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFF0B90B), width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.red, width: 1),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ৭. MAIN SCREEN — PaymentGatewayScreen
-// ═══════════════════════════════════════════════════════════════
+// ==========================================
+// 8. MAIN SCREEN - PaymentGatewayScreen
+// ==========================================
+
 class PaymentGatewayScreen extends StatefulWidget {
   final double amount;
   final String purpose;
@@ -933,7 +1629,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
       logoAsset: 'assets/images/nagad.png',
       primaryColor: Color(0xFFFF6600),
       secondaryColor: Color(0xFFFFAA55),
-      available: false,
+      available: true,
     ),
     PaymentMethod(
       id: 'binance',
@@ -942,7 +1638,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
       logoAsset: 'assets/images/binance.png',
       primaryColor: Color(0xFFF0B90B),
       secondaryColor: Color(0xFFFFDA6A),
-      available: false,
+      available: true,
     ),
   ];
 
@@ -1060,54 +1756,4 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
             child: Column(
               children: [
                 AmountCard(amount: widget.amount, purpose: widget.purpose),
-                const SizedBox(height: 28),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Select Payment Method',
-                      style: TextStyle(
-                        color: Colors.black.withOpacity(0.55),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    itemCount: _methods.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 14),
-                    itemBuilder: (context, index) {
-                      final method = _methods[index];
-                      return PaymentMethodCard(
-                        method: method,
-                        isSelected: _selectedMethod?.id == method.id,
-                        onTap: method.available
-                            ? () => setState(() => _selectedMethod = method)
-                            : null,
-                      );
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                  child: ProceedButton(
-                    enabled: _selectedMethod != null,
-                    isLoading: _isProcessing,
-                    color: _selectedMethod?.primaryColor ??
-                        const Color(0xFF6C63FF),
-                    onTap: _proceedToPayment,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+                const SizedBox(height:
