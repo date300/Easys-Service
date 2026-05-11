@@ -1,12 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../main.dart';
 
 // ==========================================
 // 1. PAYMENT METHOD MODEL
@@ -503,7 +500,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
       );
 
       if (mounted) {
-        Navigator.of(context).pop(true);
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -881,7 +878,7 @@ class _NagadPaymentFlowState extends State<NagadPaymentFlow> {
       );
 
       if (mounted) {
-        Navigator.of(context).pop(true);
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -1259,7 +1256,7 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
       );
 
       if (mounted) {
-        Navigator.of(context).pop(true);
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -1533,7 +1530,7 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
             child: Text(
               text,
               style: TextStyle(
-                FontSize: 14,
+                fontSize: 14,
                 color: Colors.grey.shade700,
                 height: 1.4,
               ),
@@ -1575,7 +1572,7 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
 // 8. MAIN SCREEN - PaymentGatewayScreen
 // ==========================================
 
-class PaymentGatewayScreen extends ConsumerStatefulWidget {
+class PaymentGatewayScreen extends StatefulWidget {
   final double amount;
   final String purpose;
   final VoidCallback? onPaymentSuccess;
@@ -1590,10 +1587,10 @@ class PaymentGatewayScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PaymentGatewayScreen> createState() => _PaymentGatewayScreenState();
+  State<PaymentGatewayScreen> createState() => _PaymentGatewayScreenState();
 }
 
-class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
+class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
     with TickerProviderStateMixin {
   PaymentMethod? _selectedMethod;
   bool _isProcessing = false;
@@ -1636,15 +1633,6 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
   @override
   void initState() {
     super.initState();
-    
-    // Set detail view for AppTopBar back button and title
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(isDetailViewProvider.notifier).state = true;
-        ref.read(detailViewTitleProvider.notifier).state = 'Payment';
-      }
-    });
-    
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -1710,8 +1698,8 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
         return;
     }
 
-    // Push payment flow as full screen outside MainWrapper
-    final result = await Navigator.of(context, rootNavigator: true).push<bool>(
+    final result = await Navigator.push<bool>(
+      context,
       MaterialPageRoute(builder: (_) => flowScreen),
     );
 
@@ -1738,7 +1726,16 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // No AppBar - MainWrapper/AppTopBar handles it via isDetailViewProvider
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          'Payment',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        centerTitle: true,
+      ),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SlideTransition(
