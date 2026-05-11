@@ -31,7 +31,6 @@ import '../features/wallet/pages/monthly_income_page.dart';
 
 Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
   final container = ProviderScope.containerOf(context);
-  // ✅ page animation শেষ হওয়ার পর reset
   Future.delayed(const Duration(milliseconds: 400), () {
     container.read(isDetailViewProvider.notifier).state = false;
     container.read(detailViewTitleProvider.notifier).state = '';
@@ -154,6 +153,7 @@ final GoRouter appRouter = GoRouter(
             productId: state.pathParameters['id']!,
           ),
         ),
+        // FIXED: Payment route with proper extra handling
         GoRoute(
           path: '/payment',
           builder: (context, state) {
@@ -162,6 +162,7 @@ final GoRouter appRouter = GoRouter(
               amount: extra?['amount'] ?? 300.00,
               purpose: extra?['purpose'] ?? 'Account Verification Fee',
               onPaymentSuccess: extra?['onSuccess'],
+              onPaymentFailed: extra?['onFailed'],
             );
           },
         ),

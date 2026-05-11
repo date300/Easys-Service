@@ -1756,4 +1756,62 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
             child: Column(
               children: [
                 AmountCard(amount: widget.amount, purpose: widget.purpose),
-                const SizedBox(height:
+                const SizedBox(height:ফাইলটি বড় হয়ে গেছে। আমি বাকি অংশ এবং বাকি ফাইলগুলো পাঠাচ্ছি:
+
+---
+
+### 2️⃣ `payment_gateway_screen.dart` — বাকি অংশ (PaymentGatewayScreen)
+
+```dart
+                AmountCard(amount: widget.amount, purpose: widget.purpose),
+                const SizedBox(height: 28),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Select Payment Method',
+                      style: TextStyle(
+                        color: Colors.black.withOpacity(0.55),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: _methods.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 14),
+                    itemBuilder: (context, index) {
+                      final method = _methods[index];
+                      return PaymentMethodCard(
+                        method: method,
+                        isSelected: _selectedMethod?.id == method.id,
+                        onTap: method.available
+                            ? () => setState(() => _selectedMethod = method)
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  child: ProceedButton(
+                    enabled: _selectedMethod != null,
+                    isLoading: _isProcessing,
+                    color: _selectedMethod?.primaryColor ??
+                        const Color(0xFF6C63FF),
+                    onTap: _proceedToPayment,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -31,8 +31,11 @@ import '../features/wallet/pages/monthly_income_page.dart';
 
 Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
   final container = ProviderScope.containerOf(context);
-  container.read(isDetailViewProvider.notifier).state = false;
-  container.read(detailViewTitleProvider.notifier).state = '';
+  // ✅ page animation শেষ হওয়ার পর reset
+  Future.delayed(const Duration(milliseconds: 400), () {
+    container.read(isDetailViewProvider.notifier).state = false;
+    container.read(detailViewTitleProvider.notifier).state = '';
+  });
   return true;
 }
 
@@ -113,8 +116,6 @@ final GoRouter appRouter = GoRouter(
           path: '/wallet',
           builder: (context, state) => const WalletPage(),
         ),
-
-        // ─────────── Wallet Sub‑pages ───────────
         _detailRoute(
           path: '/transactions',
           builder: (context, state) => const TransactionListPage(),
@@ -131,8 +132,6 @@ final GoRouter appRouter = GoRouter(
           path: '/monthly-income',
           builder: (context, state) => const MonthlyIncomePage(),
         ),
-        // ─────────────────────────────────────────
-
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
