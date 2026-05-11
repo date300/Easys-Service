@@ -580,7 +580,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
               ),
             ),
             const SizedBox(height: 28),
-
             Text(
               'Merchant Details',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -600,7 +599,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
               value: 'Send Money',
             ),
             const SizedBox(height: 28),
-
             Text(
               'Instructions',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -614,7 +612,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
             _buildInstructionTile('4', 'Amount: \u09F3${widget.amount.toStringAsFixed(2)}'),
             _buildInstructionTile('5', 'Enter TrxID and submit below'),
             const SizedBox(height: 28),
-
             Form(
               key: _formKey,
               child: Column(
@@ -660,7 +657,6 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
               ),
             ),
             const SizedBox(height: 32),
-
             SizedBox(
               width: double.infinity,
               height: 54,
@@ -962,7 +958,6 @@ class _NagadPaymentFlowState extends State<NagadPaymentFlow> {
               ),
             ),
             const SizedBox(height: 28),
-
             Text(
               'Merchant Details',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -982,7 +977,6 @@ class _NagadPaymentFlowState extends State<NagadPaymentFlow> {
               value: 'Send Money',
             ),
             const SizedBox(height: 28),
-
             Text(
               'Instructions',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -996,7 +990,6 @@ class _NagadPaymentFlowState extends State<NagadPaymentFlow> {
             _buildInstructionTile('4', 'Amount: \u09F3${widget.amount.toStringAsFixed(2)}'),
             _buildInstructionTile('5', 'Enter TrxID and submit below'),
             const SizedBox(height: 28),
-
             Form(
               key: _formKey,
               child: Column(
@@ -1042,7 +1035,6 @@ class _NagadPaymentFlowState extends State<NagadPaymentFlow> {
               ),
             ),
             const SizedBox(height: 32),
-
             SizedBox(
               width: double.infinity,
               height: 54,
@@ -1344,7 +1336,6 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
               ),
             ),
             const SizedBox(height: 28),
-
             Text(
               'Wallet Details',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -1364,7 +1355,6 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
               value: 'BEP20 (BSC)',
             ),
             const SizedBox(height: 28),
-
             Text(
               'Instructions',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -1373,13 +1363,12 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
             ),
             const SizedBox(height: 12),
             _buildInstructionTile('1', 'Open Binance App'),
-            _buildInstructionTile('2', 'Go to Withdraw → USDT'),
+            _buildInstructionTile('2', 'Go to Withdraw -> USDT'),
             _buildInstructionTile('3', 'Select BEP20 (BSC) Network'),
             _buildInstructionTile('4', 'Paste wallet address above'),
             _buildInstructionTile('5', 'Enter amount and send'),
             _buildInstructionTile('6', 'Copy TxID and submit below'),
             const SizedBox(height: 28),
-
             Form(
               key: _formKey,
               child: Column(
@@ -1422,7 +1411,6 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
               ),
             ),
             const SizedBox(height: 32),
-
             SizedBox(
               width: double.infinity,
               height: 54,
@@ -1755,14 +1743,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen>
           child: SafeArea(
             child: Column(
               children: [
-                AmountCard(amount: widget.amount, purpose: widget.purpose),
-                const SizedBox(height:ফাইলটি বড় হয়ে গেছে। আমি বাকি অংশ এবং বাকি ফাইলগুলো পাঠাচ্ছি:
-
----
-
-### 2️⃣ `payment_gateway_screen.dart` — বাকি অংশ (PaymentGatewayScreen)
-
-```dart
                 AmountCard(amount: widget.amount, purpose: widget.purpose),
                 const SizedBox(height: 28),
                 Padding(
