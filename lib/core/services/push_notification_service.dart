@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -10,14 +10,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../firebase_options.dart';
 
-// ==================== BACKGROUND HANDLER ====================
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await PushNotificationService.instance.showLocalNotification(message);
 }
 
-// ==================== NOTIFICATION EVENT MODEL ====================
 class NotificationEvent {
   final String? title;
   final String? body;
@@ -32,44 +30,49 @@ class NotificationEvent {
   });
 }
 
-// ==================== PUSH NOTIFICATION SERVICE ====================
 class PushNotificationService {
-  static final PushNotificationService instance = PushNotificationService._internal();
+  static final PushNotificationService instance =
+      PushNotificationService._internal();
   factory PushNotificationService() => instance;
   PushNotificationService._internal();
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  
-  final StreamController<<NotificationEvent> _onMessageController = StreamController<<NotificationEvent>.broadcast();
-  final StreamController<<NotificationEvent> _onTapController = StreamController<<NotificationEvent>.broadcast();
-  final StreamController<int> _unreadCountController = StreamController<int>.broadcast();
-  
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  final StreamController<NotificationEvent> _onMessageController =
+      StreamController<NotificationEvent>.broadcast();
+  final StreamController<NotificationEvent> _onTapController =
+      StreamController<NotificationEvent>.broadcast();
+  final StreamController<int> _unreadCountController =
+      StreamController<int>.broadcast();
+
   bool _initialized = false;
   String? _fcmToken;
 
-  Stream<<NotificationEvent> get onMessage => _onMessageController.stream;
-  Stream<<NotificationEvent> get onTap => _onTapController.stream;
+  Stream<NotificationEvent> get onMessage => _onMessageController.stream;
+  Stream<NotificationEvent> get onTap => _onTapController.stream;
   Stream<int> get unreadCountStream => _unreadCountController.stream;
 
   Future<void> initialize() async {
     if (_initialized) return;
-    
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    
+
     await _requestPermissions();
     await _setupLocalNotifications();
-    
+
     _fcmToken = await _messaging.getToken();
-    debugPrint('📲 FCM Token: $_fcmToken');
+    debugPrint('FCM Token: $_fcmToken');
     if (_fcmToken != null) await _sendTokenToBackend(_fcmToken!);
-    
+
     _messaging.onTokenRefresh.listen((token) async {
       _fcmToken = token;
       await _sendTokenToBackend(token);
     });
-    
+
     FirebaseMessaging.onMessage.listen((message) {
       _onMessageController.add(NotificationEvent(
         title: message.notification?.title,
@@ -80,7 +83,7 @@ class PushNotificationService {
       _incrementUnreadCount();
       showLocalNotification(message);
     });
-    
+
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       _onTapController.add(NotificationEvent(
         title: message.notification?.title,
@@ -90,7 +93,7 @@ class PushNotificationService {
       ));
       _clearUnreadCount();
     });
-    
+
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
       _onTapController.add(NotificationEvent(
@@ -101,12 +104,14 @@ class PushNotificationService {
       ));
       _clearUnreadCount();
     }
-    
+
     _initialized = true;
   }
 
   Future<void> _requestPermissions() async {
-    if (Platform.isIOS) {
+    if (kIsWeb) return;
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
       await _messaging.requestPermission(
         alert: true,
         badge: true,
@@ -118,27 +123,34 @@ class PushNotificationService {
         badge: true,
         sound: true,
       );
-    } else if (Platform.isAndroid) {
-      final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<<AndroidFlutterLocalNotificationsPlugin>();
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
       await androidPlugin?.requestNotificationsPermission();
     }
   }
 
   Future<void> _setupLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    if (kIsWeb) return;
+
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
-    
+    const initSettings =
+        InitializationSettings(android: androidSettings, iOS: iosSettings);
+
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (response) {
         if (response.payload != null && response.payload!.isNotEmpty) {
           final data = jsonDecode(response.payload!);
-          _onTapController.add(NotificationEvent(data: data, isBackground: true));
+          _onTapController.add(
+              NotificationEvent(data: data, isBackground: true));
           _clearUnreadCount();
         }
       },
@@ -154,11 +166,15 @@ class PushNotificationService {
       showBadge: true,
     );
 
-    final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<<AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(channel);
   }
 
   Future<void> showLocalNotification(RemoteMessage message) async {
+    if (kIsWeb) return;
+
     final notification = message.notification;
     if (notification == null) return;
 
@@ -183,7 +199,8 @@ class PushNotificationService {
       presentSound: true,
     );
 
-    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    const details =
+        NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     await _localNotifications.show(
       message.hashCode,
@@ -202,7 +219,7 @@ class PushNotificationService {
       final prefs = await SharedPreferences.getInstance();
       final jwt = prefs.getString('jwt_token');
       if (jwt == null || jwt.isEmpty) return;
-      
+
       await http.post(
         Uri.parse('https://easy.ltcminematrix.com/api/user/fcm-token'),
         headers: {
@@ -211,12 +228,12 @@ class PushNotificationService {
         },
         body: jsonEncode({
           'fcm_token': token,
-          'device_type': Platform.operatingSystem,
+          'device_type': kIsWeb ? 'web' : 'mobile',
         }),
       );
-      debugPrint('✅ FCM token synced to backend');
+      debugPrint('FCM token synced to backend');
     } catch (e) {
-      debugPrint('❌ FCM token sync failed: $e');
+      debugPrint('FCM token sync failed: $e');
     }
   }
 
