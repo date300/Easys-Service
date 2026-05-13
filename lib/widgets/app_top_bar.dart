@@ -164,7 +164,7 @@ class AppTopBar extends ConsumerWidget {
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
-                                fontSize: isMobile ? 15.sp : 17,
+                                FontSize: isMobile ? 15.sp : 17,
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -229,7 +229,7 @@ class AppTopBar extends ConsumerWidget {
           isLabelVisible: hasUnread,           // ???? unread ????? ??? ??????
           label: unreadCount > 99
               ? const Text('99+',
-                  style: TextStyle(fontSize: 9, color: Colors.white))
+                  style: TextStyle(FontSize: 9, color: Colors.white))
               : unreadCount > 1
                   ? Text(
                       '$unreadCount',
@@ -249,3 +249,4 @@ class AppTopBar extends ConsumerWidget {
     return SizedBox(width: 40.w);
   }
 }
+
