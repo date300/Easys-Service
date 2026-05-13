@@ -6,7 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
 
+import 'firebase_options.dart';
+import 'core/services/push_notification_service.dart';
 import 'router/app_router.dart';
 import 'widgets/app_bottom_nav_bar.dart';
 import 'widgets/app_nav_rail.dart';
@@ -18,11 +21,11 @@ import 'widgets/app_drawer.dart';
 // ============================================
 
 final themeModeProvider =
-    StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
+    StateNotifierProvider<<ThemeModeController, ThemeMode>((ref) {
   return ThemeModeController();
 });
 
-class ThemeModeController extends StateNotifier<ThemeMode> {
+class ThemeModeController extends StateNotifier<<ThemeMode> {
   ThemeModeController() : super(ThemeMode.system) {
     _loadTheme();
   }
@@ -70,7 +73,7 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
 // ============================================
 
 final authProvider =
-    StateNotifierProvider<AuthController, bool>((ref) {
+    StateNotifierProvider<<AuthController, bool>((ref) {
   return AuthController();
 });
 
@@ -107,8 +110,16 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 // MAIN
 // ============================================
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase first
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Initialize Push Notification Service
+  await PushNotificationService.instance.initialize();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -211,7 +222,7 @@ class MyApp extends ConsumerWidget {
 // MAIN WRAPPER
 // ============================================
 
-class MainWrapper extends ConsumerWidget {
+class MainWrapper extends ConsumerStatefulWidget {
   final Widget child;
   const MainWrapper({super.key, required this.child});
 
@@ -222,6 +233,13 @@ class MainWrapper extends ConsumerWidget {
       MediaQuery.of(ctx).size.width < 1100;
   static bool _isMobile(BuildContext ctx) =>
       MediaQuery.of(ctx).size.width < 600;
+
+  @override
+  ConsumerState<<MainWrapper> createState() => _MainWrapperState();
+}
+
+class _MainWrapperState extends ConsumerState<<MainWrapper> {
+  StreamSubscription<<NotificationEvent>? _pushTapSub;
 
   int _indexFromLocation(String location) {
     if (location.startsWith('/home')) return 0;
@@ -244,13 +262,31 @@ class MainWrapper extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+
+    // Listen to push notification taps — navigates to notification screen
+    _pushTapSub = PushNotificationService.instance.onTap.listen((event) {
+      if (mounted) {
+        context.push('/notifications');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pushTapSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     final currentIndex = _indexFromLocation(location);
     final isLoggedIn = ref.watch(authProvider);
-    final isDesktop = _isDesktop(context);
-    final isTablet = _isTablet(context);
-    final isMobile = _isMobile(context);
+    final isDesktop = MainWrapper._isDesktop(context);
+    final isTablet = MainWrapper._isTablet(context);
+    final isMobile = MainWrapper._isMobile(context);
 
     final isEditProfile = location.contains('edit_profile');
     final isPaymentPage = location == '/payment';
@@ -259,7 +295,7 @@ class MainWrapper extends ConsumerWidget {
     final detailTitle =
         isPaymentPage ? 'Payment' : ref.watch(detailViewTitleProvider);
 
-    final animatedChild = child
+    final animatedChild = widget.child
         .animate(key: ValueKey(location))
         .fadeIn(duration: 400.ms)
         .moveY(begin: 10, end: 0);
@@ -290,7 +326,6 @@ class MainWrapper extends ConsumerWidget {
 
     return PopScope(
       canPop: !isDetailView,
-      // ✅ এখানে reset সরানো হয়েছে — app_router.dart-এর onExit handle করবে
       onPopInvokedWithResult: (didPop, result) {},
       child: Scaffold(
         body: SafeArea(

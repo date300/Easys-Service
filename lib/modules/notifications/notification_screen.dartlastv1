@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,19 +8,21 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/services/push_notification_service.dart';
-import '../../main.dart';
-
 // ==================== CONSTANTS ====================
+
 const String _baseUrl = 'https://easy.ltcminematrix.com/api';
 
 // ==================== TOKEN HELPER ====================
+
 Future<String?> _getToken() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('jwt_token');
 }
 
 // ==================== NOTIFICATION MODEL ====================
+// Backend fields: id, message_en, message_bn, previous_balance,
+//                 amount_added, new_balance, source, is_read, created_at
+
 class NotificationItem {
   final int id;
   final String messageEn;
@@ -74,6 +75,7 @@ class NotificationItem {
     );
   }
 
+  // Source থেকে type বের করা
   NotificationType get type {
     final s = source.toLowerCase();
     if (s.contains('referral')) return NotificationType.referral;
@@ -86,10 +88,11 @@ class NotificationItem {
 enum NotificationType { referral, matrix, royalty, system }
 
 // ==================== API STATE ====================
+
 enum ApiStatus { idle, loading, success, error }
 
 class NotificationState {
-  final List<<NotificationItem> notifications;
+  final List<NotificationItem> notifications;
   final ApiStatus status;
   final String? errorMessage;
   final bool hasMore;
@@ -104,7 +107,7 @@ class NotificationState {
   });
 
   NotificationState copyWith({
-    List<<NotificationItem>? notifications,
+    List<NotificationItem>? notifications,
     ApiStatus? status,
     String? errorMessage,
     bool? hasMore,
@@ -121,16 +124,18 @@ class NotificationState {
 }
 
 // ==================== PROVIDER ====================
+
 final notificationsProvider =
-    StateNotifierProvider<<NotificationNotifier, NotificationState>((ref) {
+    StateNotifierProvider<NotificationNotifier, NotificationState>((ref) {
   return NotificationNotifier();
 });
 
-class NotificationNotifier extends StateNotifier<<NotificationState> {
+class NotificationNotifier extends StateNotifier<NotificationState> {
   NotificationNotifier() : super(const NotificationState());
 
   static const int _limit = 20;
 
+  // ── Fetch notifications (initial load) ──────────────────────────────────
   Future<void> loadNotifications() async {
     state = state.copyWith(status: ApiStatus.loading, offset: 0);
     try {
@@ -146,6 +151,7 @@ class NotificationNotifier extends StateNotifier<<NotificationState> {
     }
   }
 
+  // ── Load more (pagination) ───────────────────────────────────────────────
   Future<void> loadMore() async {
     if (!state.hasMore || state.status == ApiStatus.loading) return;
     try {
@@ -162,6 +168,7 @@ class NotificationNotifier extends StateNotifier<<NotificationState> {
     http.Response response, {
     required bool replace,
     int newOffset = 0,
+    void Function(int)? onUnreadCount,
   }) {
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
@@ -171,6 +178,10 @@ class NotificationNotifier extends StateNotifier<<NotificationState> {
       final updated = replace
           ? fetched
           : [...state.notifications, ...fetched];
+
+      // AppTopBar badge sync
+      final unreadCount = updated.where((n) => !n.isRead).length;
+      onUnreadCount?.call(unreadCount);
 
       state = state.copyWith(
         notifications: updated,
@@ -186,7 +197,9 @@ class NotificationNotifier extends StateNotifier<<NotificationState> {
     }
   }
 
+  // ── Mark single as read ─────────────────────────────────────────────────
   Future<void> markAsRead(int id) async {
+    // Optimistic update
     state = state.copyWith(
       notifications: state.notifications
           .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
@@ -199,10 +212,12 @@ class NotificationNotifier extends StateNotifier<<NotificationState> {
         headers: _authHeader(token, json: true),
         body: jsonEncode({'notification_id': id}),
       );
-    } catch (_) {/* optimistic */ }
+    } catch (_) {/* optimistic — ignore error */ }
   }
 
+  // ── Mark all as read ────────────────────────────────────────────────────
   Future<void> markAllAsRead() async {
+    // Optimistic update
     state = state.copyWith(
       notifications:
           state.notifications.map((n) => n.copyWith(isRead: true)).toList(),
@@ -214,9 +229,10 @@ class NotificationNotifier extends StateNotifier<<NotificationState> {
         headers: _authHeader(token, json: true),
         body: jsonEncode({'all': true}),
       );
-    } catch (_) {/* optimistic */ }
+    } catch (_) {/* optimistic — ignore error */ }
   }
 
+  // ── Delete local only (backend এ delete endpoint নেই) ──────────────────
   void deleteNotification(int id) {
     state = state.copyWith(
       notifications: state.notifications.where((n) => n.id != id).toList(),
@@ -227,6 +243,7 @@ class NotificationNotifier extends StateNotifier<<NotificationState> {
     state = state.copyWith(notifications: []);
   }
 
+  // ── Header builder ──────────────────────────────────────────────────────
   Map<String, String> _authHeader(String? token, {bool json = false}) {
     return {
       'Authorization': 'Bearer ${token ?? ''}',
@@ -236,25 +253,24 @@ class NotificationNotifier extends StateNotifier<<NotificationState> {
 }
 
 // ==================== MAIN SCREEN ====================
+
 class NotificationScreen extends ConsumerStatefulWidget {
   const NotificationScreen({super.key});
 
   static const Color kPrimary = Color(0xFF29B6F6);
 
   @override
-  ConsumerState<<NotificationScreen> createState() => _NotificationScreenState();
+  ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
 }
 
-class _NotificationScreenState extends ConsumerState<<NotificationScreen>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _NotificationScreenState extends ConsumerState<NotificationScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
-  StreamSubscription<<NotificationEvent>? _pushTapSub;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this);
 
     // Initial load
@@ -262,43 +278,19 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
       () => ref.read(notificationsProvider.notifier).loadNotifications(),
     );
 
-    // Pagination scroll listener
+    // Pagination — scroll to bottom হলে আরও load
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 200) {
         ref.read(notificationsProvider.notifier).loadMore();
       }
     });
-
-    // Listen to push notification taps for refresh
-    _pushTapSub = PushNotificationService.instance.onTap.listen((_) {
-      if (mounted) {
-        ref.read(notificationsProvider.notifier).loadNotifications();
-        // Switch to "All" tab to show new notification
-        _tabController.animateTo(0);
-      }
-    });
-
-    // Clear badge when screen opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(unreadNotificationCountProvider.notifier).clear();
-    });
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Refresh when app comes to foreground
-    if (state == AppLifecycleState.resumed) {
-      ref.read(notificationsProvider.notifier).loadNotifications();
-    }
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     _scrollController.dispose();
-    _pushTapSub?.cancel();
     super.dispose();
   }
 
@@ -344,6 +336,8 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
               kTextMid: kTextMid,
               kShadow: kShadow,
             ),
+
+            // TabBar
             Container(
               color: kTabBg,
               child: TabBar(
@@ -360,6 +354,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                 ],
               ),
             ),
+
             Expanded(
               child: _buildContent(
                 notifState: notifState,
@@ -378,6 +373,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     );
   }
 
+  // ── Content (loading / error / list) ────────────────────────────────────
   Widget _buildContent({
     required NotificationState notifState,
     required bool isDark,
@@ -388,6 +384,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     required Color kUnreadBg,
     required Color kUnreadBorder,
   }) {
+    // Initial loading spinner
     if (notifState.status == ApiStatus.loading &&
         notifState.notifications.isEmpty) {
       return Center(
@@ -397,6 +394,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
       );
     }
 
+    // Error state
     if (notifState.status == ApiStatus.error &&
         notifState.notifications.isEmpty) {
       return Center(
@@ -459,8 +457,9 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     );
   }
 
+  // ── Notification List ────────────────────────────────────────────────────
   Widget _buildNotificationList(
-    List<<NotificationItem> notifications, {
+    List<NotificationItem> notifications, {
     required NotificationState notifState,
     required bool isDark,
     required Color kCardBg,
@@ -483,6 +482,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
         padding: EdgeInsets.all(16.r),
         itemCount: notifications.length + (notifState.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
+          // Bottom loader
           if (index == notifications.length) {
             return Padding(
               padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -514,6 +514,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     );
   }
 
+  // ── Notification Card ────────────────────────────────────────────────────
   Widget _buildNotificationCard(
     NotificationItem notification, {
     required bool isDark,
@@ -585,6 +586,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Type Icon
               Container(
                 padding: EdgeInsets.all(12.r),
                 decoration: BoxDecoration(
@@ -593,7 +595,10 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                 ),
                 child: Icon(typeIcon, color: typeColor, size: 24.sp),
               ),
+
               SizedBox(width: 16.w),
+
+              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -623,7 +628,9 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                           ),
                       ],
                     ),
+
                     SizedBox(height: 4.h),
+
                     Text(
                       notification.messageEn,
                       style: GoogleFonts.poppins(
@@ -634,7 +641,10 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+
                     SizedBox(height: 6.h),
+
+                    // Amount badge
                     if (notification.amountAdded > 0)
                       Container(
                         padding: EdgeInsets.symmetric(
@@ -652,7 +662,9 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                           ),
                         ),
                       ),
+
                     SizedBox(height: 6.h),
+
                     Text(
                       _formatTime(notification.createdAt),
                       style: GoogleFonts.poppins(
@@ -672,6 +684,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     );
   }
 
+  // ── Detail Bottom Sheet ──────────────────────────────────────────────────
   void _showNotificationDetail(
     NotificationItem n, {
     required bool isDark,
@@ -726,6 +739,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
               ),
             ],
             SizedBox(height: 16.h),
+            // Balance info row
             if (n.amountAdded > 0)
               Container(
                 padding: EdgeInsets.all(12.r),
@@ -750,7 +764,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
               ),
             SizedBox(height: 12.h),
             Text(
-              DateFormat('d MMM y - hh:mm a').format(n.createdAt),
+              DateFormat('d MMM y • hh:mm a').format(n.createdAt),
               style: GoogleFonts.poppins(
                   fontSize: 11.sp, color: Colors.grey.shade400),
             ),
@@ -774,7 +788,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
             style: GoogleFonts.poppins(fontSize: 10.sp, color: subColor)),
         SizedBox(height: 2.h),
         Text(
-          '${amount.toStringAsFixed(0)} Tk',
+          '${amount.toStringAsFixed(0)} ৳',
           style: GoogleFonts.poppins(
             fontSize: 13.sp,
             fontWeight: FontWeight.bold,
@@ -785,6 +799,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     );
   }
 
+  // ── AppBar ────────────────────────────────────────────────────────────────
   Widget _buildAppBar({
     required int unreadCount,
     required bool isDark,
@@ -818,7 +833,9 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                   size: 18.sp, color: kTextDark),
             ),
           ),
+
           SizedBox(width: 12.w),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -842,6 +859,8 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
               ],
             ),
           ),
+
+          // Refresh button
           GestureDetector(
             onTap: () =>
                 ref.read(notificationsProvider.notifier).loadNotifications(),
@@ -854,7 +873,9 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
               child: Icon(Icons.refresh, size: 20.sp, color: kTextMid),
             ),
           ),
+
           SizedBox(width: 8.w),
+
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: kTextMid),
             color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
@@ -906,6 +927,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     );
   }
 
+  // ── Empty State ──────────────────────────────────────────────────────────
   Widget _buildEmptyState({required Color kTextMid}) {
     return Center(
       child: Column(
@@ -926,7 +948,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
           Text(
             "We'll notify you when something arrives",
             style: GoogleFonts.poppins(
-              FontSize: 12.sp,
+              fontSize: 12.sp,
               color: kTextMid.withOpacity(0.7),
             ),
           ),
@@ -935,6 +957,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     );
   }
 
+  // ── Helpers ──────────────────────────────────────────────────────────────
   String _getTitle(NotificationType type) {
     switch (type) {
       case NotificationType.referral:
