@@ -155,7 +155,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
           '$_baseUrl/user/notifications?limit=$_limit&offset=$newOffset');
       final response = await http.get(uri, headers: _authHeader(token));
       _handleListResponse(response, replace: false, newOffset: newOffset);
-    } catch (_) {/* silent */ }
+    } catch (_) {/* silent */}
   }
 
   void _handleListResponse(
@@ -199,7 +199,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
         headers: _authHeader(token, json: true),
         body: jsonEncode({'notification_id': id}),
       );
-    } catch (_) {/* optimistic */ }
+    } catch (_) {/* optimistic */}
   }
 
   Future<void> markAllAsRead() async {
@@ -214,7 +214,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
         headers: _authHeader(token, json: true),
         body: jsonEncode({'all': true}),
       );
-    } catch (_) {/* optimistic */ }
+    } catch (_) {/* optimistic */}
   }
 
   void deleteNotification(int id) {
@@ -274,10 +274,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         _tabController.animateTo(0);
       }
     });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(unreadNotificationCountProvider.notifier).clear();
-    });
   }
 
   @override
@@ -306,16 +302,13 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     final kBackground =
         isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final kCardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final kTextDark =
-        isDark ? Colors.white : const Color(0xFF0F172A);
+    final kTextDark = isDark ? Colors.white : const Color(0xFF0F172A);
     final kTextMid =
         isDark ? Colors.grey.shade400 : const Color(0xFF475569);
     final kBorder =
         isDark ? const Color(0xFF333333) : Colors.grey.shade200;
-    final kAppBarBg =
-        isDark ? const Color(0xFF1A1A1A) : Colors.white;
-    final kTabBg =
-        isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final kAppBarBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final kTabBg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final kUnreadBg =
         isDark ? const Color(0xFF1A2733) : const Color(0xFFE3F2FD);
     final kUnreadBorder = isDark
