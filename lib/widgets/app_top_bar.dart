@@ -17,7 +17,7 @@ import '../../main.dart';
 // ==================== Unread Count Provider ====================
 
 final unreadNotificationCountProvider =
-    StateNotifierProvider<<UnreadCountNotifier, int>((ref) {
+    StateNotifierProvider<UnreadCountNotifier, int>((ref) {
   return UnreadCountNotifier();
 });
 
@@ -164,7 +164,7 @@ class AppTopBar extends ConsumerWidget {
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
-                                FontSize: isMobile ? 15.sp : 17,
+                                fontSize: isMobile ? 15.sp : 17,
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -229,12 +229,12 @@ class AppTopBar extends ConsumerWidget {
           isLabelVisible: hasUnread,           // ???? unread ????? ??? ??????
           label: unreadCount > 99
               ? const Text('99+',
-                  style: TextStyle(FontSize: 9, color: Colors.white))
+                  style: TextStyle(fontSize: 9, color: Colors.white))
               : unreadCount > 1
                   ? Text(
                       '$unreadCount',
                       style: const TextStyle(
-                          FontSize: 9, color: Colors.white),
+                          fontSize: 9, color: Colors.white),
                     )
                   : null,
           backgroundColor: Colors.red,

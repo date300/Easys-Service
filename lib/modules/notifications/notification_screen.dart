@@ -89,7 +89,7 @@ enum NotificationType { referral, matrix, royalty, system }
 enum ApiStatus { idle, loading, success, error }
 
 class NotificationState {
-  final List<<NotificationItem> notifications;
+  final List<NotificationItem> notifications;
   final ApiStatus status;
   final String? errorMessage;
   final bool hasMore;
@@ -104,7 +104,7 @@ class NotificationState {
   });
 
   NotificationState copyWith({
-    List<<NotificationItem>? notifications,
+    List<NotificationItem>? notifications,
     ApiStatus? status,
     String? errorMessage,
     bool? hasMore,
@@ -122,11 +122,11 @@ class NotificationState {
 
 // ==================== PROVIDER ====================
 final notificationsProvider =
-    StateNotifierProvider<<NotificationNotifier, NotificationState>((ref) {
+    StateNotifierProvider<NotificationNotifier, NotificationState>((ref) {
   return NotificationNotifier();
 });
 
-class NotificationNotifier extends StateNotifier<<NotificationState> {
+class NotificationNotifier extends StateNotifier<NotificationState> {
   NotificationNotifier() : super(const NotificationState());
 
   static const int _limit = 20;
@@ -242,14 +242,14 @@ class NotificationScreen extends ConsumerStatefulWidget {
   static const Color kPrimary = Color(0xFF29B6F6);
 
   @override
-  ConsumerState<<NotificationScreen> createState() => _NotificationScreenState();
+  ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
 }
 
-class _NotificationScreenState extends ConsumerState<<NotificationScreen>
+class _NotificationScreenState extends ConsumerState<NotificationScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
-  StreamSubscription<<NotificationEvent>? _pushTapSub;
+  StreamSubscription<NotificationEvent>? _pushTapSub;
 
   @override
   void initState() {
@@ -454,7 +454,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
   }
 
   Widget _buildNotificationList(
-    List<<NotificationItem> notifications, {
+    List<NotificationItem> notifications, {
     required NotificationState notifState,
     required bool isDark,
     required Color kCardBg,
@@ -621,7 +621,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                     Text(
                       notification.messageEn,
                       style: GoogleFonts.poppins(
-                        FontSize: 12.sp,
+                        fontSize: 12.sp,
                         color: kTextMid,
                         height: 1.5,
                       ),
@@ -640,7 +640,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                         child: Text(
                           '+${notification.amountAdded.toStringAsFixed(0)} BDT',
                           style: GoogleFonts.poppins(
-                            FontSize: 11.sp,
+                            fontSize: 11.sp,
                             color: Colors.green,
                             fontWeight: FontWeight.w600,
                           ),
@@ -650,7 +650,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                     Text(
                       _formatTime(notification.createdAt),
                       style: GoogleFonts.poppins(
-                        FontSize: 11.sp,
+                        fontSize: 11.sp,
                         color: isDark
                             ? Colors.grey.shade600
                             : Colors.grey.shade400,
@@ -700,7 +700,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
             Text(
               _getTitle(n.type),
               style: GoogleFonts.poppins(
-                FontSize: 16.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.bold,
                 color: kTextDark,
               ),
@@ -709,14 +709,14 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
             Text(
               n.messageEn,
               style: GoogleFonts.poppins(
-                  FontSize: 13.sp, color: kTextMid, height: 1.6),
+                  fontSize: 13.sp, color: kTextMid, height: 1.6),
             ),
             if (n.messageBn.isNotEmpty) ...[
               SizedBox(height: 6.h),
               Text(
                 n.messageBn,
                 style: GoogleFonts.poppins(
-                    FontSize: 13.sp, color: kTextMid, height: 1.6),
+                    fontSize: 13.sp, color: kTextMid, height: 1.6),
               ),
             ],
             SizedBox(height: 16.h),
@@ -746,7 +746,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
             Text(
               DateFormat('d MMM y - hh:mm a').format(n.createdAt),
               style: GoogleFonts.poppins(
-                  FontSize: 11.sp, color: Colors.grey.shade400),
+                  fontSize: 11.sp, color: Colors.grey.shade400),
             ),
             SizedBox(height: 8.h),
           ],
@@ -765,12 +765,12 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
     return Column(
       children: [
         Text(label,
-            style: GoogleFonts.poppins(FontSize: 10.sp, color: subColor)),
+            style: GoogleFonts.poppins(fontSize: 10.sp, color: subColor)),
         SizedBox(height: 2.h),
         Text(
           '${amount.toStringAsFixed(0)} Tk',
           style: GoogleFonts.poppins(
-            FontSize: 13.sp,
+            fontSize: 13.sp,
             fontWeight: FontWeight.bold,
             color: valueColor ?? labelColor,
           ),
@@ -820,7 +820,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                 Text(
                   'Notifications',
                   style: GoogleFonts.poppins(
-                    FontSize: 20.sp,
+                    fontSize: 20.sp,
                     fontWeight: FontWeight.bold,
                     color: kTextDark,
                   ),
@@ -829,7 +829,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                   Text(
                     '$unreadCount unread',
                     style: GoogleFonts.poppins(
-                      FontSize: 12.sp,
+                      fontSize: 12.sp,
                       color: NotificationScreen.kPrimary,
                     ),
                   ),
@@ -859,7 +859,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('All marked as read',
-                          style: GoogleFonts.poppins(FontSize: 13.sp)),
+                          style: GoogleFonts.poppins(fontSize: 13.sp)),
                       backgroundColor: NotificationScreen.kPrimary,
                     ),
                   );
@@ -911,7 +911,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
           Text(
             'No notifications yet',
             style: GoogleFonts.poppins(
-              FontSize: 16.sp,
+              fontSize: 16.sp,
               color: kTextMid,
               fontWeight: FontWeight.w500,
             ),
@@ -920,7 +920,7 @@ class _NotificationScreenState extends ConsumerState<<NotificationScreen>
           Text(
             "We'll notify you when something arrives",
             style: GoogleFonts.poppins(
-              FontSize: 12.sp,
+              fontSize: 12.sp,
               color: kTextMid.withOpacity(0.7),
             ),
           ),
