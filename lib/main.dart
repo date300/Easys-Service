@@ -21,11 +21,11 @@ import 'widgets/app_drawer.dart';
 // ============================================
 
 final themeModeProvider =
-    StateNotifierProvider<<ThemeModeController, ThemeMode>((ref) {
+    StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
   return ThemeModeController();
 });
 
-class ThemeModeController extends StateNotifier<<ThemeMode> {
+class ThemeModeController extends StateNotifier<ThemeMode> {
   ThemeModeController() : super(ThemeMode.system) {
     _loadTheme();
   }
@@ -73,7 +73,7 @@ class ThemeModeController extends StateNotifier<<ThemeMode> {
 // ============================================
 
 final authProvider =
-    StateNotifierProvider<<AuthController, bool>((ref) {
+    StateNotifierProvider<AuthController, bool>((ref) {
   return AuthController();
 });
 
@@ -235,11 +235,11 @@ class MainWrapper extends ConsumerStatefulWidget {
       MediaQuery.of(ctx).size.width < 600;
 
   @override
-  ConsumerState<<MainWrapper> createState() => _MainWrapperState();
+  ConsumerState<MainWrapper> createState() => _MainWrapperState();
 }
 
-class _MainWrapperState extends ConsumerState<<MainWrapper> {
-  StreamSubscription<<NotificationEvent>? _pushTapSub;
+class _MainWrapperState extends ConsumerState<MainWrapper> {
+  StreamSubscription<NotificationEvent>? _pushTapSub;
 
   int _indexFromLocation(String location) {
     if (location.startsWith('/home')) return 0;
