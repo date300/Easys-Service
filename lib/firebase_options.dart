@@ -22,53 +22,53 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       default:
-        return web;
+        return android;
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'DEMO_API_KEY',
-    appId: 'DEMO_APP_ID',
-    messagingSenderId: 'DEMO_SENDER_ID',
-    projectId: 'DEMO_PROJECT_ID',
-    authDomain: 'DEMO_AUTH_DOMAIN',
-    storageBucket: 'DEMO_STORAGE_BUCKET',
-    measurementId: 'DEMO_MEASUREMENT_ID',
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyC786WSjnhlWcebz_niVba0USi5HbPJa2Q',
+    appId: '1:753217579632:android:1bd1cda362b9afd3c2e2b5',
+    messagingSenderId: '753217579632',
+    projectId: 'easyservice-86513',
+    storageBucket: 'easyservice-86513.firebasestorage.app',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'DEMO_API_KEY',
-    appId: 'DEMO_APP_ID',
-    messagingSenderId: 'DEMO_SENDER_ID',
-    projectId: 'DEMO_PROJECT_ID',
-    storageBucket: 'DEMO_STORAGE_BUCKET',
+  // Web, iOS, macOS, Windows এর জন্য আলাদা app যোগ করা হয়নি।
+  // প্রয়োজন হলে Firebase Console থেকে যোগ করুন।
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyC786WSjnhlWcebz_niVba0USi5HbPJa2Q',
+    appId: '1:753217579632:android:1bd1cda362b9afd3c2e2b5',
+    messagingSenderId: '753217579632',
+    projectId: 'easyservice-86513',
+    storageBucket: 'easyservice-86513.firebasestorage.app',
+    authDomain: 'easyservice-86513.firebaseapp.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'DEMO_API_KEY',
-    appId: 'DEMO_APP_ID',
-    messagingSenderId: 'DEMO_SENDER_ID',
-    projectId: 'DEMO_PROJECT_ID',
-    storageBucket: 'DEMO_STORAGE_BUCKET',
-    iosBundleId: 'com.demo.easyservice',
+    apiKey: 'AIzaSyC786WSjnhlWcebz_niVba0USi5HbPJa2Q',
+    appId: '1:753217579632:android:1bd1cda362b9afd3c2e2b5',
+    messagingSenderId: '753217579632',
+    projectId: 'easyservice-86513',
+    storageBucket: 'easyservice-86513.firebasestorage.app',
+    iosBundleId: 'com.easyservice.easyservice',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'DEMO_API_KEY',
-    appId: 'DEMO_APP_ID',
-    messagingSenderId: 'DEMO_SENDER_ID',
-    projectId: 'DEMO_PROJECT_ID',
-    storageBucket: 'DEMO_STORAGE_BUCKET',
-    iosBundleId: 'com.demo.easyservice',
+    apiKey: 'AIzaSyC786WSjnhlWcebz_niVba0USi5HbPJa2Q',
+    appId: '1:753217579632:android:1bd1cda362b9afd3c2e2b5',
+    messagingSenderId: '753217579632',
+    projectId: 'easyservice-86513',
+    storageBucket: 'easyservice-86513.firebasestorage.app',
+    iosBundleId: 'com.easyservice.easyservice',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'DEMO_API_KEY',
-    appId: 'DEMO_APP_ID',
-    messagingSenderId: 'DEMO_SENDER_ID',
-    projectId: 'DEMO_PROJECT_ID',
-    authDomain: 'DEMO_AUTH_DOMAIN',
-    storageBucket: 'DEMO_STORAGE_BUCKET',
-    measurementId: 'DEMO_MEASUREMENT_ID',
+    apiKey: 'AIzaSyC786WSjnhlWcebz_niVba0USi5HbPJa2Q',
+    appId: '1:753217579632:android:1bd1cda362b9afd3c2e2b5',
+    messagingSenderId: '753217579632',
+    projectId: 'easyservice-86513',
+    storageBucket: 'easyservice-86513.firebasestorage.app',
+    authDomain: 'easyservice-86513.firebaseapp.com',
   );
 }
