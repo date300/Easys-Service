@@ -65,7 +65,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse("https://easy.ltcminematrix.com/api/auth/register"),
+        Uri.parse("https://easysarvice.com/api/auth/register"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "full_name": _nameController.text.trim(),
@@ -106,7 +106,7 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse("https://easy.ltcminematrix.com/api/auth/verify-otp"),
+        Uri.parse("https://easysarvice.com/api/auth/verify-otp"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": _emailController.text.trim(),

@@ -16,7 +16,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   static const Color skyBlue = Color(0xFF29B6F6);
-  static const String baseUrl = "https://easy.ltcminematrix.com/api";
+  static const String baseUrl = "https://easysarvice.com/api";
 
   final _nameController = TextEditingController();
   final _mobileController = TextEditingController();

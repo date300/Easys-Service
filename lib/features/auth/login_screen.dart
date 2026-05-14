@@ -60,7 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     
     try {
       final response = await http.post(
-        Uri.parse("https://easy.ltcminematrix.com/api/auth/login"),
+        Uri.parse("https://easysarvice.com/api/auth/login"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": _emailController.text.trim(),
