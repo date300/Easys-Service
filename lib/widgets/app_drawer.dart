@@ -33,7 +33,7 @@ class UserProfile {
 }
 
 final drawerProfileProvider = FutureProvider<UserProfile?>((ref) async {
-  const String baseUrl = "https://easy.ltcminematrix.com/api";
+  const String baseUrl = "https://api.easysarvice.com/api";
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('jwt_token');
 
