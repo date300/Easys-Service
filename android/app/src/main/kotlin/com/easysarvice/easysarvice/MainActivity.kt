@@ -1,4 +1,4 @@
-package com.easyservice.easyservice
+package com.easysarvice.easysarvice
 
 import io.flutter.embedding.android.FlutterActivity
 
