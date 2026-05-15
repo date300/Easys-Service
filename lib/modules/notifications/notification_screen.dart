@@ -13,7 +13,7 @@ import '../../core/services/push_notification_service.dart';
 import '../../main.dart';
 
 // ==================== CONSTANTS ====================
-const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+const String _baseUrl = 'https://api.easysarvice..com/api';
 
 // ==================== TOKEN HELPER ====================
 Future<String?> _getToken() async {

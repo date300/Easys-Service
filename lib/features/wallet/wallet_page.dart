@@ -44,7 +44,7 @@ class Transaction {
 
 // ========== API Service ==========
 class WalletApiService {
-  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+  static const String _baseUrl = 'https://api.easysarvice.com/api';
 
   static Future<WalletBalance> fetchBalance(String token) async {
     final res = await http.get(
