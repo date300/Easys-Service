@@ -1,4 +1,4 @@
-name: Flutter Build & Deploy
+name: Flutter Debug Build
 
 on:
   push:
@@ -6,52 +6,9 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
-  # ১. ওয়েবসাইট বিল্ড
-  build-web:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.6'
-          channel: 'stable'
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build Flutter Web
-        run: flutter build web --release --base-href "/Easys-Service/"
-
-      - name: Upload Web Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: build/web
-
-  # ২. GitHub Pages-এ Deploy
-  deploy:
-    needs: build-web
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  # ৩. Android অ্যাপ বিল্ড (Deploy শেষ হওয়ার পর)
-  build-android:
-    needs: deploy
+  build-android-debug:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -66,11 +23,18 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Android APK
-        run: flutter build apk --release
+      - name: Build Android Debug APK
+        run: flutter build apk --debug --verbose 2>&1 | tee build_log.txt
 
-      - name: Upload Android APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: Easys-Service-Android-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: Easys-Service-Debug-APK
+          path: build/app/outputs/flutter-apk/app-debug.apk
+
+      - name: Upload Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build_log.txt
