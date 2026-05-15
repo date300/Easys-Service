@@ -13,7 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/push_notification_service.dart';
 import '../../main.dart';
-import '../../modules/ai/easy_ai_sheet.dart'; // আলাদা ফাইল থেকে import
 
 // ==================== Unread Count Provider ====================
 
@@ -26,12 +25,12 @@ class UnreadCountNotifier extends StateNotifier<int> {
   StreamSubscription<int>? _pushSub;
 
   UnreadCountNotifier() : super(0) {
-    _pushSub =
-        PushNotificationService.instance.unreadCountStream.listen((delta) {
+    // Listen to push notification stream for real-time badge updates
+    _pushSub = PushNotificationService.instance.unreadCountStream.listen((delta) {
       if (delta == 0) {
-        state = 0;
+        state = 0; // Reset
       } else {
-        state = state + delta;
+        state = state + delta; // Increment by delta (usually +1)
       }
     });
   }
@@ -65,13 +64,16 @@ class UnreadCountNotifier extends StateNotifier<int> {
     }
   }
 
+  /// Notification screen load ??? ?? method call ??? exact count set ???
   void setCount(int count) => state = count;
+
+  /// Notification screen ? ???? clear ???
   void clear() => state = 0;
 }
 
 // ==================== AppTopBar ====================
 
-class AppTopBar extends ConsumerStatefulWidget {
+class AppTopBar extends ConsumerWidget {
   final bool isDetailView;
   final String detailTitle;
   final bool isMobile;
@@ -89,38 +91,31 @@ class AppTopBar extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AppTopBar> createState() => _AppTopBarState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    final double contentHeight = isMobile ? 48.h : 55;
+    final double totalHeight = contentHeight + statusBarHeight;
+    final double radius = isMobile ? 16.r : 14;
 
-class _AppTopBarState extends ConsumerState<AppTopBar> {
-  @override
-  void initState() {
-    super.initState();
-    // শুধু একবার fetch করবে, প্রতিটা rebuild-এ নয়
+    // App open ??? unread count fetch ???
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.isLoggedIn) {
+      if (isLoggedIn) {
         ref.read(unreadNotificationCountProvider.notifier).fetchUnreadCount();
       }
     });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final double statusBarHeight = MediaQuery.of(context).padding.top;
-    final double contentHeight = widget.isMobile ? 48.h : 55;
-    final double totalHeight = contentHeight + statusBarHeight;
-    final double radius = widget.isMobile ? 16.r : 14;
 
     final overlayColor = isDark
-        ? AppTopBar.darkHeader.withOpacity(0.9)
-        : AppTopBar.skyBlue.withOpacity(0.6);
+        ? darkHeader.withOpacity(0.9)
+        : skyBlue.withOpacity(0.6);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness:
+            isDark ? Brightness.dark : Brightness.light,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.only(
@@ -159,25 +154,23 @@ class _AppTopBarState extends ConsumerState<AppTopBar> {
                     padding: EdgeInsets.symmetric(horizontal: 8.w),
                     child: Row(
                       children: [
-                        _buildLeadingIcon(context, isDark),
+                        _buildLeadingIcon(context, ref, isDark),
                         Expanded(
                           child: Center(
                             child: Text(
-                              widget.isDetailView
-                                  ? widget.detailTitle
-                                  : 'Easy Service',
+                              isDetailView ? detailTitle : 'Easy Service',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
-                                fontSize: widget.isMobile ? 15.sp : 17,
+                                fontSize: isMobile ? 15.sp : 17,
                                 letterSpacing: 0.3,
                               ),
                             ),
                           ),
                         ),
-                        _buildTrailingActions(context),
+                        _buildTrailingAction(context, ref, isDark),
                       ],
                     ),
                   ),
@@ -190,13 +183,12 @@ class _AppTopBarState extends ConsumerState<AppTopBar> {
     );
   }
 
-  Widget _buildLeadingIcon(BuildContext context, bool isDark) {
-    if (widget.isDetailView) {
+  Widget _buildLeadingIcon(BuildContext context, WidgetRef ref, bool isDark) {
+    if (isDetailView) {
       return IconButton(
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
-        icon:
-            Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22.sp),
+        icon: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22.sp),
         onPressed: () {
           ref.read(isDetailViewProvider.notifier).state = false;
           ref.read(detailViewTitleProvider.notifier).state = '';
@@ -213,87 +205,48 @@ class _AppTopBarState extends ConsumerState<AppTopBar> {
       builder: (ctx) => IconButton(
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
-        icon:
-            Icon(Icons.menu_open_rounded, color: Colors.white, size: 24.sp),
+        icon: Icon(Icons.menu_open_rounded, color: Colors.white, size: 24.sp),
         onPressed: () => Scaffold.of(ctx).openDrawer(),
       ),
     );
   }
 
-  Widget _buildTrailingActions(BuildContext context) {
-    if (widget.isDetailView || !widget.isLoggedIn) {
-      return SizedBox(width: 40.w);
+  Widget _buildTrailingAction(
+      BuildContext context, WidgetRef ref, bool isDark) {
+    if (!isDetailView && isLoggedIn) {
+      final unreadCount = ref.watch(unreadNotificationCountProvider);
+      final hasUnread = unreadCount > 0;
+
+      return IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onPressed: () {
+          // Notification screen ? ???? badge clear ???
+          ref.read(unreadNotificationCountProvider.notifier).clear();
+          context.push('/notifications');
+        },
+        icon: Badge(
+          isLabelVisible: hasUnread,           // ???? unread ????? ??? ??????
+          label: unreadCount > 99
+              ? const Text('99+',
+                  style: TextStyle(fontSize: 9, color: Colors.white))
+              : unreadCount > 1
+                  ? Text(
+                      '$unreadCount',
+                      style: const TextStyle(
+                          fontSize: 9, color: Colors.white),
+                    )
+                  : null,
+          backgroundColor: Colors.red,
+          child: Icon(
+            Icons.notifications_outlined,
+            color: Colors.white,
+            size: 22.sp,
+          ),
+        ),
+      );
     }
-
-    final unreadCount = ref.watch(unreadNotificationCountProvider);
-    final hasUnread = unreadCount > 0;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // ── Easy AI Button ──
-        GestureDetector(
-          onTap: () => EasyAiSheet.show(context),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
-              borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(
-                  color: Colors.white.withOpacity(0.35), width: 1),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    size: widget.isMobile ? 14.sp : 14),
-                SizedBox(width: 4.w),
-                Text(
-                  'Easy AI',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: widget.isMobile ? 11.sp : 11,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        SizedBox(width: 4.w),
-
-        // ── Notification Bell ──
-        IconButton(
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () {
-            ref.read(unreadNotificationCountProvider.notifier).clear();
-            context.push('/notifications');
-          },
-          icon: Badge(
-            isLabelVisible: hasUnread,
-            label: unreadCount > 99
-                ? const Text('99+',
-                    style: TextStyle(fontSize: 9, color: Colors.white))
-                : unreadCount > 1
-                    ? Text(
-                        '$unreadCount',
-                        style: const TextStyle(
-                            fontSize: 9, color: Colors.white),
-                      )
-                    : null,
-            backgroundColor: Colors.red,
-            child: Icon(
-              Icons.notifications_outlined,
-              color: Colors.white,
-              size: 22.sp,
-            ),
-          ),
-        ),
-      ],
-    );
+    return SizedBox(width: 40.w);
   }
 }
+
