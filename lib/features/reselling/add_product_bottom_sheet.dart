@@ -19,7 +19,7 @@ class AddProductBottomSheet extends StatefulWidget {
 
 class _AddProductBottomSheetState extends State<AddProductBottomSheet> {
   // ===================== CONSTANTS =====================
-  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+  static const String _baseUrl = 'https://api.easysarvice.com/api';
 
   // ===================== CONTROLLERS =====================
   final _titleController         = TextEditingController();

@@ -30,7 +30,7 @@ class ProductListNotifier extends StateNotifier<List<ProductModel>> {
   Future<void> fetchProducts() async {
     try {
       final response = await http.get(
-        Uri.parse('https://easy.ltcminematrix.com/api/products'),
+        Uri.parse('https://api.easysarvice.com/api/products'),
       );
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);

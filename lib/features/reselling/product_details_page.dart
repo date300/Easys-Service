@@ -17,7 +17,7 @@ const Color kTextMid  = Color(0xFF64748B);
 
 // ==================== API SERVICE ====================
 class ApiService {
-  static const String baseUrl = 'https://easy.ltcminematrix.com/api';
+  static const String baseUrl = 'https://api.easysarvice.com/api';
   static String? authToken;
 
   static Future<void> loadAuthToken() async {
