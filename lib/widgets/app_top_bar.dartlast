@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -11,8 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/services/push_notification_service.dart';
-import '../../main.dart';
+import '../main.dart';
 
 // ==================== Unread Count Provider ====================
 
@@ -22,24 +20,7 @@ final unreadNotificationCountProvider =
 });
 
 class UnreadCountNotifier extends StateNotifier<int> {
-  StreamSubscription<int>? _pushSub;
-
-  UnreadCountNotifier() : super(0) {
-    // Listen to push notification stream for real-time badge updates
-    _pushSub = PushNotificationService.instance.unreadCountStream.listen((delta) {
-      if (delta == 0) {
-        state = 0; // Reset
-      } else {
-        state = state + delta; // Increment by delta (usually +1)
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _pushSub?.cancel();
-    super.dispose();
-  }
+  UnreadCountNotifier() : super(0);
 
   Future<void> fetchUnreadCount() async {
     try {
@@ -57,17 +38,20 @@ class UnreadCountNotifier extends StateNotifier<int> {
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         final List data = body['data'] ?? [];
+        // data তে কিছু থাকলে unread আছে, না থাকলে 0
+        // সঠিক count এর জন্য full list fetch করতে হবে
+        // তাই notification screen এর provider থেকে sync করাই ভালো
         state = data.isNotEmpty ? 1 : 0;
       }
     } catch (_) {
-      // Silent fail — badge hide
+      // Silent fail — badge hide থাকবে
     }
   }
 
-  /// Notification screen load ??? ?? method call ??? exact count set ???
+  /// Notification screen load হলে এই method call করে exact count set করো
   void setCount(int count) => state = count;
 
-  /// Notification screen ? ???? clear ???
+  /// Notification screen এ গেলে clear করো
   void clear() => state = 0;
 }
 
@@ -98,7 +82,7 @@ class AppTopBar extends ConsumerWidget {
     final double totalHeight = contentHeight + statusBarHeight;
     final double radius = isMobile ? 16.r : 14;
 
-    // App open ??? unread count fetch ???
+    // App open হলে unread count fetch করো
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (isLoggedIn) {
         ref.read(unreadNotificationCountProvider.notifier).fetchUnreadCount();
@@ -221,12 +205,12 @@ class AppTopBar extends ConsumerWidget {
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
         onPressed: () {
-          // Notification screen ? ???? badge clear ???
+          // Notification screen এ গেলে badge clear করো
           ref.read(unreadNotificationCountProvider.notifier).clear();
           context.push('/notifications');
         },
         icon: Badge(
-          isLabelVisible: hasUnread,           // ???? unread ????? ??? ??????
+          isLabelVisible: hasUnread,           // শুধু unread থাকলে লাল দেখাবে
           label: unreadCount > 99
               ? const Text('99+',
                   style: TextStyle(fontSize: 9, color: Colors.white))
@@ -249,4 +233,3 @@ class AppTopBar extends ConsumerWidget {
     return SizedBox(width: 40.w);
   }
 }
-
