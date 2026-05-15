@@ -20,7 +20,7 @@ class VendorApplyPage extends ConsumerStatefulWidget {
 
 class _VendorApplyPageState extends ConsumerState<VendorApplyPage> {
   static const Color skyBlue = Color(0xFF29B6F6);
-  static const String baseUrl = "https://easy.ltcminematrix.com/api";
+  static const String baseUrl = "https://api.easysarvice.com/api";
 
   final _formKey = GlobalKey<FormState>();
 

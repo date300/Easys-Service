@@ -74,7 +74,7 @@ class UserProfile {
 // ==========================================
 
 class ReferralApiService {
-  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+  static const String _baseUrl = 'https://api.easysarvice.com/api';
 
   static Future<List<ReferralUser>> fetchReferrals(String token) async {
     final response = await http.get(
@@ -228,7 +228,7 @@ class _ReferralPageState extends State<ReferralPage> {
   void _copyReferralLink() {
     if (_profile == null) return;
     final code = _profile!.referralCode;
-    final link = 'https://easy.ltcminematrix.com/register?ref=$code';
+    final link = 'https://easysarvice.com/register?ref=$code';
     Clipboard.setData(ClipboardData(text: link));
     HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(

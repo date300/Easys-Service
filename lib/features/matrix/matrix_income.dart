@@ -51,7 +51,7 @@ class MatrixMyStatus {
 // 2. API Service
 // ==========================================
 class MatrixApiService {
-  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+  static const String _baseUrl = 'https://api.easysarvice.com/api';
 
   static Future<MatrixMyStatus> fetchMyStatus(String token) async {
     final response = await http.get(

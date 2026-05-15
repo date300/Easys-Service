@@ -43,7 +43,7 @@ class RoyaltyGlobalData {
 // ==========================================
 
 class RoyaltyApiService {
-  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+  static const String _baseUrl = 'https://api.easysarvice.com/api';
 
   static Future<List<RoyaltyIncome>> fetchMyRoyaltyHistory(String token) async {
     final response = await http.get(

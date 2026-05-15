@@ -31,7 +31,7 @@ class VoucherBalance {
 // ==========================================
 
 class VoucherApiService {
-  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+  static const String _baseUrl = 'https://api.easysarvice.com/api';
 
   static Future<VoucherBalance> fetchBalance(String token) async {
     final response = await http.get(
