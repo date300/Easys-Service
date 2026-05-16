@@ -14,9 +14,9 @@ class _MicrojobsScreenState extends State<MicrojobsScreen> {
   RewardedAd? _rewardedAd;
   bool _isRewardedLoaded = false;
 
-  // ✅ Test ID — এখনই Ad দেখাবে
+  // ✅ আপনার আসল Rewarded Ad ID
   static const String _rewardedAdUnitId =
-      'ca-app-pub-3940256099942544/5224354917';
+      'ca-app-pub-9354625065393218/3725985999';
 
   @override
   void initState() {
@@ -50,7 +50,7 @@ class _MicrojobsScreenState extends State<MicrojobsScreen> {
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         setState(() => _isRewardedLoaded = false);
-        _loadRewardedAd();
+        _loadRewardedAd(); // পরেরবারের জন্য reload
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
@@ -60,6 +60,7 @@ class _MicrojobsScreenState extends State<MicrojobsScreen> {
 
     _rewardedAd!.show(
       onUserEarnedReward: (ad, reward) {
+        // ✅ User ad দেখা শেষ করলে এখানে reward দিন
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
