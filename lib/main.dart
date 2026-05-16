@@ -8,6 +8,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // ✅ নতুন
 
 import 'firebase_options.dart';
 import 'core/services/push_notification_service.dart';
@@ -114,10 +115,13 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase first
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // ✅ Initialize AdMob
+  await MobileAds.instance.initialize();
 
   // Initialize Push Notification Service
   await PushNotificationService.instance.initialize();
@@ -266,7 +270,6 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
   void initState() {
     super.initState();
 
-    // Listen to push notification taps — navigates to notification screen
     _pushTapSub = PushNotificationService.instance.onTap.listen((event) {
       if (mounted) {
         context.push('/notifications');
