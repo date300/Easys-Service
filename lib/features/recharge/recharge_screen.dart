@@ -54,7 +54,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
       };
 
       final response = await http.post(
-        Uri.parse('https://easy.ltcminematrix.com/api/recharge/recharge'),
+        Uri.parse('https://api.easysarvice.com/api/recharge/recharge'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(payload),
       ).timeout(const Duration(seconds: 20));

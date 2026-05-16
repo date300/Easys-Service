@@ -221,7 +221,7 @@ class PushNotificationService {
       if (jwt == null || jwt.isEmpty) return;
 
       await http.post(
-        Uri.parse('https://easy.ltcminematrix.com/api/user/fcm-token'),
+        Uri.parse('https://api.easysarvice.com/api/user/fcm-token'),
         headers: {
           'Authorization': 'Bearer $jwt',
           'Content-Type': 'application/json',

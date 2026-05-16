@@ -63,7 +63,7 @@ class _DriveScreenState extends State<DriveScreen> {
     try {
       final opCode = operator.toLowerCase();
       final response = await http
-          .get(Uri.parse('https://easy.ltcminematrix.com/api/recharge/drives/$opCode'))
+          .get(Uri.parse('https://api.easysarvice.com/api/recharge/drives/$opCode'))
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -125,7 +125,7 @@ class _DriveScreenState extends State<DriveScreen> {
       };
 
       final response = await http.post(
-        Uri.parse('https://easy.ltcminematrix.com/api/recharge/recharge'),
+        Uri.parse('https://api.easysarvice.com/api/recharge/recharge'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(payload),
       ).timeout(const Duration(seconds: 20));

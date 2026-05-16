@@ -49,7 +49,7 @@ class UnreadCountNotifier extends StateNotifier<int> {
       if (token.isEmpty) return;
 
       final uri = Uri.parse(
-          'https://easy.ltcminematrix.com/api/user/notifications?limit=1&is_read=0');
+          'https://api.easysarvice.com/api/user/notifications?limit=1&is_read=0');
       final response = await http.get(
         uri,
         headers: {'Authorization': 'Bearer $token'},
