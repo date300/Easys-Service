@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -63,9 +61,7 @@ final drawerProfileProvider = FutureProvider<UserProfile?>((ref) async {
   return null;
 });
 
-// ==================== DRAWER ====================
-
-class AppDrawer extends ConsumerStatefulWidget {
+class AppDrawer extends ConsumerWidget {
   final bool isLoggedIn;
   final bool isDesktop;
   final bool isTablet;
@@ -80,107 +76,10 @@ class AppDrawer extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AppDrawer> createState() => _AppDrawerState();
-}
-
-class _AppDrawerState extends ConsumerState<AppDrawer> {
-  // ==================== REWARDED AD ====================
-  RewardedAd? _rewardedAd;
-  bool _isAdLoaded = false;
-  bool _isAdShowing = false;
-
-  // Test Rewarded Ad Unit ID
-  static const String _rewardedAdUnitId =
-      'ca-app-pub-3940256099942544/5224354917';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRewardedAd();
-  }
-
-  void _loadRewardedAd() {
-    RewardedAd.load(
-      adUnitId: _rewardedAdUnitId,
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
-          setState(() {
-            _rewardedAd = ad;
-            _isAdLoaded = true;
-          });
-          debugPrint('Drawer Rewarded Ad Loaded');
-        },
-        onAdFailedToLoad: (error) {
-          setState(() => _isAdLoaded = false);
-          debugPrint('Drawer Rewarded Ad Failed: ${error.message}');
-        },
-      ),
-    );
-  }
-
-  /// Ad দেখিয়ে navigate করে।
-  /// Ad load না হলে সরাসরি navigate করে (UX নষ্ট না করতে)।
-  void _navigateWithAd(VoidCallback onRewardEarned) {
-    // Ad already showing থাকলে skip
-    if (_isAdShowing) return;
-
-    if (!_isAdLoaded || _rewardedAd == null) {
-      // Ad ready না — সরাসরি navigate
-      onRewardEarned();
-      _loadRewardedAd(); // পরেরবারের জন্য load
-      return;
-    }
-
-    setState(() => _isAdShowing = true);
-
-    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (ad) {
-        ad.dispose();
-        setState(() {
-          _rewardedAd = null;
-          _isAdLoaded = false;
-          _isAdShowing = false;
-        });
-        _loadRewardedAd();
-        // Ad দেখা শেষ কিন্তু reward পায়নি — navigate করব না
-      },
-      onAdFailedToShowFullScreenContent: (ad, error) {
-        ad.dispose();
-        setState(() {
-          _rewardedAd = null;
-          _isAdLoaded = false;
-          _isAdShowing = false;
-        });
-        debugPrint('Ad Show Failed: ${error.message}');
-        // Fail হলে সরাসরি navigate
-        onRewardEarned();
-        _loadRewardedAd();
-      },
-    );
-
-    _rewardedAd!.show(
-      onUserEarnedReward: (ad, reward) {
-        // Reward পেলে navigate
-        onRewardEarned();
-      },
-    );
-
-    _rewardedAd = null;
-  }
-
-  @override
-  void dispose() {
-    _rewardedAd?.dispose();
-    super.dispose();
-  }
-  // ==================== END REWARDED AD ====================
-
-  @override
-  Widget build(BuildContext context) {
-    final double drawerWidth = widget.isDesktop
+  Widget build(BuildContext context, WidgetRef ref) {
+    final double drawerWidth = isDesktop
         ? 300
-        : widget.isTablet
+        : isTablet
             ? 280
             : MediaQuery.of(context).size.width * 0.78;
 
@@ -190,9 +89,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
     final subTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
     final dividerColor = isDark ? const Color(0xFF333333) : const Color(0xFFEEEEEE);
     final avatarBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.white;
-    final splashColor = isDark
-        ? AppDrawer.skyBlue.withOpacity(0.15)
-        : AppDrawer.skyBlue.withOpacity(0.1);
+    final splashColor = isDark ? skyBlue.withOpacity(0.15) : skyBlue.withOpacity(0.1);
 
     final profileAsync = ref.watch(drawerProfileProvider);
 
@@ -202,7 +99,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
         backgroundColor: drawerBackground,
         child: Column(
           children: [
-            // ==================== HEADER ====================
             Container(
               width: double.infinity,
               padding: EdgeInsets.only(
@@ -212,31 +108,27 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                 right: 20,
               ),
               decoration: const BoxDecoration(
-                color: AppDrawer.skyBlue,
+                color: skyBlue,
                 borderRadius: BorderRadius.only(
                   bottomRight: Radius.circular(30),
                 ),
               ),
-              child: widget.isLoggedIn
+              child: isLoggedIn
                   ? profileAsync.when(
-                      data: (user) =>
-                          _buildProfileHeader(context, user, avatarBgColor, isDark),
-                      loading: () => const Center(
-                          child: CircularProgressIndicator(color: Colors.white)),
+                      data: (user) => _buildProfileHeader(context, user, avatarBgColor, isDark),
+                      loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
                       error: (err, stack) => _buildGuestHeader(context),
                     )
                   : _buildGuestHeader(context),
             ),
 
-            // ==================== MENU ITEMS ====================
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 physics: const BouncingScrollPhysics(),
                 children: [
-
                   // 1. Voucher Balance
-                  if (widget.isLoggedIn)
+                  if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.card_giftcard_rounded,
@@ -246,16 +138,14 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        _navigateWithAd(() {
-                          ref.read(isDetailViewProvider.notifier).state = true;
-                          ref.read(detailViewTitleProvider.notifier).state = 'Voucher Balance';
-                          context.push('/voucher-balance');
-                        });
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Voucher Balance';
+                        context.push('/voucher-balance');
                       },
                     ),
 
                   // 2. Vendor Apply
-                  if (widget.isLoggedIn)
+                  if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.storefront_rounded,
@@ -266,16 +156,14 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        _navigateWithAd(() {
-                          ref.read(isDetailViewProvider.notifier).state = true;
-                          ref.read(detailViewTitleProvider.notifier).state = 'Vendor Apply';
-                          context.push('/vendor-apply');
-                        });
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Vendor Apply';
+                        context.push('/vendor-apply');
                       },
                     ),
 
-                  // 3. Royalty Salary
-                  if (widget.isLoggedIn)
+                  // 3. Royalty Salary ✅
+                  if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.workspace_premium_rounded,
@@ -285,16 +173,14 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        _navigateWithAd(() {
-                          ref.read(isDetailViewProvider.notifier).state = true;
-                          ref.read(detailViewTitleProvider.notifier).state = 'Royalty Salary';
-                          context.push('/royalty-salary');
-                        });
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Royalty Salary';
+                        context.push('/royalty-salary');
                       },
                     ),
 
-                  // 4. My Referrals
-                  if (widget.isLoggedIn)
+                  // 4. My Referrals ✅
+                  if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.group_add_rounded,
@@ -305,16 +191,14 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        _navigateWithAd(() {
-                          ref.read(isDetailViewProvider.notifier).state = true;
-                          ref.read(detailViewTitleProvider.notifier).state = 'My Referrals';
-                          context.push('/referral');
-                        });
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'My Referrals';
+                        context.push('/referral');
                       },
                     ),
 
-                  // 5. Matrix Income
-                  if (widget.isLoggedIn)
+                  // 5. Matrix Income ✅
+                  if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.account_tree_rounded,
@@ -325,16 +209,14 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        _navigateWithAd(() {
-                          ref.read(isDetailViewProvider.notifier).state = true;
-                          ref.read(detailViewTitleProvider.notifier).state = 'Matrix Income';
-                          context.push('/matrix-income');
-                        });
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'Matrix Income';
+                        context.push('/matrix-income');
                       },
                     ),
 
                   // 6. My Wallet
-                  if (widget.isLoggedIn)
+                  if (isLoggedIn)
                     _drawerItem(
                       context,
                       Icons.account_balance_wallet_rounded,
@@ -345,15 +227,13 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       splashColor: splashColor,
                       onTap: () {
                         Navigator.pop(context);
-                        _navigateWithAd(() {
-                          ref.read(isDetailViewProvider.notifier).state = true;
-                          ref.read(detailViewTitleProvider.notifier).state = 'My Wallet';
-                          context.push('/wallet');
-                        });
+                        ref.read(isDetailViewProvider.notifier).state = true;
+                        ref.read(detailViewTitleProvider.notifier).state = 'My Wallet';
+                        context.push('/wallet');
                       },
                     ),
 
-                  // 7. Leaderboard (Ad ছাড়া — public page)
+                  // 7. Leaderboard
                   _drawerItem(
                     context,
                     Icons.emoji_events_rounded,
@@ -373,7 +253,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 8. Support Center (Ad ছাড়া)
+                  // 8. Support Center
                   _drawerItem(
                     context,
                     Icons.support_agent_rounded,
@@ -387,7 +267,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 9. Facebook (Ad ছাড়া)
+                  // 9. Facebook
                   _drawerItem(
                     context,
                     Icons.facebook_rounded,
@@ -402,7 +282,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 10. YouTube (Ad ছাড়া)
+                  // 10. YouTube
                   _drawerItem(
                     context,
                     Icons.smart_display_rounded,
@@ -417,7 +297,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 11. Telegram (Ad ছাড়া)
+                  // 11. Telegram
                   _drawerItem(
                     context,
                     Icons.telegram_rounded,
@@ -432,7 +312,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 12. Website (Ad ছাড়া)
+                  // 12. Website
                   _drawerItem(
                     context,
                     Icons.language_rounded,
@@ -452,7 +332,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 13. Privacy Policy (Ad ছাড়া)
+                  // 13. Privacy Policy
                   _drawerItem(
                     context,
                     Icons.privacy_tip_rounded,
@@ -466,7 +346,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 14. Terms & Conditions (Ad ছাড়া)
+                  // 14. Terms & Conditions
                   _drawerItem(
                     context,
                     Icons.description_rounded,
@@ -480,7 +360,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 15. About Us (Ad ছাড়া)
+                  // 15. About Us
                   _drawerItem(
                     context,
                     Icons.info_rounded,
@@ -497,8 +377,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
               ),
             ),
 
-            // ==================== LOGOUT ====================
-            if (widget.isLoggedIn)
+            if (isLoggedIn)
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 10, 15, 25),
                 child: ListTile(
@@ -530,9 +409,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
     );
   }
 
-  // ==================== PROFILE HEADER ====================
-  Widget _buildProfileHeader(
-      BuildContext context, UserProfile? user, Color avatarBg, bool isDark) {
+  Widget _buildProfileHeader(BuildContext context, UserProfile? user, Color avatarBg, bool isDark) {
     final String name = user?.fullName ?? "No Name";
     final String id = user?.referralCode ?? "N/A";
     final String? img = user?.profilePicture;
@@ -548,10 +425,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
             color: avatarBg,
             border: Border.all(color: Colors.white, width: 3),
             boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5)),
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5)),
             ],
           ),
           child: ClipOval(
@@ -559,8 +433,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                 ? Image.network(
                     img,
                     fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) =>
-                        _buildDefaultAvatar(name, isDark),
+                    errorBuilder: (c, e, s) => _buildDefaultAvatar(name, isDark),
                   )
                 : _buildDefaultAvatar(name, isDark),
           ),
@@ -572,10 +445,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
             Flexible(
               child: Text(
                 name,
-                style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold),
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -606,10 +476,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                 const SizedBox(width: 6),
                 Text(
                   'ID: $id',
-                  style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500),
+                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -625,18 +492,11 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
         Container(
           width: 70,
           height: 70,
-          decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2)),
-          child: const Icon(Icons.person_outline_rounded,
-              color: Colors.white, size: 40),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.2)),
+          child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 40),
         ),
         const SizedBox(height: 12),
-        Text('Welcome Guest',
-            style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600)),
+        Text('Welcome Guest', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: () {
@@ -644,17 +504,11 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
             context.go('/login');
           },
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20)),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
             child: Text(
               'Login / Register',
-              style: GoogleFonts.poppins(
-                  color: AppDrawer.skyBlue,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold),
+              style: GoogleFonts.poppins(color: skyBlue, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -664,34 +518,25 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
 
   Widget _buildDefaultAvatar(String name, bool isDark) {
     return Container(
-      color: isDark
-          ? const Color(0xFF2C2C2C)
-          : AppDrawer.skyBlue.withOpacity(0.1),
+      color: isDark ? const Color(0xFF2C2C2C) : skyBlue.withOpacity(0.1),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: GoogleFonts.poppins(
-              color: AppDrawer.skyBlue,
-              fontSize: 32,
-              fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(color: skyBlue, fontSize: 32, fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
 
-  void _copyAffiliateId(
-      BuildContext context, String affiliateId, bool isDark) {
+  void _copyAffiliateId(BuildContext context, String affiliateId, bool isDark) {
     Clipboard.setData(ClipboardData(text: affiliateId));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:
-            Text('Affiliate ID copied!', style: GoogleFonts.poppins()),
-        backgroundColor:
-            isDark ? const Color(0xFF29B6F6) : Colors.green,
+        content: Text('Affiliate ID copied!', style: GoogleFonts.poppins()),
+        backgroundColor: isDark ? const Color(0xFF29B6F6) : Colors.green,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -707,19 +552,13 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      leading:
-          Icon(icon, color: iconColor ?? AppDrawer.skyBlue, size: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      leading: Icon(icon, color: iconColor ?? skyBlue, size: 24),
       title: Text(
         title,
-        style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: textColor),
+        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: textColor),
       ),
-      trailing: Icon(Icons.arrow_forward_ios_rounded,
-          size: 13, color: subTextColor),
+      trailing: Icon(Icons.arrow_forward_ios_rounded, size: 13, color: subTextColor),
       onTap: onTap,
       splashColor: splashColor,
     );
