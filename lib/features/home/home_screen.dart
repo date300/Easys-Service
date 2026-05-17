@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../main.dart';
 import '../reselling/reselling_screen.dart';
@@ -51,6 +54,48 @@ class BannerItem {
     this.route,
   });
 }
+
+// ==================== HOME PROFILE PROVIDER ====================
+
+class HomeUserProfile {
+  final String idVerified;
+  HomeUserProfile({required this.idVerified});
+
+  factory HomeUserProfile.fromJson(Map<String, dynamic> json) {
+    return HomeUserProfile(
+      idVerified: json['id_verified'] ?? 'unverified',
+    );
+  }
+}
+
+final homeProfileProvider = FutureProvider<HomeUserProfile?>((ref) async {
+  const String baseUrl = "https://api.easysarvice.com/api";
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('jwt_token');
+
+  if (token == null) return null;
+
+  try {
+    final response = await http.get(
+      Uri.parse("$baseUrl/user/profile"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['status'] == 'success') {
+        return HomeUserProfile.fromJson(data['user']);
+      }
+    }
+  } catch (e) {
+    debugPrint("Home Profile Fetch Error: $e");
+    return null;
+  }
+  return null;
+});
 
 // ==================== PROVIDERS ====================
 
@@ -202,6 +247,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final products = ref.watch(productListProvider);
     final banners = ref.watch(bannerProvider);
     final currentBannerIndex = ref.watch(currentBannerIndexProvider);
+    final profileAsync = ref.watch(homeProfileProvider);
     final screenWidth = MediaQuery.of(context).size.width;
 
     final isDesktop = screenWidth >= 1024;
@@ -219,9 +265,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final hPadding = isDesktop ? 32.w : isTablet ? 20.w : isSmall ? 12.w : 16.w;
     final vPadding = isDesktop ? 24.h : isTablet ? 20.h : 16.h;
-
-    // ── Read profile to check verification status ──
-    final profileAsync = ref.watch(drawerProfileProvider);
 
     return Container(
       color: kBackground,
@@ -250,8 +293,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       // ==================== UNVERIFIED BANNER ====================
                       profileAsync.when(
                         data: (user) {
-                          final isUnverified = user?.idVerified == 'unverified';
-                          if (!isUnverified) return const SizedBox.shrink();
+                          if (user?.idVerified != 'unverified') return const SizedBox.shrink();
                           return Padding(
                             padding: EdgeInsets.only(bottom: isDesktop ? 20.h : 14.h),
                             child: Container(
