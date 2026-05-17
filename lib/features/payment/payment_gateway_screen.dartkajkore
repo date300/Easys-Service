@@ -187,58 +187,6 @@ class AmountCard extends StatelessWidget {
   }
 }
 
-// ==========================================
-// LOGO WIDGET — লোগো না পেলে fallback letter
-// ==========================================
-
-class _PaymentLogo extends StatelessWidget {
-  final PaymentMethod method;
-  final bool enabled;
-
-  const _PaymentLogo({required this.method, required this.enabled});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: enabled
-            ? method.primaryColor.withOpacity(isDark ? 0.15 : 0.08)
-            : (isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Image.asset(
-            method.logoAsset,
-            fit: BoxFit.contain,
-            // ইমেজ না পেলে প্রথম অক্ষর দেখাবে — crash হবে না
-            errorBuilder: (context, error, stackTrace) {
-              return Center(
-                child: Text(
-                  method.name[0],
-                  style: TextStyle(
-                    color: enabled
-                        ? method.primaryColor
-                        : (isDark ? Colors.grey.shade600 : Colors.grey),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class PaymentMethodCard extends StatelessWidget {
   final PaymentMethod method;
   final bool isSelected;
@@ -289,8 +237,28 @@ class PaymentMethodCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           child: Row(
             children: [
-              // ✅ আসল লোগো ইমেজ এখানে দেখাবে
-              _PaymentLogo(method: method, enabled: enabled),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: enabled
+                      ? method.primaryColor.withOpacity(isDark ? 0.2 : 0.1)
+                      : (isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    method.name[0],
+                    style: TextStyle(
+                      color: enabled
+                          ? method.primaryColor
+                          : (isDark ? Colors.grey.shade600 : Colors.grey),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -605,30 +573,7 @@ class _BkashPaymentFlowState extends State<BkashPaymentFlow> {
       appBar: AppBar(
         backgroundColor: widget.method.primaryColor,
         elevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ✅ AppBar-এও লোগো দেখাবে
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Image.asset(
-                  widget.method.logoAsset,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text('bKash Payment'),
-          ],
-        ),
+        title: const Text('bKash Payment'),
         centerTitle: true,
         foregroundColor: Colors.white,
       ),
@@ -1023,30 +968,7 @@ class _NagadPaymentFlowState extends State<NagadPaymentFlow> {
       appBar: AppBar(
         backgroundColor: widget.method.primaryColor,
         elevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ✅ AppBar-এও লোগো দেখাবে
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Image.asset(
-                  widget.method.logoAsset,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text('Nagad Payment'),
-          ],
-        ),
+        title: const Text('Nagad Payment'),
         centerTitle: true,
         foregroundColor: Colors.white,
       ),
@@ -1441,30 +1363,7 @@ class _BinancePaymentFlowState extends State<BinancePaymentFlow> {
       appBar: AppBar(
         backgroundColor: widget.method.primaryColor,
         elevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ✅ AppBar-এও লোগো দেখাবে
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Image.asset(
-                  widget.method.logoAsset,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text('Binance Pay'),
-          ],
-        ),
+        title: const Text('Binance Pay'),
         centerTitle: true,
         foregroundColor: Colors.black,
       ),
@@ -1814,6 +1713,7 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
   void initState() {
     super.initState();
 
+    // Set detail view for AppTopBar back button and title
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(isDetailViewProvider.notifier).state = true;
@@ -1886,6 +1786,7 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
         return;
     }
 
+    // Push payment flow as full screen outside MainWrapper
     final result = await Navigator.of(context, rootNavigator: true).push<bool>(
       MaterialPageRoute(builder: (_) => flowScreen),
     );
@@ -1915,6 +1816,7 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0D0D0D) : Colors.white,
+      // No AppBar - MainWrapper/AppTopBar handles it via isDetailViewProvider
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SlideTransition(
@@ -1961,7 +1863,8 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
                   child: ProceedButton(
                     enabled: _selectedMethod != null,
                     isLoading: _isProcessing,
-                    color: _selectedMethod?.primaryColor ?? const Color(0xFF6C63FF),
+                    color: _selectedMethod?.primaryColor ??
+                        const Color(0xFF6C63FF),
                     onTap: _proceedToPayment,
                   ),
                 ),
@@ -1973,3 +1876,4 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen>
     );
   }
 }
+
