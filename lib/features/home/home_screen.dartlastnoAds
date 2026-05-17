@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../main.dart';
 import '../reselling/reselling_screen.dart';
@@ -97,76 +95,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late PageController _bannerController;
 
-  // ==================== INTERSTITIAL AD ====================
-  InterstitialAd? _interstitialAd;
-  bool _isInterstitialLoaded = false;
-  Timer? _adTimer;
-
-  // Test Interstitial Ad Unit ID
-  static const String _interstitialAdUnitId =
-      'ca-app-pub-3940256099942544/1033173712';
-
-  void _loadInterstitialAd() {
-    InterstitialAd.load(
-      adUnitId: _interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialLoaded = true;
-          debugPrint('Interstitial Ad Loaded');
-        },
-        onAdFailedToLoad: (error) {
-          _isInterstitialLoaded = false;
-          debugPrint('Interstitial Ad Failed: ${error.message}');
-        },
-      ),
-    );
-  }
-
-  void _showInterstitialAd() {
-    if (!_isInterstitialLoaded || _interstitialAd == null) {
-      // Ad এখনো ready না, reload করো
-      _loadInterstitialAd();
-      return;
-    }
-
-    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (ad) {
-        ad.dispose();
-        _interstitialAd = null;
-        _isInterstitialLoaded = false;
-        // পরের Ad আগে থেকেই load করে রাখো
-        _loadInterstitialAd();
-      },
-      onAdFailedToShowFullScreenContent: (ad, error) {
-        ad.dispose();
-        _interstitialAd = null;
-        _isInterstitialLoaded = false;
-        debugPrint('Interstitial Ad Show Failed: ${error.message}');
-        _loadInterstitialAd();
-      },
-    );
-
-    _interstitialAd!.show();
-  }
-
-  void _startAdTimer() {
-    _adTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (!mounted) return;
-      _showInterstitialAd();
-    });
-  }
-  // ==================== END INTERSTITIAL AD ====================
-
   @override
   void initState() {
     super.initState();
     _bannerController = PageController();
     _startAutoSlide();
-    _loadInterstitialAd();
-    _startAdTimer();
 
+    // API থেকে প্রোডাক্ট লোড করো
     Future.microtask(() {
       ref.read(productListProvider.notifier).fetchProducts();
     });
@@ -175,8 +110,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _bannerController.dispose();
-    _adTimer?.cancel();
-    _interstitialAd?.dispose();
     super.dispose();
   }
 
@@ -578,6 +511,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required Color kTextDark,
     required Color kTextMid,
   }) {
+    // লোডিং স্টেট — প্রোডাক্ট এখনো আসেনি
     if (products.isEmpty) {
       return SizedBox(
         height: isSmall ? 175.h : isTablet ? 195.h : 205.h,
@@ -737,6 +671,7 @@ class _ProductCard extends StatelessWidget {
     final cardWidth = isSmall ? 100.w : isDesktop ? 130.w : 115.w;
     final imageSize = isSmall ? 85.w : isDesktop ? 110.w : 95.w;
 
+    // ডিসকাউন্ট % হিসাব
     final hasDiscount = product.originalPrice != null && product.originalPrice! > product.wholesalePrice;
     final discountPercent = hasDiscount
         ? (((product.originalPrice! - product.wholesalePrice) / product.originalPrice!) * 100).round()
@@ -758,6 +693,7 @@ class _ProductCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // ছবি + badge গুলো
             Stack(
               children: [
                 ClipRRect(
@@ -778,6 +714,7 @@ class _ProductCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                // ডিসকাউন্ট badge
                 if (hasDiscount)
                   Positioned(
                     top: 6,
@@ -798,6 +735,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                // স্টার rating
                 Positioned(
                   top: 6,
                   right: 6,
@@ -826,6 +764,8 @@ class _ProductCard extends StatelessWidget {
                 ),
               ],
             ),
+
+            // প্রোডাক্ট info
             Padding(
               padding: EdgeInsets.all(isSmall ? 6.w : 8.w),
               child: Column(
@@ -844,6 +784,7 @@ class _ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4.h),
+                  // wholesale price
                   Text(
                     '৳${product.wholesalePrice.toInt()}',
                     style: GoogleFonts.poppins(
@@ -852,6 +793,7 @@ class _ProductCard extends StatelessWidget {
                       color: const Color(0xFF29B6F6),
                     ),
                   ),
+                  // original price strikethrough
                   if (hasDiscount) ...[
                     SizedBox(height: 1.h),
                     Text(
