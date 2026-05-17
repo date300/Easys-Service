@@ -119,16 +119,12 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
     );
   }
 
-  /// Ad দেখিয়ে navigate করে।
-  /// Ad load না হলে সরাসরি navigate করে (UX নষ্ট না করতে)।
   void _navigateWithAd(VoidCallback onRewardEarned) {
-    // Ad already showing থাকলে skip
     if (_isAdShowing) return;
 
     if (!_isAdLoaded || _rewardedAd == null) {
-      // Ad ready না — সরাসরি navigate
       onRewardEarned();
-      _loadRewardedAd(); // পরেরবারের জন্য load
+      _loadRewardedAd();
       return;
     }
 
@@ -143,7 +139,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
           _isAdShowing = false;
         });
         _loadRewardedAd();
-        // Ad দেখা শেষ কিন্তু reward পায়নি — navigate করব না
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
@@ -153,7 +148,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
           _isAdShowing = false;
         });
         debugPrint('Ad Show Failed: ${error.message}');
-        // Fail হলে সরাসরি navigate
         onRewardEarned();
         _loadRewardedAd();
       },
@@ -161,7 +155,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
 
     _rewardedAd!.show(
       onUserEarnedReward: (ad, reward) {
-        // Reward পেলে navigate
         onRewardEarned();
       },
     );
@@ -227,6 +220,82 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     )
                   : _buildGuestHeader(context),
             ),
+
+            // ==================== UNVERIFIED BANNER ====================
+            if (widget.isLoggedIn)
+              profileAsync.when(
+                data: (user) {
+                  final isUnverified = user?.idVerified == 'unverified';
+                  if (!isUnverified) return const SizedBox.shrink();
+                  return Container(
+                    margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(isDark ? 0.15 : 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.orange.withOpacity(0.5),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.orange,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'আপনার অ্যাকাউন্টটি এখনও ভেরিফাই করা হয়নি। এই ফিচার ব্যবহার করতে হলে অ্যাকাউন্ট ভেরিফাই করতে হবে।',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11.5,
+                                  color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              context.go('/payment');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'এখন ভেরিফাই করুন',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
 
             // ==================== MENU ITEMS ====================
             Expanded(
@@ -353,7 +422,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       },
                     ),
 
-                  // 7. Leaderboard (Ad ছাড়া — public page)
+                  // 7. Leaderboard
                   _drawerItem(
                     context,
                     Icons.emoji_events_rounded,
@@ -373,7 +442,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 8. Support Center (Ad ছাড়া)
+                  // 8. Support Center
                   _drawerItem(
                     context,
                     Icons.support_agent_rounded,
@@ -387,7 +456,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 9. Facebook (Ad ছাড়া)
+                  // 9. Facebook
                   _drawerItem(
                     context,
                     Icons.facebook_rounded,
@@ -402,7 +471,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 10. YouTube (Ad ছাড়া)
+                  // 10. YouTube
                   _drawerItem(
                     context,
                     Icons.smart_display_rounded,
@@ -417,7 +486,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 11. Telegram (Ad ছাড়া)
+                  // 11. Telegram
                   _drawerItem(
                     context,
                     Icons.telegram_rounded,
@@ -432,7 +501,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 12. Website (Ad ছাড়া)
+                  // 12. Website
                   _drawerItem(
                     context,
                     Icons.language_rounded,
@@ -452,7 +521,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     child: Divider(color: dividerColor, thickness: 1.5),
                   ),
 
-                  // 13. Privacy Policy (Ad ছাড়া)
+                  // 13. Privacy Policy
                   _drawerItem(
                     context,
                     Icons.privacy_tip_rounded,
@@ -466,7 +535,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 14. Terms & Conditions (Ad ছাড়া)
+                  // 14. Terms & Conditions
                   _drawerItem(
                     context,
                     Icons.description_rounded,
@@ -480,7 +549,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     },
                   ),
 
-                  // 15. About Us (Ad ছাড়া)
+                  // 15. About Us
                   _drawerItem(
                     context,
                     Icons.info_rounded,
@@ -590,6 +659,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
           ],
         ),
         const SizedBox(height: 8),
+        // ── UPDATED: "ID:" → "Affiliate ID:" ──
         GestureDetector(
           onTap: () => _copyAffiliateId(context, id, isDark),
           child: Container(
@@ -605,7 +675,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                 const Icon(Icons.copy_rounded, color: Colors.white, size: 14),
                 const SizedBox(width: 6),
                 Text(
-                  'ID: $id',
+                  'Affiliate ID: $id',
                   style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 12,
