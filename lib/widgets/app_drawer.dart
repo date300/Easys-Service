@@ -252,7 +252,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'আপনার অ্যাকাউন্টটি এখনও ভেরিফাই করা হয়নি। এই ফিচার ব্যবহার করতে হলে অ্যাকাউন্ট ভেরিফাই করতে হবে।',
+                                'Your account is not verified yet. You need to verify your account to use this feature.',
                                 style: GoogleFonts.poppins(
                                   fontSize: 11.5,
                                   color: isDark ? Colors.orange.shade200 : Colors.orange.shade900,
@@ -281,7 +281,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                               elevation: 0,
                             ),
                             child: Text(
-                              'এখন ভেরিফাই করুন',
+                              'Verify Now',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
