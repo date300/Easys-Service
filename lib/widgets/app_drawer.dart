@@ -245,8 +245,8 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       subTextColor: subTextColor,
                       splashColor: splashColor,
                       onTap: () {
-                        Navigator.pop(context);
                         _navigateWithAd(() {
+                          Navigator.pop(context);
                           ref.read(isDetailViewProvider.notifier).state = true;
                           ref.read(detailViewTitleProvider.notifier).state = 'Voucher Balance';
                           context.push('/voucher-balance');
@@ -265,8 +265,8 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       subTextColor: subTextColor,
                       splashColor: splashColor,
                       onTap: () {
-                        Navigator.pop(context);
                         _navigateWithAd(() {
+                          Navigator.pop(context);
                           ref.read(isDetailViewProvider.notifier).state = true;
                           ref.read(detailViewTitleProvider.notifier).state = 'Vendor Apply';
                           context.push('/vendor-apply');
@@ -284,8 +284,8 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       subTextColor: subTextColor,
                       splashColor: splashColor,
                       onTap: () {
-                        Navigator.pop(context);
                         _navigateWithAd(() {
+                          Navigator.pop(context);
                           ref.read(isDetailViewProvider.notifier).state = true;
                           ref.read(detailViewTitleProvider.notifier).state = 'Royalty Salary';
                           context.push('/royalty-salary');
@@ -304,8 +304,8 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       subTextColor: subTextColor,
                       splashColor: splashColor,
                       onTap: () {
-                        Navigator.pop(context);
                         _navigateWithAd(() {
+                          Navigator.pop(context);
                           ref.read(isDetailViewProvider.notifier).state = true;
                           ref.read(detailViewTitleProvider.notifier).state = 'My Referrals';
                           context.push('/referral');
@@ -324,8 +324,8 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       subTextColor: subTextColor,
                       splashColor: splashColor,
                       onTap: () {
-                        Navigator.pop(context);
                         _navigateWithAd(() {
+                          Navigator.pop(context);
                           ref.read(isDetailViewProvider.notifier).state = true;
                           ref.read(detailViewTitleProvider.notifier).state = 'Matrix Income';
                           context.push('/matrix-income');
@@ -344,8 +344,8 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       subTextColor: subTextColor,
                       splashColor: splashColor,
                       onTap: () {
-                        Navigator.pop(context);
                         _navigateWithAd(() {
+                          Navigator.pop(context);
                           ref.read(isDetailViewProvider.notifier).state = true;
                           ref.read(detailViewTitleProvider.notifier).state = 'My Wallet';
                           context.push('/wallet');
