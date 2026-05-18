@@ -8,7 +8,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // ✅ নতুন
 
 import 'firebase_options.dart';
 import 'core/services/push_notification_service.dart';
@@ -115,12 +115,15 @@ final detailViewTitleProvider = StateProvider<String>((ref) => '');
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // ✅ Initialize AdMob
   await MobileAds.instance.initialize();
 
+  // Initialize Push Notification Service
   await PushNotificationService.instance.initialize();
 
   SystemChrome.setSystemUIOverlayStyle(
@@ -266,6 +269,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
   @override
   void initState() {
     super.initState();
+
     _pushTapSub = PushNotificationService.instance.onTap.listen((event) {
       if (mounted) {
         context.push('/notifications');
@@ -325,15 +329,8 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     }
 
     return PopScope(
-      // ✅ সবসময় canPop: true — mobile back button সবসময় কাজ করবে
-      canPop: true,
-      onPopInvokedWithResult: (didPop, result) {
-        // ✅ back হয়ে গেলে detail providers reset করো
-        if (didPop && isDetailView) {
-          ref.read(isDetailViewProvider.notifier).state = false;
-          ref.read(detailViewTitleProvider.notifier).state = '';
-        }
-      },
+      canPop: !isDetailView,
+      onPopInvokedWithResult: (didPop, result) {},
       child: Scaffold(
         body: SafeArea(
           top: !isEditProfile,
