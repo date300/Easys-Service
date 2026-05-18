@@ -55,18 +55,18 @@ final leaderboardDataProvider =
     throw Exception('UNAUTHORIZED');
   }
 
-  String url = '\$API_BASE/leaderboard/\$tab?limit=\$limit';
+  String url = '$API_BASE/leaderboard/$tab?limit=$limit';
   if (tab == 'income' || tab == 'matrix') {
-    url += '&period=\$period';
+    url += '&period=$period';
   }
   if (tab == 'balance') {
-    url += '&type=\$balanceType';
+    url += '&type=$balanceType';
   }
 
   final response = await http.get(
     Uri.parse(url),
     headers: {
-      'Authorization': 'Bearer \$token',
+      'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     },
   );
@@ -92,9 +92,9 @@ final leaderboardStatsProvider =
   }
 
   final response = await http.get(
-    Uri.parse('\$API_BASE/leaderboard/stats'),
+    Uri.parse('$API_BASE/leaderboard/stats'),
     headers: {
-      'Authorization': 'Bearer \$token',
+      'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     },
   );
@@ -117,9 +117,9 @@ final userDetailProvider =
   }
 
   final response = await http.get(
-    Uri.parse('\$API_BASE/leaderboard/user/\$userId'),
+    Uri.parse('$API_BASE/leaderboard/user/$userId'),
     headers: {
-      'Authorization': 'Bearer \$token',
+      'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     },
   );
@@ -704,14 +704,16 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         badgeIcon = LucideIcons.trendingUp;
         break;
       case 'referrals':
-        amount = '\${item['referral_count'] ?? 0} refs';
+        final refCount = item['referral_count'] ?? 0;
+        amount = refCount.toString() + ' refs';
         badge = formatCurrency(item['referral_commission']);
         badgeColor = const Color(0xFF22C55E);
         badgeIcon = LucideIcons.users;
         break;
       case 'matrix':
         amount = formatCurrency(item['matrix_income']);
-        badge = '\${item['matrix_payouts'] ?? 0} payouts';
+        final payouts = item['matrix_payouts'] ?? 0;
+        badge = payouts.toString() + ' payouts';
         badgeColor = const Color(0xFFA855F7);
         badgeIcon = LucideIcons.layoutGrid;
         break;
@@ -781,7 +783,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                             size: 22,
                           )
                         : Text(
-                            '\${index + 1}',
+                            (index + 1).toString(),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -1288,10 +1290,11 @@ class UserDetailBottomSheet extends ConsumerWidget {
                                 : type == 'matrix'
                                     ? const Color(0xFFA855F7)
                                     : const Color(0xFF0EA5E9);
+                            final incomeCount = income['count'] ?? 0;
                             return _buildIncomeRow(
                               type.toString().toUpperCase(),
                               formatCurrency(income['total']),
-                              '\${income['count']} txs',
+                              incomeCount.toString() + ' txs',
                               color,
                               isDark,
                             );
@@ -1336,7 +1339,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
                                       ),
                                     ),
                                     Text(
-                                      '\$referralCount',
+                                      referralCount.toString(),
                                       style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
@@ -1718,4 +1721,3 @@ class UserDetailBottomSheet extends ConsumerWidget {
     );
   }
 }
-
