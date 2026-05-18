@@ -68,7 +68,7 @@ class HomeUserProfile {
   }
 }
 
-final homeProfileProvider = FutureProvider<<HomeUserProfile?>((ref) async {
+final homeProfileProvider = FutureProvider<HomeUserProfile?>((ref) async {
   const String baseUrl = "https://api.easysarvice.com/api";
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('jwt_token');
@@ -136,10 +136,10 @@ class HomeScreen extends ConsumerStatefulWidget {
   static const Color kPrimary = Color(0xFF29B6F6);
 
   @override
-  ConsumerState<<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   late PageController _bannerController;
 
   // ==================== INTERSTITIAL AD ====================
@@ -208,12 +208,12 @@ class _HomeScreenState extends ConsumerState<<HomeScreen> {
     _bannerController = PageController();
     _startAutoSlide();
     _loadInterstitialAd();
-    
-    // 🔥 ওপেনিং এড — অ্যাপ ঢুকে ৩ সেকেন্ড পর শো হবে (UI লোড হওয়ার পর)
+
+    // ওপেনিং এড — অ্যাপ ঢুকে ৩ সেকেন্ড পর শো হবে (UI লোড হওয়ার পর)
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) _showInterstitialAd();
     });
-    
+
     _startAdTimer();
 
     Future.microtask(() {
@@ -812,7 +812,8 @@ class _ServiceCard extends ConsumerWidget {
             children: [
               Flexible(
                 child: Text(
-                  service.isComingSoon ? 'Coming\nSoon' : service.name,
+                  service.isComingSoon ? 'Coming
+Soon' : service.name,
                   style: GoogleFonts.poppins(
                     fontSize: service.isComingSoon
                         ? comingSoonFontSize
