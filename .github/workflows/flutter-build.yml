@@ -1,4 +1,4 @@
-name: Flutter Build & Deploy
+name: Flutter Build & Deploy (Ultra Fast)
 
 on:
   push:
@@ -9,25 +9,45 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  # ১. ওয়েবসাইট বিল্ড
+  # ==========================================
+  # ১. ওয়েব বিল্ড
+  # ==========================================
   build-web:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout Repository
+      - name: Checkout (Shallow Clone)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v4
-
-      - name: Setup Flutter
+      - name: Setup Flutter (with SDK Cache)
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.6'
           channel: 'stable'
+          cache: true
+
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ${{ github.workspace }}/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
       - name: Install Dependencies
         run: flutter pub get
+
+      - name: Generate Launcher Icons
+        run: dart run flutter_launcher_icons
 
       - name: Build Flutter Web
         run: flutter build web --release --base-href "/Easys-Service/"
@@ -37,8 +57,69 @@ jobs:
         with:
           path: build/web
 
-  # ২. GitHub Pages-এ Deploy
-  deploy:
+  # ==========================================
+  # ২. Android APK বিল্ড (সব ডিভাইসে চলবে)
+  # ==========================================
+  build-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout (Shallow Clone)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Java (with Gradle Cache)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter (with SDK Cache)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Cache Pub & Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ${{ github.workspace }}/.dart_tool
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-android-${{ hashFiles('**/pubspec.lock', '**/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-android-
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Generate Launcher Icons
+        run: dart run flutter_launcher_icons
+
+      - name: Build Android APK (All Devices)
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.jvmargs=-Xmx4g"
+        # ✅ সব ডিভাইসে চলবে — arm64, armeabi-v7a, x86_64 সব architecture
+        run: flutter build apk --release
+
+      - name: Upload Android APK (No Re-compression)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Easys-Service-Android-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
+          if-no-files-found: error
+          compression-level: 0
+
+  # ==========================================
+  # ৩. GitHub Pages Deploy
+  # ==========================================
+  deploy-web:
     needs: build-web
     runs-on: ubuntu-latest
     environment:
@@ -48,29 +129,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  # ৩. Android অ্যাপ বিল্ড (Deploy শেষ হওয়ার পর)
-  build-android:
-    needs: deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.6'
-          channel: 'stable'
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build Android APK
-        run: flutter build apk --release
-
-      - name: Upload Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Easys-Service-Android-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
