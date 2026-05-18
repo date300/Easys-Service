@@ -26,7 +26,6 @@ import '../features/wallet/pages/transaction_list_page.dart';
 import '../features/wallet/pages/daily_income_page.dart';
 import '../features/wallet/pages/weekly_income_page.dart';
 import '../features/wallet/pages/monthly_income_page.dart';
-import '../features/leaderboard/leaderboard_page.dart';   // ← নতুন import
 
 // ==================== HELPERS ====================
 
@@ -131,10 +130,6 @@ final GoRouter appRouter = GoRouter(
         _detailRoute(
           path: '/monthly-income',
           builder: (context, state) => const MonthlyIncomePage(),
-        ),
-        _detailRoute(
-          path: '/leaderboard',                                    // ← নতুন route
-          builder: (context, state) => const LeaderboardPage(),
         ),
         GoRoute(
           path: '/profile',
