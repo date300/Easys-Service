@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ==================== API CONFIG ====================
 const String API_BASE = 'https://api.easysarvice.com/api';
@@ -12,19 +13,29 @@ final leaderboardTabProvider = StateProvider<String>((ref) => 'income');
 final leaderboardPeriodProvider = StateProvider<String>((ref) => 'all');
 final leaderboardLimitProvider = StateProvider<int>((ref) => 50);
 
+// Helper: Get JWT token from SharedPreferences (same as VendorApplyPage)
+Future<String?> _getToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('jwt_token');
+}
+
 final leaderboardDataProvider = FutureProvider.family<List<dynamic>, String>((ref, tab) async {
   final period = ref.watch(leaderboardPeriodProvider);
   final limit = ref.watch(leaderboardLimitProvider);
-  final token = ref.read(authTokenProvider); // আপনার auth token provider
+  final token = await _getToken();
 
-  String url = '\$API_BASE/leaderboard/\$tab?limit=\$limit';
+  if (token == null || token.isEmpty) {
+    throw Exception('Please login first. Token not found.');
+  }
+
+  String url = '$API_BASE/leaderboard/$tab?limit=$limit';
   if (tab == 'income' || tab == 'matrix') {
-    url += '&period=\$period';
+    url += '&period=$period';
   }
 
   final response = await http.get(
     Uri.parse(url),
-    headers: {'Authorization': 'Bearer \$token'},
+    headers: {'Authorization': 'Bearer $token'},
   );
 
   if (response.statusCode == 200) {
@@ -35,10 +46,15 @@ final leaderboardDataProvider = FutureProvider.family<List<dynamic>, String>((re
 });
 
 final leaderboardStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final token = ref.read(authTokenProvider);
+  final token = await _getToken();
+
+  if (token == null || token.isEmpty) {
+    throw Exception('Please login first. Token not found.');
+  }
+
   final response = await http.get(
-    Uri.parse('\$API_BASE/leaderboard/stats'),
-    headers: {'Authorization': 'Bearer \$token'},
+    Uri.parse('$API_BASE/leaderboard/stats'),
+    headers: {'Authorization': 'Bearer $token'},
   );
 
   if (response.statusCode == 200) {
@@ -54,11 +70,20 @@ class LeaderboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeTab = ref.watch(leaderboardTabProvider);
     final period = ref.watch(leaderboardPeriodProvider);
     final limit = ref.watch(leaderboardLimitProvider);
     final leaderboardAsync = ref.watch(leaderboardDataProvider(activeTab));
     final statsAsync = ref.watch(leaderboardStatsProvider);
+
+    // Dark/Light colors (same pattern as VendorApplyPage)
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final hintColor = isDark ? Colors.grey.shade500 : Colors.grey.shade400;
+    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.shade200;
 
     final tabs = [
       {'key': 'income', 'label': 'Top Earners', 'icon': LucideIcons.trophy},
@@ -68,22 +93,30 @@ class LeaderboardPage extends ConsumerWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Leaderboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: cardColor,
         elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(100),
           child: Column(
             children: [
               // Stats Cards
               statsAsync.when(
-                data: (stats) => _buildStatsRow(stats),
-                loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
+                data: (stats) => _buildStatsRow(stats, isDark),
+                loading: () => SizedBox(
+                  height: 80,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
                 error: (_, __) => const SizedBox.shrink(),
               ),
               // Tab Bar
@@ -102,22 +135,31 @@ class LeaderboardPage extends ConsumerWidget {
                         label: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(tab['icon'] as IconData, size: 16, color: isActive ? Colors.white : Colors.grey[600]),
+                            Icon(
+                              tab['icon'] as IconData,
+                              size: 16,
+                              color: isActive ? Colors.white : secondaryTextColor,
+                            ),
                             const SizedBox(width: 6),
-                            Text(tab['label'] as String),
+                            Text(
+                              tab['label'] as String,
+                              style: TextStyle(
+                                color: isActive ? Colors.white : secondaryTextColor,
+                              ),
+                            ),
                           ],
                         ),
                         selected: isActive,
                         onSelected: (_) => ref.read(leaderboardTabProvider.notifier).state = tab['key'] as String,
                         selectedColor: const Color(0xFF0F172A),
                         labelStyle: TextStyle(
-                          color: isActive ? Colors.white : Colors.grey[700],
+                          color: isActive ? Colors.white : secondaryTextColor,
                           fontWeight: FontWeight.w500,
                         ),
-                        backgroundColor: Colors.white,
+                        backgroundColor: cardColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey[200]!),
+                          side: BorderSide(color: borderColor),
                         ),
                       ),
                     );
@@ -146,6 +188,10 @@ class LeaderboardPage extends ConsumerWidget {
                         DropdownMenuItem(value: 'month', child: Text('This Month')),
                       ],
                       onChanged: (v) => ref.read(leaderboardPeriodProvider.notifier).state = v!,
+                      isDark: isDark,
+                      cardColor: cardColor,
+                      borderColor: borderColor,
+                      textColor: textColor,
                     ),
                   ),
                 if (activeTab == 'income' || activeTab == 'matrix') const SizedBox(width: 12),
@@ -159,6 +205,10 @@ class LeaderboardPage extends ConsumerWidget {
                       DropdownMenuItem(value: '100', child: Text('Top 100')),
                     ],
                     onChanged: (v) => ref.read(leaderboardLimitProvider.notifier).state = int.parse(v!),
+                    isDark: isDark,
+                    cardColor: cardColor,
+                    borderColor: borderColor,
+                    textColor: textColor,
                   ),
                 ),
               ],
@@ -167,18 +217,30 @@ class LeaderboardPage extends ConsumerWidget {
           // List
           Expanded(
             child: leaderboardAsync.when(
-              data: (data) => _buildList(data, activeTab),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              data: (data) => _buildList(data, activeTab, isDark, cardColor, textColor, borderColor),
+              loading: () => Center(
+                child: CircularProgressIndicator(
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
               error: (err, _) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.alertCircle, size: 48, color: Colors.red[300]),
+                    Icon(LucideIcons.alertCircle, size: 48, color: isDark ? Colors.red.shade300 : Colors.red[300]),
                     const SizedBox(height: 12),
-                    Text('Error: \$err', style: TextStyle(color: Colors.red[600])),
+                    Text(
+                      'Error: $err',
+                      style: TextStyle(color: isDark ? Colors.red.shade300 : Colors.red[600]),
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () => ref.invalidate(leaderboardDataProvider(activeTab)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark ? const Color(0xFF333333) : const Color(0xFF0F172A),
+                        foregroundColor: Colors.white,
+                      ),
                       child: const Text('Retry'),
                     ),
                   ],
@@ -191,7 +253,9 @@ class LeaderboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsRow(Map<String, dynamic> stats) {
+  // ==================== Helper Widgets ====================
+
+  Widget _buildStatsRow(Map<String, dynamic> stats, bool isDark) {
     final items = [
       {'label': 'Users', 'value': stats['total_users']?.toString() ?? '0', 'color': const Color(0xFF0EA5E9)},
       {'label': 'Active', 'value': stats['active_users']?.toString() ?? '0', 'color': const Color(0xFF22C55E)},
@@ -224,7 +288,10 @@ class LeaderboardPage extends ConsumerWidget {
                 ),
                 Text(
                   item['label'] as String,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey[600],
+                  ),
                 ),
               ],
             ),
@@ -238,13 +305,17 @@ class LeaderboardPage extends ConsumerWidget {
     required String value,
     required List<DropdownMenuItem<String>> items,
     required Function(String?) onChanged,
+    required bool isDark,
+    required Color cardColor,
+    required Color borderColor,
+    required Color textColor,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: borderColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -252,21 +323,33 @@ class LeaderboardPage extends ConsumerWidget {
           items: items,
           onChanged: onChanged,
           isExpanded: true,
-          icon: const Icon(LucideIcons.chevronDown, size: 18),
+          icon: Icon(LucideIcons.chevronDown, size: 18, color: textColor),
+          dropdownColor: cardColor,
+          style: TextStyle(color: textColor),
         ),
       ),
     );
   }
 
-  Widget _buildList(List<dynamic> data, String activeTab) {
+  Widget _buildList(
+    List<dynamic> data,
+    String activeTab,
+    bool isDark,
+    Color cardColor,
+    Color textColor,
+    Color borderColor,
+  ) {
     if (data.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(LucideIcons.inbox, size: 48, color: Colors.grey),
-            SizedBox(height: 12),
-            Text('No data found for this period', style: TextStyle(color: Colors.grey)),
+            Icon(LucideIcons.inbox, size: 48, color: isDark ? Colors.grey.shade600 : Colors.grey),
+            const SizedBox(height: 12),
+            Text(
+              'No data found for this period',
+              style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey),
+            ),
           ],
         ),
       );
@@ -277,12 +360,20 @@ class LeaderboardPage extends ConsumerWidget {
       itemCount: data.length,
       itemBuilder: (context, index) {
         final item = data[index];
-        return _buildLeaderboardCard(item, index, activeTab);
+        return _buildLeaderboardCard(item, index, activeTab, isDark, cardColor, textColor, borderColor);
       },
     );
   }
 
-  Widget _buildLeaderboardCard(dynamic item, int index, String activeTab) {
+  Widget _buildLeaderboardCard(
+    dynamic item,
+    int index,
+    String activeTab,
+    bool isDark,
+    Color cardColor,
+    Color textColor,
+    Color borderColor,
+  ) {
     final rankColors = [
       const Color(0xFFFFD700), // Gold
       const Color(0xFFC0C0C0), // Silver
@@ -290,7 +381,9 @@ class LeaderboardPage extends ConsumerWidget {
     ];
 
     final isTop3 = index < 3;
-    final rankColor = isTop3 ? rankColors[index] : Colors.grey[300];
+    final rankColor = isTop3
+        ? rankColors[index]
+        : (isDark ? Colors.grey.shade600 : Colors.grey[300]);
 
     String title = item['full_name'] ?? 'Unknown';
     String subtitle = item['mobile'] ?? item['email'] ?? '';
@@ -300,23 +393,23 @@ class LeaderboardPage extends ConsumerWidget {
 
     switch (activeTab) {
       case 'income':
-        amount = '৳${(item['total_income'] ?? 0).toString()}';
+        amount = '?${(item['total_income'] ?? 0).toString()}';
         badge = 'Income';
         badgeColor = const Color(0xFF0EA5E9);
         break;
       case 'referrals':
         amount = '${(item['referral_count'] ?? 0).toString()} refs';
-        badge = 'Commission: ৳${(item['referral_commission'] ?? 0).toString()}';
+        badge = 'Commission: ?${(item['referral_commission'] ?? 0).toString()}';
         badgeColor = const Color(0xFF22C55E);
         break;
       case 'matrix':
-        amount = '৳${(item['matrix_income'] ?? 0).toString()}';
+        amount = '?${(item['matrix_income'] ?? 0).toString()}';
         badge = '${(item['matrix_payouts'] ?? 0).toString()} payouts';
         badgeColor = const Color(0xFFA855F7);
         break;
       case 'balance':
-        amount = '৳${(item['total_balance'] ?? 0).toString()}';
-        badge = 'Balance: ৳${(item['balance'] ?? 0).toString()}';
+        amount = '?${(item['total_balance'] ?? 0).toString()}';
+        badge = 'Balance: ?${(item['balance'] ?? 0).toString()}';
         badgeColor = const Color(0xFFF97316);
         break;
     }
@@ -324,15 +417,15 @@ class LeaderboardPage extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isTop3 ? rankColor!.withOpacity(0.5) : Colors.grey[100]!,
+          color: isTop3 ? rankColor.withOpacity(0.5) : borderColor,
           width: isTop3 ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -344,9 +437,9 @@ class LeaderboardPage extends ConsumerWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: rankColor?.withOpacity(0.15),
+            color: rankColor.withOpacity(0.15),
             shape: BoxShape.circle,
-            border: isTop3 ? Border.all(color: rankColor!, width: 2) : null,
+            border: isTop3 ? Border.all(color: rankColor, width: 2) : null,
           ),
           child: Center(
             child: isTop3
@@ -359,7 +452,7 @@ class LeaderboardPage extends ConsumerWidget {
                     '${index + 1}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[500],
+                      color: isDark ? Colors.grey.shade400 : Colors.grey[500],
                     ),
                   ),
           ),
@@ -369,9 +462,10 @@ class LeaderboardPage extends ConsumerWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
+                  color: textColor,
                 ),
               ),
             ),
@@ -394,20 +488,20 @@ class LeaderboardPage extends ConsumerWidget {
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark ? Colors.grey.shade400 : Colors.grey[500],
+          ),
         ),
         trailing: Text(
           amount,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: isTop3 ? rankColor : const Color(0xFF0F172A),
+            color: isTop3 ? rankColor : textColor,
           ),
         ),
       ),
     );
   }
 }
-
-// Dummy auth token provider — আপনার প্রজেক্টের auth provider দিয়ে রিপ্লেস করুন
-final authTokenProvider = Provider<String>((ref) => '');
