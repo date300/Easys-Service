@@ -263,6 +263,17 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     }
   }
 
+  // ✅ Detail view back — providers reset + আগের page এ ফিরে যাও
+  void _handleDetailBack(BuildContext context) {
+    ref.read(isDetailViewProvider.notifier).state = false;
+    ref.read(detailViewTitleProvider.notifier).state = '';
+    if (context.canPop()) {
+      context.pop(); // আগের page এ ফিরবে, app বন্ধ হবে না
+    } else {
+      context.go('/home'); // stack শেষ হলে home এ যাবে
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -325,13 +336,13 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
     }
 
     return PopScope(
-      // ✅ সবসময় canPop: true — mobile back button সবসময় কাজ করবে
-      canPop: true,
+      // ✅ detail view এ system back block করো
+      canPop: !isDetailView,
       onPopInvokedWithResult: (didPop, result) {
-        // ✅ back হয়ে গেলে detail providers reset করো
-        if (didPop && isDetailView) {
-          ref.read(isDetailViewProvider.notifier).state = false;
-          ref.read(detailViewTitleProvider.notifier).state = '';
+        // ✅ system pop হয়নি কিন্তু detail view আছে
+        // → manually back handle করো, app বন্ধ হবে না
+        if (!didPop && isDetailView) {
+          _handleDetailBack(context);
         }
       },
       child: Scaffold(
