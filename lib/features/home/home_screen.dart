@@ -812,8 +812,7 @@ class _ServiceCard extends ConsumerWidget {
             children: [
               Flexible(
                 child: Text(
-                  service.isComingSoon ? 'Coming
-Soon' : service.name,
+                  service.isComingSoon ? 'Coming\nSoon' : service.name,
                   style: GoogleFonts.poppins(
                     fontSize: service.isComingSoon
                         ? comingSoonFontSize
@@ -998,3 +997,4 @@ class _ProductCard extends StatelessWidget {
     );
   }
 }
+
