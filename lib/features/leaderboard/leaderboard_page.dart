@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../main.dart'; // isDetailViewProvider, detailViewTitleProvider
 
 // ==================== API CONFIG ====================
 const String API_BASE = 'https://api.easysarvice.com/api';
@@ -13,13 +14,14 @@ final leaderboardTabProvider = StateProvider<String>((ref) => 'income');
 final leaderboardPeriodProvider = StateProvider<String>((ref) => 'all');
 final leaderboardLimitProvider = StateProvider<int>((ref) => 50);
 
-// Helper: Get JWT token from SharedPreferences (same as VendorApplyPage)
+// Helper: Get JWT token from SharedPreferences
 Future<String?> _getToken() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('jwt_token');
 }
 
-final leaderboardDataProvider = FutureProvider.family<List<dynamic>, String>((ref, tab) async {
+final leaderboardDataProvider =
+    FutureProvider.family<List<dynamic>, String>((ref, tab) async {
   final period = ref.watch(leaderboardPeriodProvider);
   final limit = ref.watch(leaderboardLimitProvider);
   final token = await _getToken();
@@ -45,7 +47,8 @@ final leaderboardDataProvider = FutureProvider.family<List<dynamic>, String>((re
   throw Exception('Failed to load leaderboard');
 });
 
-final leaderboardStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final leaderboardStatsProvider =
+    FutureProvider<Map<String, dynamic>>((ref) async {
   final token = await _getToken();
 
   if (token == null || token.isEmpty) {
@@ -65,24 +68,43 @@ final leaderboardStatsProvider = FutureProvider<Map<String, dynamic>>((ref) asyn
 });
 
 // ==================== PAGE ====================
-class LeaderboardPage extends ConsumerWidget {
+class LeaderboardPage extends ConsumerStatefulWidget {
   const LeaderboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LeaderboardPage> createState() => _LeaderboardPageState();
+}
+
+class _LeaderboardPageState extends ConsumerState<LeaderboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Detail view হিসেবে set করা হচ্ছে — MainWrapper back button ও title দেখাবে
+    Future.microtask(() {
+      ref.read(isDetailViewProvider.notifier).state = true;
+      ref.read(detailViewTitleProvider.notifier).state = 'Leaderboard';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // ref সরাসরি ব্যবহার করা হচ্ছে — parameter দরকার নেই
     final activeTab = ref.watch(leaderboardTabProvider);
     final period = ref.watch(leaderboardPeriodProvider);
     final limit = ref.watch(leaderboardLimitProvider);
     final leaderboardAsync = ref.watch(leaderboardDataProvider(activeTab));
     final statsAsync = ref.watch(leaderboardStatsProvider);
 
-    // Dark/Light colors (same pattern as VendorApplyPage)
-    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final bgColor =
+        isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.shade200;
+    final secondaryTextColor =
+        isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final borderColor =
+        isDark ? const Color(0xFF333333) : Colors.grey.shade200;
 
     final tabs = [
       {'key': 'income', 'label': 'Top Earners', 'icon': LucideIcons.trophy},
@@ -93,87 +115,79 @@ class LeaderboardPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        title: Text(
-          'Leaderboard',
-          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
-        ),
-        backgroundColor: cardColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: textColor),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
-          child: Column(
-            children: [
-              // Stats Cards
-              statsAsync.when(
-                data: (stats) => _buildStatsRow(stats, isDark),
-                loading: () => SizedBox(
-                  height: 80,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                ),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
-              // Tab Bar
-              Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: tabs.length,
-                  itemBuilder: (context, index) {
-                    final tab = tabs[index];
-                    final isActive = activeTab == tab['key'];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              tab['icon'] as IconData,
-                              size: 16,
-                              color: isActive ? Colors.white : secondaryTextColor,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              tab['label'] as String,
-                              style: TextStyle(
-                                color: isActive ? Colors.white : secondaryTextColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        selected: isActive,
-                        onSelected: (_) => ref.read(leaderboardTabProvider.notifier).state = tab['key'] as String,
-                        selectedColor: const Color(0xFF0F172A),
-                        labelStyle: TextStyle(
-                          color: isActive ? Colors.white : secondaryTextColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        backgroundColor: cardColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: borderColor),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      // ✅ AppBar সম্পূর্ণ সরানো হয়েছে
+      // MainWrapper নিজেই "Leaderboard" title এবং back button দেখাবে
       body: Column(
         children: [
-          // Filters
+          // ── Stats Row ──
+          statsAsync.when(
+            data: (stats) => _buildStatsRow(stats, isDark),
+            loading: () => SizedBox(
+              height: 80,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+
+          // ── Tab Bar ──
+          Container(
+            height: 56,
+            color: cardColor,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: tabs.length,
+              itemBuilder: (context, index) {
+                final tab = tabs[index];
+                final isActive = activeTab == tab['key'];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          tab['icon'] as IconData,
+                          size: 16,
+                          color: isActive ? Colors.white : secondaryTextColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          tab['label'] as String,
+                          style: TextStyle(
+                            color:
+                                isActive ? Colors.white : secondaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    selected: isActive,
+                    onSelected: (_) =>
+                        ref.read(leaderboardTabProvider.notifier).state =
+                            tab['key'] as String,
+                    selectedColor: const Color(0xFF0F172A),
+                    labelStyle: TextStyle(
+                      color: isActive ? Colors.white : secondaryTextColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    backgroundColor: cardColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: borderColor),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // ── Filters ──
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Row(
               children: [
                 if (activeTab == 'income' || activeTab == 'matrix')
@@ -181,19 +195,26 @@ class LeaderboardPage extends ConsumerWidget {
                     child: _buildDropdown(
                       value: period,
                       items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All Time')),
-                        DropdownMenuItem(value: 'today', child: Text('Today')),
-                        DropdownMenuItem(value: 'week', child: Text('This Week')),
-                        DropdownMenuItem(value: 'month', child: Text('This Month')),
+                        DropdownMenuItem(
+                            value: 'all', child: Text('All Time')),
+                        DropdownMenuItem(
+                            value: 'today', child: Text('Today')),
+                        DropdownMenuItem(
+                            value: 'week', child: Text('This Week')),
+                        DropdownMenuItem(
+                            value: 'month', child: Text('This Month')),
                       ],
-                      onChanged: (v) => ref.read(leaderboardPeriodProvider.notifier).state = v!,
+                      onChanged: (v) =>
+                          ref.read(leaderboardPeriodProvider.notifier).state =
+                              v!,
                       isDark: isDark,
                       cardColor: cardColor,
                       borderColor: borderColor,
                       textColor: textColor,
                     ),
                   ),
-                if (activeTab == 'income' || activeTab == 'matrix') const SizedBox(width: 12),
+                if (activeTab == 'income' || activeTab == 'matrix')
+                  const SizedBox(width: 12),
                 Expanded(
                   child: _buildDropdown(
                     value: limit.toString(),
@@ -203,7 +224,9 @@ class LeaderboardPage extends ConsumerWidget {
                       DropdownMenuItem(value: '50', child: Text('Top 50')),
                       DropdownMenuItem(value: '100', child: Text('Top 100')),
                     ],
-                    onChanged: (v) => ref.read(leaderboardLimitProvider.notifier).state = int.parse(v!),
+                    onChanged: (v) =>
+                        ref.read(leaderboardLimitProvider.notifier).state =
+                            int.parse(v!),
                     isDark: isDark,
                     cardColor: cardColor,
                     borderColor: borderColor,
@@ -213,10 +236,12 @@ class LeaderboardPage extends ConsumerWidget {
               ],
             ),
           ),
-          // List
+
+          // ── List ──
           Expanded(
             child: leaderboardAsync.when(
-              data: (data) => _buildList(data, activeTab, isDark, cardColor, textColor, borderColor),
+              data: (data) => _buildList(
+                  data, activeTab, isDark, cardColor, textColor, borderColor),
               loading: () => Center(
                 child: CircularProgressIndicator(
                   color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -226,18 +251,28 @@ class LeaderboardPage extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.alertCircle, size: 48, color: isDark ? Colors.red.shade300 : Colors.red[300]),
+                    Icon(LucideIcons.alertCircle,
+                        size: 48,
+                        color: isDark
+                            ? Colors.red.shade300
+                            : Colors.red[300]),
                     const SizedBox(height: 12),
                     Text(
                       'Error: $err',
-                      style: TextStyle(color: isDark ? Colors.red.shade300 : Colors.red[600]),
+                      style: TextStyle(
+                          color: isDark
+                              ? Colors.red.shade300
+                              : Colors.red[600]),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton(
-                      onPressed: () => ref.invalidate(leaderboardDataProvider(activeTab)),
+                      onPressed: () =>
+                          ref.invalidate(leaderboardDataProvider(activeTab)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark ? const Color(0xFF333333) : const Color(0xFF0F172A),
+                        backgroundColor: isDark
+                            ? const Color(0xFF333333)
+                            : const Color(0xFF0F172A),
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('Retry'),
@@ -256,46 +291,66 @@ class LeaderboardPage extends ConsumerWidget {
 
   Widget _buildStatsRow(Map<String, dynamic> stats, bool isDark) {
     final items = [
-      {'label': 'Users', 'value': stats['total_users']?.toString() ?? '0', 'color': const Color(0xFF0EA5E9)},
-      {'label': 'Active', 'value': stats['active_users']?.toString() ?? '0', 'color': const Color(0xFF22C55E)},
-      {'label': 'Verified', 'value': stats['verified_users']?.toString() ?? '0', 'color': const Color(0xFF6366F1)},
-      {'label': 'Business', 'value': stats['total_businesses']?.toString() ?? '0', 'color': const Color(0xFFF97316)},
+      {
+        'label': 'Users',
+        'value': stats['total_users']?.toString() ?? '0',
+        'color': const Color(0xFF0EA5E9)
+      },
+      {
+        'label': 'Active',
+        'value': stats['active_users']?.toString() ?? '0',
+        'color': const Color(0xFF22C55E)
+      },
+      {
+        'label': 'Verified',
+        'value': stats['verified_users']?.toString() ?? '0',
+        'color': const Color(0xFF6366F1)
+      },
+      {
+        'label': 'Business',
+        'value': stats['total_businesses']?.toString() ?? '0',
+        'color': const Color(0xFFF97316)
+      },
     ];
 
     return Container(
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        children: items.map((item) => Expanded(
-          child: Container(
-            margin: const EdgeInsets.only(right: 8),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: (item['color'] as Color).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  item['value'] as String,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: item['color'] as Color,
+        children: items
+            .map((item) => Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: (item['color'] as Color).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          item['value'] as String,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: item['color'] as Color,
+                          ),
+                        ),
+                        Text(
+                          item['label'] as String,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  item['label'] as String,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.grey.shade400 : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        )).toList(),
+                ))
+            .toList(),
       ),
     );
   }
@@ -343,11 +398,14 @@ class LeaderboardPage extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(LucideIcons.inbox, size: 48, color: isDark ? Colors.grey.shade600 : Colors.grey),
+            Icon(LucideIcons.inbox,
+                size: 48,
+                color: isDark ? Colors.grey.shade600 : Colors.grey),
             const SizedBox(height: 12),
             Text(
               'No data found for this period',
-              style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey),
+              style: TextStyle(
+                  color: isDark ? Colors.grey.shade400 : Colors.grey),
             ),
           ],
         ),
@@ -359,7 +417,8 @@ class LeaderboardPage extends ConsumerWidget {
       itemCount: data.length,
       itemBuilder: (context, index) {
         final item = data[index];
-        return _buildLeaderboardCard(item, index, activeTab, isDark, cardColor, textColor, borderColor);
+        return _buildLeaderboardCard(
+            item, index, activeTab, isDark, cardColor, textColor, borderColor);
       },
     );
   }
@@ -380,7 +439,6 @@ class LeaderboardPage extends ConsumerWidget {
     ];
 
     final isTop3 = index < 3;
-    // FIX: Use non-nullable Color by providing fallback
     final Color rankColor = isTop3
         ? rankColors[index]
         : (isDark ? Colors.grey.shade600 : Colors.grey.shade300);
@@ -393,23 +451,24 @@ class LeaderboardPage extends ConsumerWidget {
 
     switch (activeTab) {
       case 'income':
-        amount = '?${(item['total_income'] ?? 0).toString()}';
+        amount = '৳${(item['total_income'] ?? 0).toString()}';
         badge = 'Income';
         badgeColor = const Color(0xFF0EA5E9);
         break;
       case 'referrals':
         amount = '${(item['referral_count'] ?? 0).toString()} refs';
-        badge = 'Commission: ?${(item['referral_commission'] ?? 0).toString()}';
+        badge =
+            'Commission: ৳${(item['referral_commission'] ?? 0).toString()}';
         badgeColor = const Color(0xFF22C55E);
         break;
       case 'matrix':
-        amount = '?${(item['matrix_income'] ?? 0).toString()}';
+        amount = '৳${(item['matrix_income'] ?? 0).toString()}';
         badge = '${(item['matrix_payouts'] ?? 0).toString()} payouts';
         badgeColor = const Color(0xFFA855F7);
         break;
       case 'balance':
-        amount = '?${(item['total_balance'] ?? 0).toString()}';
-        badge = 'Balance: ?${(item['balance'] ?? 0).toString()}';
+        amount = '৳${(item['total_balance'] ?? 0).toString()}';
+        badge = 'Balance: ৳${(item['balance'] ?? 0).toString()}';
         badgeColor = const Color(0xFFF97316);
         break;
     }
@@ -432,7 +491,8 @@ class LeaderboardPage extends ConsumerWidget {
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           width: 44,
           height: 44,
@@ -452,7 +512,9 @@ class LeaderboardPage extends ConsumerWidget {
                     '${index + 1}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.grey.shade400 : Colors.grey[500],
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey[500],
                     ),
                   ),
           ),
@@ -470,7 +532,8 @@ class LeaderboardPage extends ConsumerWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: badgeColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
@@ -505,4 +568,3 @@ class LeaderboardPage extends ConsumerWidget {
     );
   }
 }
-
