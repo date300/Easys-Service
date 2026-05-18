@@ -14,32 +14,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ==========================================
-  # ১. ওয়েব বিল্ড
-  # ==========================================
   build-web:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout (Shallow Clone)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Flutter (with SDK Cache)
+      - name: Setup Flutter (Auto Latest Stable)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.6'
           channel: 'stable'
           cache: true
+          # ❌ flutter-version বাদ দিয়েছি — auto latest নেবে
 
-      - name: Cache Pub Dependencies
+      - name: Cache Pub
         uses: actions/cache@v4
         with:
           path: |
             ~/.pub-cache
             ${{ github.workspace }}/.dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock', '**/pubspec.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pub-
 
@@ -53,33 +50,29 @@ jobs:
         run: flutter build web --release --base-href "/Easys-Service/"
 
       - name: Upload Web Artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: build/web
 
-  # ==========================================
-  # ২. Android APK বিল্ড (সব ডিভাইসে চলবে)
-  # ==========================================
   build-android:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout (Shallow Clone)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Java (with Gradle Cache)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
           cache: 'gradle'
 
-      - name: Setup Flutter (with SDK Cache)
+      - name: Setup Flutter (Auto Latest Stable)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.6'
           channel: 'stable'
           cache: true
 
@@ -91,7 +84,7 @@ jobs:
             ${{ github.workspace }}/.dart_tool
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-android-${{ hashFiles('**/pubspec.lock', '**/android/gradle/wrapper/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-android-${{ hashFiles('**/pubspec.lock', '**/pubspec.yaml', '**/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-android-
 
@@ -101,13 +94,12 @@ jobs:
       - name: Generate Launcher Icons
         run: dart run flutter_launcher_icons
 
-      - name: Build Android APK (All Devices)
+      - name: Build Android APK
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.jvmargs=-Xmx4g"
-        # ✅ সব ডিভাইসে চলবে — arm64, armeabi-v7a, x86_64 সব architecture
         run: flutter build apk --release
 
-      - name: Upload Android APK (No Re-compression)
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Easys-Service-Android-APK
@@ -116,9 +108,6 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-  # ==========================================
-  # ৩. GitHub Pages Deploy
-  # ==========================================
   deploy-web:
     needs: build-web
     runs-on: ubuntu-latest
