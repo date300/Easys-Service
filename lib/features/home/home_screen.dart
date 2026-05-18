@@ -7,7 +7,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -142,79 +141,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late PageController _bannerController;
 
-  // ==================== INTERSTITIAL AD ====================
-  InterstitialAd? _interstitialAd;
-  bool _isInterstitialLoaded = false;
-  Timer? _adTimer;
-
-  static const String _interstitialAdUnitId =
-      'ca-app-pub-3940256099942544/1033173712';
-
-  void _loadInterstitialAd() {
-    InterstitialAd.load(
-      adUnitId: _interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialLoaded = true;
-          debugPrint('Interstitial Ad Loaded');
-        },
-        onAdFailedToLoad: (error) {
-          _isInterstitialLoaded = false;
-          debugPrint('Interstitial Ad Failed: ${error.message}');
-        },
-      ),
-    );
-  }
-
-  void _showInterstitialAd() {
-    if (!_isInterstitialLoaded || _interstitialAd == null) {
-      _loadInterstitialAd();
-      return;
-    }
-
-    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (ad) {
-        ad.dispose();
-        _interstitialAd = null;
-        _isInterstitialLoaded = false;
-        _loadInterstitialAd();
-      },
-      onAdFailedToShowFullScreenContent: (ad, error) {
-        ad.dispose();
-        _interstitialAd = null;
-        _isInterstitialLoaded = false;
-        debugPrint('Interstitial Ad Show Failed: ${error.message}');
-        _loadInterstitialAd();
-      },
-    );
-
-    _interstitialAd!.show();
-  }
-
-  void _startAdTimer() {
-    // প্রতি ২ মিনিট পরপর এড শো হবে — ইউজার বিরক্ত হবে না
-    _adTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
-      if (!mounted) return;
-      _showInterstitialAd();
-    });
-  }
-  // ==================== END INTERSTITIAL AD ====================
-
   @override
   void initState() {
     super.initState();
     _bannerController = PageController();
     _startAutoSlide();
-    _loadInterstitialAd();
-
-    // ওপেনিং এড — অ্যাপ ঢুকে ৩ সেকেন্ড পর শো হবে (UI লোড হওয়ার পর)
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) _showInterstitialAd();
-    });
-
-    _startAdTimer();
 
     Future.microtask(() {
       ref.read(productListProvider.notifier).fetchProducts();
@@ -224,8 +155,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _bannerController.dispose();
-    _adTimer?.cancel();
-    _interstitialAd?.dispose();
     super.dispose();
   }
 
@@ -997,4 +926,3 @@ class _ProductCard extends StatelessWidget {
     );
   }
 }
-
