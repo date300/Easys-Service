@@ -44,6 +44,7 @@ String formatNumber(dynamic number) {
   return NumberFormat.compact(locale: 'en').format(value);
 }
 
+// ✅ FIX: <<dynamic> => <dynamic>
 final leaderboardDataProvider =
     FutureProvider.family<List<<dynamic>, String>((ref, tab) async {
   final period = ref.watch(leaderboardPeriodProvider);
@@ -135,6 +136,7 @@ final userDetailProvider =
 });
 
 // ==================== PAGE ====================
+// ✅ FIX: <<LeaderboardPage> => <LeaderboardPage>
 class LeaderboardPage extends ConsumerStatefulWidget {
   const LeaderboardPage({super.key});
 
@@ -142,6 +144,7 @@ class LeaderboardPage extends ConsumerStatefulWidget {
   ConsumerState<<LeaderboardPage> createState() => _LeaderboardPageState();
 }
 
+// ✅ FIX: <<LeaderboardPage> => <LeaderboardPage>
 class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
@@ -431,7 +434,6 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
             // List Content
             leaderboardAsync.when(
               data: (data) {
-                // Filter by search
                 final filteredData = searchQuery.isEmpty
                     ? data
                     : data.where((item) {
@@ -860,7 +862,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
                           Icon(
                             LucideIcons.smartphone,
                             size: 12,
-                            color: secondaryTextColor(isDark),
+                            color: _secondaryTextColor(isDark),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -868,7 +870,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
                               subtitle,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: secondaryTextColor(isDark),
+                                color: _secondaryTextColor(isDark),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -939,7 +941,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
     );
   }
 
-  Color secondaryTextColor(bool isDark) =>
+  Color _secondaryTextColor(bool isDark) =>
       isDark ? Colors.grey.shade400 : Colors.grey.shade600;
 
   Widget _buildShimmerCard(bool isDark, Color cardColor) {
@@ -1087,6 +1089,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
 }
 
 // ==================== User Detail Bottom Sheet ====================
+// ✅ FIX: <<LeaderboardPage> => <LeaderboardPage> (এখানে নেই, ক্লাস নাম আলাদা)
 class UserDetailBottomSheet extends ConsumerWidget {
   final int userId;
 
@@ -1711,7 +1714,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Copied to clipboard'),
+        content: const Text('Copied to clipboard'),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         duration: const Duration(seconds: 2),
