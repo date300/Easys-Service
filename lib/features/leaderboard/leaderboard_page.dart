@@ -82,7 +82,6 @@ class LeaderboardPage extends ConsumerWidget {
     final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
     final secondaryTextColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final hintColor = isDark ? Colors.grey.shade500 : Colors.grey.shade400;
     final borderColor = isDark ? const Color(0xFF333333) : Colors.grey.shade200;
 
     final tabs = [
@@ -381,9 +380,10 @@ class LeaderboardPage extends ConsumerWidget {
     ];
 
     final isTop3 = index < 3;
-    final rankColor = isTop3
+    // FIX: Use non-nullable Color by providing fallback
+    final Color rankColor = isTop3
         ? rankColors[index]
-        : (isDark ? Colors.grey.shade600 : Colors.grey[300]);
+        : (isDark ? Colors.grey.shade600 : Colors.grey.shade300);
 
     String title = item['full_name'] ?? 'Unknown';
     String subtitle = item['mobile'] ?? item['email'] ?? '';
@@ -505,3 +505,4 @@ class LeaderboardPage extends ConsumerWidget {
     );
   }
 }
+
