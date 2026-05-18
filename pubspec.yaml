@@ -23,7 +23,7 @@ dependencies:
   http: ^1.1.0
   dio: ^5.7.0
   shared_preferences: ^2.5.4
-
+  shimmer: ^3.0.0
   # --- UI & Design ---
   flutter_screenutil: ^5.9.3
   google_fonts: ^6.2.1

@@ -44,9 +44,8 @@ String formatNumber(dynamic number) {
   return NumberFormat.compact(locale: 'en').format(value);
 }
 
-// ✅ FIX: <<dynamic> => <dynamic>
 final leaderboardDataProvider =
-    FutureProvider.family<List<<dynamic>, String>((ref, tab) async {
+    FutureProvider.family<List<dynamic>, String>((ref, tab) async {
   final period = ref.watch(leaderboardPeriodProvider);
   final limit = ref.watch(leaderboardLimitProvider);
   final balanceType = ref.watch(leaderboardBalanceTypeProvider);
@@ -56,18 +55,18 @@ final leaderboardDataProvider =
     throw Exception('UNAUTHORIZED');
   }
 
-  String url = '$API_BASE/leaderboard/$tab?limit=$limit';
+  String url = '\$API_BASE/leaderboard/\$tab?limit=\$limit';
   if (tab == 'income' || tab == 'matrix') {
-    url += '&period=$period';
+    url += '&period=\$period';
   }
   if (tab == 'balance') {
-    url += '&type=$balanceType';
+    url += '&type=\$balanceType';
   }
 
   final response = await http.get(
     Uri.parse(url),
     headers: {
-      'Authorization': 'Bearer $token',
+      'Authorization': 'Bearer \$token',
       'Content-Type': 'application/json',
     },
   );
@@ -93,9 +92,9 @@ final leaderboardStatsProvider =
   }
 
   final response = await http.get(
-    Uri.parse('$API_BASE/leaderboard/stats'),
+    Uri.parse('\$API_BASE/leaderboard/stats'),
     headers: {
-      'Authorization': 'Bearer $token',
+      'Authorization': 'Bearer \$token',
       'Content-Type': 'application/json',
     },
   );
@@ -118,9 +117,9 @@ final userDetailProvider =
   }
 
   final response = await http.get(
-    Uri.parse('$API_BASE/leaderboard/user/$userId'),
+    Uri.parse('\$API_BASE/leaderboard/user/\$userId'),
     headers: {
-      'Authorization': 'Bearer $token',
+      'Authorization': 'Bearer \$token',
       'Content-Type': 'application/json',
     },
   );
@@ -136,16 +135,14 @@ final userDetailProvider =
 });
 
 // ==================== PAGE ====================
-// ✅ FIX: <<LeaderboardPage> => <LeaderboardPage>
 class LeaderboardPage extends ConsumerStatefulWidget {
   const LeaderboardPage({super.key});
 
   @override
-  ConsumerState<<LeaderboardPage> createState() => _LeaderboardPageState();
+  ConsumerState<LeaderboardPage> createState() => _LeaderboardPageState();
 }
 
-// ✅ FIX: <<LeaderboardPage> => <LeaderboardPage>
-class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
+class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   final TextEditingController _searchController = TextEditingController();
@@ -188,6 +185,9 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
     );
   }
 
+  Color _secondaryTextColor(bool isDark) =>
+      isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -212,7 +212,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
     final tabs = [
       {'key': 'income', 'label': 'Top Earners', 'icon': LucideIcons.trophy},
       {'key': 'referrals', 'label': 'Referrers', 'icon': LucideIcons.users},
-      {'key': 'matrix', 'label': 'Matrix', 'icon': LucideIcons.grid3x3},
+      {'key': 'matrix', 'label': 'Matrix', 'icon': LucideIcons.layoutGrid},
       {'key': 'balance', 'label': 'Balance', 'icon': LucideIcons.wallet},
     ];
 
@@ -535,7 +535,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
       {
         'label': 'Matrix Payouts',
         'value': formatCurrency(stats['total_matrix_payouts']),
-        'icon': LucideIcons.grid3x3,
+        'icon': LucideIcons.layoutGrid,
         'color': const Color(0xFFF97316),
         'bgColor': const Color(0xFFF97316).withOpacity(0.1),
       },
@@ -634,7 +634,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
   // ==================== Dropdown ====================
   Widget _buildDropdown({
     required String value,
-    required List<<DropdownMenuItem<String>> items,
+    required List<DropdownMenuItem<String>> items,
     required Function(String?) onChanged,
     required bool isDark,
     required Color cardColor,
@@ -704,16 +704,16 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
         badgeIcon = LucideIcons.trendingUp;
         break;
       case 'referrals':
-        amount = '${item['referral_count'] ?? 0} refs';
+        amount = '\${item['referral_count'] ?? 0} refs';
         badge = formatCurrency(item['referral_commission']);
         badgeColor = const Color(0xFF22C55E);
         badgeIcon = LucideIcons.users;
         break;
       case 'matrix':
         amount = formatCurrency(item['matrix_income']);
-        badge = '${item['matrix_payouts'] ?? 0} payouts';
+        badge = '\${item['matrix_payouts'] ?? 0} payouts';
         badgeColor = const Color(0xFFA855F7);
-        badgeIcon = LucideIcons.grid3x3;
+        badgeIcon = LucideIcons.layoutGrid;
         break;
       case 'balance':
         amount = formatCurrency(item['total_balance']);
@@ -781,7 +781,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
                             size: 22,
                           )
                         : Text(
-                            '${index + 1}',
+                            '\${index + 1}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -941,9 +941,6 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
     );
   }
 
-  Color _secondaryTextColor(bool isDark) =>
-      isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-
   Widget _buildShimmerCard(bool isDark, Color cardColor) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -1089,7 +1086,6 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
 }
 
 // ==================== User Detail Bottom Sheet ====================
-// ✅ FIX: <<LeaderboardPage> => <LeaderboardPage> (এখানে নেই, ক্লাস নাম আলাদা)
 class UserDetailBottomSheet extends ConsumerWidget {
   final int userId;
 
@@ -1119,10 +1115,10 @@ class UserDetailBottomSheet extends ConsumerWidget {
             data: (data) {
               final user = data['user'] as Map<String, dynamic>? ?? {};
               final incomeBreakdown =
-                  data['income_breakdown'] as List<<dynamic>? ?? [];
+                  data['income_breakdown'] as List<dynamic>? ?? [];
               final referralCount = data['referral_count'] ?? 0;
               final recentHistory =
-                  data['recent_history'] as List<<dynamic>? ?? [];
+                  data['recent_history'] as List<dynamic>? ?? [];
 
               return Column(
                 children: [
@@ -1295,7 +1291,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
                             return _buildIncomeRow(
                               type.toString().toUpperCase(),
                               formatCurrency(income['total']),
-                              '${income['count']} txs',
+                              '\${income['count']} txs',
                               color,
                               isDark,
                             );
@@ -1340,7 +1336,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
                                       ),
                                     ),
                                     Text(
-                                      '$referralCount',
+                                      '\$referralCount',
                                       style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
@@ -1722,3 +1718,4 @@ class UserDetailBottomSheet extends ConsumerWidget {
     );
   }
 }
+
