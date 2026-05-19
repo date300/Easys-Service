@@ -31,7 +31,7 @@ String formatCurrency(dynamic amount) {
 }
 
 // -- Pending withdraws provider --
-final pendingWithdrawsProvider = FutureProvider<List<<dynamic>>((ref) async {
+final pendingWithdrawsProvider = FutureProvider<List<dynamic>>((ref) async {
   final token = await _getToken();
   if (token == null || token.isEmpty) throw Exception('UNAUTHORIZED');
 
@@ -101,11 +101,11 @@ class WithdrawLedgerPage extends ConsumerStatefulWidget {
   const WithdrawLedgerPage({super.key});
 
   @override
-  ConsumerState<<WithdrawLedgerPage> createState() =>
+  ConsumerState<WithdrawLedgerPage> createState() =>
       _WithdrawLedgerPageState();
 }
 
-class _WithdrawLedgerPageState extends ConsumerState<<WithdrawLedgerPage>
+class _WithdrawLedgerPageState extends ConsumerState<WithdrawLedgerPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   final TextEditingController _searchController = TextEditingController();
@@ -169,7 +169,7 @@ class _WithdrawLedgerPageState extends ConsumerState<<WithdrawLedgerPage>
   }
 
   // -- Summary stats from pending list --
-  Map<String, dynamic> _calcStats(List<<dynamic> data) {
+  Map<String, dynamic> _calcStats(List<dynamic> data) {
     double total = 0;
     for (final item in data) {
       total += (item['amount'] is num)
@@ -1207,11 +1207,11 @@ class WithdrawDetailPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<<WithdrawDetailPage> createState() =>
+  ConsumerState<WithdrawDetailPage> createState() =>
       _WithdrawDetailPageState();
 }
 
-class _WithdrawDetailPageState extends ConsumerState<<WithdrawDetailPage> {
+class _WithdrawDetailPageState extends ConsumerState<WithdrawDetailPage> {
   Color _statusColor(String status) {
     switch (status) {
       case 'approved':
@@ -1662,4 +1662,3 @@ class _WithdrawDetailPageState extends ConsumerState<<WithdrawDetailPage> {
             : Colors.grey.shade100,
       );
 }
-
