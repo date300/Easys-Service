@@ -362,8 +362,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
                         : _error != null
                             ? _errorWidget(isSmall)
                             : Text(
-                                // FIX #2: Replaced corrupted '?' with correct '₹' symbol
-                                '₹ ${(_balance?.balance ?? 0).toStringAsFixed(2)}',
+                                '৳ ${(_balance?.balance ?? 0).toStringAsFixed(2)}',
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: isSmall ? 26.sp : 30.sp,
@@ -455,8 +454,6 @@ class _WalletPageState extends ConsumerState<WalletPage> {
         ),
       );
 
-  // FIX #1: Broken lambda fixed — History button's onTap was closed early
-  // and remaining code was dangling outside the lambda, causing a compile error.
   Widget _buildActionButtons(bool isSmall) {
     return Row(
       children: [
@@ -467,8 +464,6 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              ref.read(detailViewTitleProvider.notifier).state = 'Withdraw Ledger';
-              context.push('/withdraw');
             },
           ),
         ),
@@ -478,8 +473,9 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             label: 'History',
             icon:  CupertinoIcons.list_bullet_below_rectangle,
             isSmall: isSmall,
-            onTap: () {
-              HapticFeedback.mediumImpact();
+            onTap: () {  HapticFeedback.mediumImpact();  ref.read(detailViewTitleProvider.notifier).state = 'Withdraw Ledger';  context.push('/withdraw');},
+              // ✅ isDetailViewProvider set করা নেই — wallet-এ ঢোকার সময়ই true আছে
+              // শুধু title update করো
               ref.read(detailViewTitleProvider.notifier).state = 'Transaction History';
               context.push('/transactions');
             },
@@ -552,6 +548,8 @@ class _WalletPageState extends ConsumerState<WalletPage> {
         isDark:    isDark,
         onTap: () {
           HapticFeedback.lightImpact();
+          // ✅ isDetailViewProvider set করা নেই — wallet-এ ঢোকার সময়ই true আছে
+          // শুধু title update করো
           ref.read(detailViewTitleProvider.notifier).state = item['label'] as String;
           context.push(item['route'] as String);
         },
