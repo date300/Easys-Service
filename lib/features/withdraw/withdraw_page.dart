@@ -7,7 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 
 // ==========================================
-// 1. Data Model (অপরিবর্তিত)
+// 1. Data Model
 // ==========================================
 class WithdrawItem {
   final int? id;
@@ -59,7 +59,7 @@ class WithdrawItem {
 }
 
 // ==========================================
-// 2. API Service (অপরিবর্তিত)
+// 2. API Service
 // ==========================================
 class WithdrawApiService {
   static const String _baseUrl = 'https://api.easysarvice.com/api';
@@ -131,7 +131,7 @@ String formatDate(DateTime? dt) {
 }
 
 // ==========================================
-// 4. WithdrawLedgerPage (Leaderboard Design)
+// 4. WithdrawLedgerPage
 // ==========================================
 class WithdrawLedgerPage extends StatefulWidget {
   const WithdrawLedgerPage({super.key});
@@ -147,7 +147,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
   static const Color _pending = Color(0xFFF59E0B);
   static const Color _rejected = Color(0xFFEF4444);
 
-  // ── ফর্ম কন্ট্রোলার ──
   final _accountNoCtrl = TextEditingController();
   final _accountHolderCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
@@ -155,7 +154,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
   bool _isSubmitting = false;
   String? _formError;
 
-  // ── ইতিহাস ──
   List<<WithdrawItem> _withdraws = [];
   bool _isLoadingHistory = true;
   String? _historyError;
@@ -341,7 +339,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
           controller: _scrollController,
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // ── হেডার ──
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -391,7 +388,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
               ),
             ),
 
-            // ── উইথড্র ফর্ম ──
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -431,7 +427,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                       ),
                       const SizedBox(height: 16),
 
-                      // Payment Method
                       Text(
                         'Payment Method *',
                         style: TextStyle(
@@ -472,7 +467,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                       ),
                       const SizedBox(height: 16),
 
-                      // Account Number
                       _buildFormField(
                         ctrl: _accountNoCtrl,
                         label: 'Account Number *',
@@ -486,7 +480,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                       ),
                       const SizedBox(height: 12),
 
-                      // Account Holder
                       _buildFormField(
                         ctrl: _accountHolderCtrl,
                         label: 'Account Holder (optional)',
@@ -499,7 +492,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                       ),
                       const SizedBox(height: 12),
 
-                      // Amount
                       _buildFormField(
                         ctrl: _amountCtrl,
                         label: 'Amount (৳) *',
@@ -513,7 +505,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                       ),
                       const SizedBox(height: 16),
 
-                      // Error
                       if (_formError != null) ...[
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -541,7 +532,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                         const SizedBox(height: 12),
                       ],
 
-                      // Submit
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -580,7 +570,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
               ),
             ),
 
-            // ── স্ট্যাটস ──
             if (!_isLoadingHistory && _historyError == null) ...[
               SliverToBoxAdapter(
                 child: Padding(
@@ -630,7 +619,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                 ),
               ),
 
-              // ── সার্চ বার ──
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -668,7 +656,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                 ),
               ),
 
-              // ── সেকশন টাইটেল ──
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -697,7 +684,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
               ),
             ],
 
-            // ── ইতিহাস লিস্ট ──
             if (_isLoadingHistory)
               SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -755,7 +741,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
     );
   }
 
-  // ==================== Form Field ====================
   Widget _buildFormField({
     required TextEditingController ctrl,
     required String label,
@@ -805,7 +790,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
     );
   }
 
-  // ==================== Stat Card ====================
   Widget _buildStatCard({
     required IconData icon,
     required Color iconColor,
@@ -869,7 +853,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
     );
   }
 
-  // ==================== Withdraw Card ====================
   Widget _buildWithdrawCard({
     required WithdrawItem item,
     required bool isDark,
@@ -920,7 +903,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Status Icon
                     Container(
                       width: 48,
                       height: 48,
@@ -936,8 +918,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                       ),
                     ),
                     const SizedBox(width: 14),
-
-                    // Info
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1001,10 +981,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                         ],
                       ),
                     ),
-
                     const SizedBox(width: 10),
-
-                    // Amount + Arrow
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -1026,7 +1003,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                     ),
                   ],
                 ),
-
                 if (item.accountHolder.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   _buildChip(
@@ -1114,7 +1090,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
     );
   }
 
-  // ==================== Shimmer ====================
   Widget _buildShimmerCard(Color cardColor, bool isDark) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -1171,7 +1146,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
     );
   }
 
-  // ==================== Empty State ====================
   Widget _buildEmptyState(bool isDark, bool isSearch) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -1204,7 +1178,6 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
     );
   }
 
-  // ==================== Error State ====================
   Widget _buildErrorState(String error, bool isDark) {
     String message = 'Something went wrong';
     IconData icon = Icons.error_outline;
@@ -1259,7 +1232,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
 }
 
 // ==========================================
-// 5. WithdrawDetailPage (Leaderboard Style)
+// 5. WithdrawDetailPage
 // ==========================================
 class WithdrawDetailPage extends StatelessWidget {
   final WithdrawItem item;
@@ -1320,7 +1293,6 @@ class WithdrawDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status Header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -1370,7 +1342,6 @@ class WithdrawDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Payment Info Section
             _buildSection(
               title: 'Payment Info',
               icon: Icons.payment,
@@ -1424,7 +1395,6 @@ class WithdrawDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Timeline Section
             _buildSection(
               title: 'Timeline',
               icon: Icons.access_time,
