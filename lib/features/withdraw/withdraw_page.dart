@@ -134,7 +134,7 @@ String formatDate(DateTime? dt) {
 }
 
 // ==========================================
-// 4. WithdrawLedgerPage (Main Page)
+// 4. WithdrawLedgerPage (এক পেজেই ফর্ম + ইতিহাস)
 // ==========================================
 class WithdrawLedgerPage extends StatefulWidget {
   const WithdrawLedgerPage({super.key});
@@ -149,13 +149,25 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
   static const Color _pending  = Color(0xFFF59E0B);
   static const Color _rejected = Color(0xFFEF4444);
 
+  // ── ফর্ম কন্ট্রোলার ──
+  final _methodCtrl       = TextEditingController(); // selected method store as text (optional)
+  final _accountNoCtrl     = TextEditingController();
+  final _accountHolderCtrl = TextEditingController();
+  final _amountCtrl        = TextEditingController();
+  String? _selectedMethod;
+  bool _isSubmitting = false;
+  String? _formError;
+
+  // ── ইতিহাস ──
   List<WithdrawItem> _withdraws = [];
-  bool _isLoading = true;
-  String? _error;
+  bool _isLoadingHistory = true;
+  String? _historyError;
   String _token = '';
   String _searchQuery = '';
 
   final TextEditingController _searchCtrl = TextEditingController();
+
+  final List<String> _methods = ['bKash', 'Nagad', 'Rocket', 'Upay', 'Bank'];
 
   @override
   void initState() {
@@ -165,6 +177,10 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
 
   @override
   void dispose() {
+    _methodCtrl.dispose();
+    _accountNoCtrl.dispose();
+    _accountHolderCtrl.dispose();
+    _amountCtrl.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -174,8 +190,8 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
     _token = prefs.getString('jwt_token') ?? '';
     if (_token.isEmpty) {
       setState(() {
-        _error = 'Token not found. Please login again.';
-        _isLoading = false;
+        _historyError = 'Token not found. Please login again.';
+        _isLoadingHistory = false;
       });
       return;
     }
@@ -183,20 +199,79 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
   }
 
   Future<void> _fetchHistory() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() { _isLoadingHistory = true; _historyError = null; });
     try {
       final data = await WithdrawApiService.fetchHistory(_token);
-      if (mounted) setState(() { _withdraws = data; _isLoading = false; });
+      if (mounted) setState(() { _withdraws = data; _isLoadingHistory = false; });
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString().replaceAll('Exception: ', '');
-          _isLoading = false;
+          _historyError = e.toString().replaceAll('Exception: ', '');
+          _isLoadingHistory = false;
         });
       }
     }
   }
 
+  // ── সাবমিট ফর্ম ──
+  Future<void> _submitForm() async {
+    final method    = _selectedMethod ?? '';
+    final accountNo = _accountNoCtrl.text.trim();
+    final amount    = double.tryParse(_amountCtrl.text.trim());
+
+    if (method.isEmpty) {
+      setState(() => _formError = 'Please select a payment method.');
+      return;
+    }
+    if (accountNo.isEmpty) {
+      setState(() => _formError = 'Account number is required.');
+      return;
+    }
+    if (amount == null || amount <= 0) {
+      setState(() => _formError = 'Please enter a valid amount.');
+      return;
+    }
+
+    setState(() { _isSubmitting = true; _formError = null; });
+
+    try {
+      final result = await WithdrawApiService.submitWithdraw(
+        token: _token,
+        method: method,
+        accountNo: accountNo,
+        accountHolder: _accountHolderCtrl.text.trim(),
+        amount: amount,
+      );
+
+      // সাকসেস: ফর্ম ক্লিয়ার ও ইতিহাস রিফ্রেশ
+      if (mounted) {
+        _accountNoCtrl.clear();
+        _accountHolderCtrl.clear();
+        _amountCtrl.clear();
+        setState(() {
+          _selectedMethod = null;
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(result['message'] ?? 'Request submitted successfully!',
+              style: GoogleFonts.poppins(fontSize: 13)),
+          backgroundColor: _approved,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+        ));
+        await _fetchHistory();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _formError = e.toString().replaceAll('Exception: ', '');
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  // ── ইতিহাস ফিল্টার ──
   List<WithdrawItem> get _filtered {
     if (_searchQuery.isEmpty) return _withdraws;
     final q = _searchQuery.toLowerCase();
@@ -220,27 +295,6 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
   IconData _statusIcon(String s)  => s == 'approved' ? CupertinoIcons.checkmark_seal_fill : s == 'rejected' ? CupertinoIcons.xmark_circle_fill : CupertinoIcons.clock_fill;
   String   _statusLabel(String s) => s == 'approved' ? 'Approved' : s == 'rejected' ? 'Rejected' : 'Pending';
 
-  // ========== FAB এখন ফুল পেজ ওপেন করবে ==========
-  void _openSubmitPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => WithdrawSubmitPage(
-          token: _token,
-          onSuccess: (msg) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(msg, style: GoogleFonts.poppins(fontSize: 13)),
-              backgroundColor: _approved,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
-            ));
-            _fetchHistory(); // ফিরে এলে ইতিহাস রিফ্রেশ
-          },
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark    = Theme.of(context).brightness == Brightness.dark;
@@ -249,6 +303,7 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
     final textColor = isDark ? Colors.white : const Color(0xFF000000);
     final sub       = isDark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93);
     final border    = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
+    final fill      = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7);
     final shadow    = isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.04);
 
     final sw       = MediaQuery.of(context).size.width;
@@ -259,13 +314,7 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openSubmitPage,  // ✅ এখন ফুল পেজ ওপেন হবে
-        backgroundColor: _primary,
-        icon: const Icon(CupertinoIcons.add, color: Colors.white),
-        label: Text('Withdraw', style: GoogleFonts.poppins(
-            color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13.sp)),
-      ),
+      // কোনো FAB লাগবে না
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -279,10 +328,16 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
             padding: EdgeInsets.fromLTRB(hPad, 8.h, hPad, 100.h),
             physics: const BouncingScrollPhysics(),
             children: [
+              // ── হেডার ──
               _buildHeader(textColor, sub, isSmall, isDesktop),
               SizedBox(height: 14.h),
 
-              if (!_isLoading && _error == null) ...[
+              // ── উইথড্র ফর্ম ──
+              _buildWithdrawForm(cardColor, textColor, sub, border, fill, isSmall),
+              SizedBox(height: 20.h),
+
+              // ── সামারি ও স্ট্যাট ──
+              if (!_isLoadingHistory && _historyError == null) ...[
                 _buildSummaryCard(isDark, isSmall)
                     .animate().fadeIn(delay: 80.ms).slideY(begin: 0.03),
                 SizedBox(height: 10.h),
@@ -320,16 +375,17 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
                 ),
               ],
 
-              if (_isLoading)
+              // ── ইতিহাস লোডিং/এরর/খালি ──
+              if (_isLoadingHistory)
                 ...List.generate(5, (_) => _buildShimmerCard(cardColor))
-              else if (_error != null)
-                _buildErrorCard(_error!, cardColor, textColor, isSmall)
+              else if (_historyError != null)
+                _buildErrorCard(_historyError!, cardColor, textColor, isSmall)
               else if (_filtered.isEmpty)
                 _buildEmptyCard(
                   _searchQuery.isNotEmpty ? 'No results found' : 'No withdrawals yet',
                   _searchQuery.isNotEmpty
                       ? 'Try a different search term'
-                      : 'Tap "+ Withdraw" to make your first request',
+                      : 'Submit a request using the form above',
                   cardColor, border, textColor, sub, isSmall,
                 )
               else
@@ -346,7 +402,150 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
     );
   }
 
-  // ───── Sub-widgets (অপরিবর্তিত) ─────
+  // ─────────── উইথড্র ফর্ম (পুরো পেজের উপরে) ───────────
+  Widget _buildWithdrawForm(Color cardColor, Color textColor, Color sub,
+      Color border, Color fill, bool isSmall) {
+    return Container(
+      padding: EdgeInsets.all(isSmall ? 14.w : 18.w),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: border, width: 0.5),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: Offset(0, 4))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Request a Withdraw', style: GoogleFonts.poppins(
+            fontSize: isSmall ? 15.sp : 17.sp,
+            fontWeight: FontWeight.w700, color: textColor)),
+        SizedBox(height: 4.h),
+        Text('Fill the details and submit', style: GoogleFonts.poppins(
+            fontSize: isSmall ? 11.sp : 12.sp, color: sub)),
+        SizedBox(height: 16.h),
+
+        // Payment Method
+        Text('Payment Method *', style: GoogleFonts.poppins(
+            fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
+        SizedBox(height: 6.h),
+        Wrap(spacing: 8.w, runSpacing: 8.h,
+          children: _methods.map((m) {
+            final selected = _selectedMethod == m;
+            return GestureDetector(
+              onTap: () => setState(() => _selectedMethod = selected ? null : m),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: selected ? _primary : fill,
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(color: selected ? _primary : border, width: 0.5),
+                ),
+                child: Text(m, style: GoogleFonts.poppins(
+                    fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : textColor)),
+              ),
+            );
+          }).toList(),
+        ),
+        SizedBox(height: 16.h),
+
+        // Account Number
+        _buildFormField(
+          ctrl: _accountNoCtrl, label: 'Account Number *', hint: 'e.g. 01XXXXXXXXX',
+          icon: CupertinoIcons.phone, textColor: textColor, sub: sub,
+          border: border, fill: fill, isSmall: isSmall,
+          keyboard: TextInputType.phone,
+        ),
+        SizedBox(height: 12.h),
+
+        // Account Holder (optional)
+        _buildFormField(
+          ctrl: _accountHolderCtrl, label: 'Account Holder (optional)', hint: 'Name of account owner',
+          icon: CupertinoIcons.person, textColor: textColor, sub: sub,
+          border: border, fill: fill, isSmall: isSmall,
+        ),
+        SizedBox(height: 12.h),
+
+        // Amount
+        _buildFormField(
+          ctrl: _amountCtrl, label: 'Amount (৳) *', hint: 'e.g. 500',
+          icon: CupertinoIcons.money_dollar_circle, textColor: textColor, sub: sub,
+          border: border, fill: fill, isSmall: isSmall,
+          keyboard: const TextInputType.numberWithOptions(decimal: true),
+        ),
+        SizedBox(height: 16.h),
+
+        // Error message
+        if (_formError != null) ...[
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: Colors.red.withOpacity(0.2)),
+            ),
+            child: Row(children: [
+              Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: 15.sp),
+              SizedBox(width: 8.w),
+              Flexible(child: Text(_formError!, style: GoogleFonts.poppins(
+                  fontSize: isSmall ? 12.sp : 13.sp, color: Colors.red))),
+            ]),
+          ),
+          SizedBox(height: 12.h),
+        ],
+
+        // Submit Button
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isSubmitting ? null : _submitForm,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              disabledBackgroundColor: _primary.withOpacity(0.5),
+              padding: EdgeInsets.symmetric(vertical: isSmall ? 13.h : 15.h),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+              elevation: 0,
+            ),
+            child: _isSubmitting
+                ? SizedBox(width: 20.w, height: 20.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : Text('Submit Withdraw Request', style: GoogleFonts.poppins(
+                    color: Colors.white, fontWeight: FontWeight.w700, fontSize: isSmall ? 13.sp : 14.sp)),
+          ),
+        ),
+      ]),
+    ).animate().fadeIn(delay: 40.ms).slideY(begin: 0.02);
+  }
+
+  Widget _buildFormField({
+    required TextEditingController ctrl, required String label, required String hint,
+    required IconData icon, required Color textColor, required Color sub,
+    required Color border, required Color fill, required bool isSmall,
+    TextInputType keyboard = TextInputType.text,
+  }) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: GoogleFonts.poppins(
+            fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
+        SizedBox(height: 6.h),
+        Container(
+          decoration: BoxDecoration(
+            color: fill, borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: border, width: 0.5),
+          ),
+          child: TextField(
+            controller: ctrl, keyboardType: keyboard,
+            style: GoogleFonts.poppins(fontSize: isSmall ? 13.sp : 14.sp, color: textColor),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.poppins(color: sub),
+              prefixIcon: Icon(icon, size: 18.sp, color: sub),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+            ),
+          ),
+        ),
+      ]);
+
+  // ───── নিচের সব হেল্পার উইজেট আগের মতোই (অপরিবর্তিত) ─────
   Widget _buildHeader(Color textColor, Color sub, bool isSmall, bool isDesktop) =>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -621,254 +820,7 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
 }
 
 // ==========================================
-// 5. WithdrawSubmitPage (Full Page) NEW
-// ==========================================
-class WithdrawSubmitPage extends StatefulWidget {
-  final String token;
-  final void Function(String message) onSuccess;
-
-  const WithdrawSubmitPage({super.key, required this.token, required this.onSuccess});
-
-  @override
-  State<WithdrawSubmitPage> createState() => _WithdrawSubmitPageState();
-}
-
-class _WithdrawSubmitPageState extends State<WithdrawSubmitPage> {
-  static const Color _primary = Color(0xFF0F172A);
-  static const List<String> _methods = ['bKash', 'Nagad', 'Rocket', 'Upay', 'Bank'];
-
-  final _accountNoCtrl     = TextEditingController();
-  final _accountHolderCtrl = TextEditingController();
-  final _amountCtrl        = TextEditingController();
-
-  String? _selectedMethod;
-  bool    _isSubmitting = false;
-  String? _errorMsg;
-
-  @override
-  void dispose() {
-    _accountNoCtrl.dispose();
-    _accountHolderCtrl.dispose();
-    _amountCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final method    = _selectedMethod ?? '';
-    final accountNo = _accountNoCtrl.text.trim();
-    final amount    = double.tryParse(_amountCtrl.text.trim());
-
-    if (method.isEmpty) {
-      setState(() => _errorMsg = 'Please select a payment method.');
-      return;
-    }
-    if (accountNo.isEmpty) {
-      setState(() => _errorMsg = 'Account number is required.');
-      return;
-    }
-    if (amount == null || amount <= 0) {
-      setState(() => _errorMsg = 'Please enter a valid amount.');
-      return;
-    }
-
-    setState(() { _isSubmitting = true; _errorMsg = null; });
-
-    try {
-      final result = await WithdrawApiService.submitWithdraw(
-        token: widget.token,
-        method: method,
-        accountNo: accountNo,
-        accountHolder: _accountHolderCtrl.text.trim(),
-        amount: amount,
-      );
-
-      final remaining = result['data']?['remaining_balance'];
-      final msg = remaining != null
-          ? 'Request submitted! Remaining balance: ৳${NumberFormat('#,##0', 'en_US').format(remaining)}'
-          : result['message'] ?? 'Withdraw submitted successfully.';
-
-      if (mounted) {
-        Navigator.pop(context);
-        widget.onSuccess(msg);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMsg = e.toString().replaceAll('Exception: ', '');
-          _isSubmitting = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark    = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF000000);
-    final sub       = isDark ? const Color(0xFF8E8E93) : const Color(0xFF8E8E93);
-    final border    = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA);
-    final fill      = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7);
-    final isSmall   = MediaQuery.of(context).size.width < 360;
-
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
-      appBar: AppBar(
-        backgroundColor: cardColor,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(CupertinoIcons.chevron_left, color: textColor, size: 20.sp),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('Withdraw Funds', style: GoogleFonts.poppins(
-            color: textColor, fontWeight: FontWeight.w700, fontSize: 17.sp)),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Payment Method *', style: GoogleFonts.poppins(
-              fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
-          SizedBox(height: 8.h),
-          Wrap(spacing: 8.w, runSpacing: 8.h,
-            children: _methods.map((m) {
-              final selected = _selectedMethod == m;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedMethod = selected ? null : m),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: selected ? _primary : fill,
-                    borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(color: selected ? _primary : border, width: 0.5),
-                  ),
-                  child: Text(m, style: GoogleFonts.poppins(
-                      fontSize: isSmall ? 11.sp : 12.sp, fontWeight: FontWeight.w600,
-                      color: selected ? Colors.white : textColor)),
-                ),
-              );
-            }).toList(),
-          ),
-          SizedBox(height: 20.h),
-
-          // Account Number
-          Text('Account Number *', style: GoogleFonts.poppins(
-              fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
-          SizedBox(height: 6.h),
-          Container(
-            decoration: BoxDecoration(
-              color: fill, borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: border, width: 0.5),
-            ),
-            child: TextField(
-              controller: _accountNoCtrl,
-              keyboardType: TextInputType.phone,
-              style: GoogleFonts.poppins(fontSize: isSmall ? 13.sp : 14.sp, color: textColor),
-              decoration: InputDecoration(
-                hintText: 'e.g. 01XXXXXXXXX',
-                hintStyle: GoogleFonts.poppins(color: sub),
-                prefixIcon: Icon(CupertinoIcons.phone, size: 18.sp, color: sub),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
-              ),
-            ),
-          ),
-          SizedBox(height: 16.h),
-
-          // Account Holder (optional)
-          Text('Account Holder (optional)', style: GoogleFonts.poppins(
-              fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
-          SizedBox(height: 6.h),
-          Container(
-            decoration: BoxDecoration(
-              color: fill, borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: border, width: 0.5),
-            ),
-            child: TextField(
-              controller: _accountHolderCtrl,
-              style: GoogleFonts.poppins(fontSize: isSmall ? 13.sp : 14.sp, color: textColor),
-              decoration: InputDecoration(
-                hintText: 'Name of account owner',
-                hintStyle: GoogleFonts.poppins(color: sub),
-                prefixIcon: Icon(CupertinoIcons.person, size: 18.sp, color: sub),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
-              ),
-            ),
-          ),
-          SizedBox(height: 16.h),
-
-          // Amount
-          Text('Amount (৳) *', style: GoogleFonts.poppins(
-              fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
-          SizedBox(height: 6.h),
-          Container(
-            decoration: BoxDecoration(
-              color: fill, borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: border, width: 0.5),
-            ),
-            child: TextField(
-              controller: _amountCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.poppins(fontSize: isSmall ? 13.sp : 14.sp, color: textColor),
-              decoration: InputDecoration(
-                hintText: 'e.g. 500',
-                hintStyle: GoogleFonts.poppins(color: sub),
-                prefixIcon: Icon(CupertinoIcons.money_dollar_circle, size: 18.sp, color: sub),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
-              ),
-            ),
-          ),
-          SizedBox(height: 24.h),
-
-          // Error box
-          if (_errorMsg != null) ...[
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(color: Colors.red.withOpacity(0.2)),
-              ),
-              child: Row(children: [
-                Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: 15.sp),
-                SizedBox(width: 8.w),
-                Flexible(child: Text(_errorMsg!, style: GoogleFonts.poppins(
-                    fontSize: isSmall ? 12.sp : 13.sp, color: Colors.red))),
-              ]),
-            ),
-            SizedBox(height: 16.h),
-          ],
-
-          // Submit Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primary,
-                disabledBackgroundColor: _primary.withOpacity(0.5),
-                padding: EdgeInsets.symmetric(vertical: isSmall ? 14.h : 16.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-                elevation: 0,
-              ),
-              child: _isSubmitting
-                  ? SizedBox(width: 22.w, height: 22.w,
-                      child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text('Submit Request', style: GoogleFonts.poppins(
-                      color: Colors.white, fontWeight: FontWeight.w700, fontSize: isSmall ? 14.sp : 15.sp)),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-// ==========================================
-// 6. WithdrawDetailPage (অপরিবর্তিত)
+// 5. WithdrawDetailPage (অপরিবর্তিত)
 // ==========================================
 class WithdrawDetailPage extends StatelessWidget {
   final WithdrawItem item;
