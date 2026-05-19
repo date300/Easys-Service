@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
@@ -209,10 +208,10 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade200;
 
     final tabs = [
-      {'key': 'income', 'label': 'Top Earners', 'icon': LucideIcons.trophy},
-      {'key': 'referrals', 'label': 'Referrers', 'icon': LucideIcons.users},
-      {'key': 'matrix', 'label': 'Matrix', 'icon': LucideIcons.layoutGrid},
-      {'key': 'balance', 'label': 'Balance', 'icon': LucideIcons.wallet},
+      {'key': 'income', 'label': 'Top Earners', 'icon': Icons.emoji_events},
+      {'key': 'referrals', 'label': 'Referrers', 'icon': Icons.people},
+      {'key': 'matrix', 'label': 'Matrix', 'icon': Icons.grid_view},
+      {'key': 'balance', 'label': 'Balance', 'icon': Icons.account_balance_wallet},
     ];
 
     return Scaffold(
@@ -243,10 +242,10 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                       hintText: 'Search by name...',
                       hintStyle: TextStyle(color: secondaryTextColor),
                       prefixIcon:
-                          Icon(LucideIcons.search, color: secondaryTextColor),
+                          Icon(Icons.search, color: secondaryTextColor),
                       suffixIcon: searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: Icon(LucideIcons.x,
+                              icon: Icon(Icons.close,
                                   color: secondaryTextColor, size: 18),
                               onPressed: () {
                                 _searchController.clear();
@@ -362,7 +361,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                           cardColor: cardColor,
                           borderColor: borderColor,
                           textColor: textColor,
-                          icon: LucideIcons.calendar,
+                          icon: Icons.calendar_today,
                         ),
                       ),
                     if (activeTab == 'balance')
@@ -386,7 +385,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                           cardColor: cardColor,
                           borderColor: borderColor,
                           textColor: textColor,
-                          icon: LucideIcons.filter,
+                          icon: Icons.filter_list,
                         ),
                       ),
                     if (activeTab == 'income' ||
@@ -413,7 +412,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                         cardColor: cardColor,
                         borderColor: borderColor,
                         textColor: textColor,
-                        icon: LucideIcons.listFilter,
+                        icon: Icons.format_list_numbered,
                       ),
                     ),
                   ],
@@ -514,7 +513,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
           items: items,
           onChanged: onChanged,
           isExpanded: true,
-          icon: Icon(LucideIcons.chevronDown, size: 16, color: textColor),
+          icon: Icon(Icons.keyboard_arrow_down, size: 16, color: textColor),
           dropdownColor: cardColor,
           style: TextStyle(
             color: textColor,
@@ -553,34 +552,34 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     String amount = '';
     String badge = '';
     Color badgeColor = Colors.grey;
-    IconData badgeIcon = LucideIcons.circleDollarSign;
+    IconData badgeIcon = Icons.paid;
 
     switch (activeTab) {
       case 'income':
         amount = formatCurrency(item['total_income']);
         badge = 'Income';
         badgeColor = const Color(0xFF0EA5E9);
-        badgeIcon = LucideIcons.trendingUp;
+        badgeIcon = Icons.trending_up;
         break;
       case 'referrals':
         final refCount = item['referral_count'] ?? 0;
         amount = refCount.toString() + ' refs';
         badge = formatCurrency(item['referral_commission']);
         badgeColor = const Color(0xFF22C55E);
-        badgeIcon = LucideIcons.users;
+        badgeIcon = Icons.people;
         break;
       case 'matrix':
         amount = formatCurrency(item['matrix_income']);
         final payouts = item['matrix_payouts'] ?? 0;
         badge = payouts.toString() + ' payouts';
         badgeColor = const Color(0xFFA855F7);
-        badgeIcon = LucideIcons.layoutGrid;
+        badgeIcon = Icons.grid_view;
         break;
       case 'balance':
         amount = formatCurrency(item['total_balance']);
         badge = formatCurrency(item['balance']);
         badgeColor = const Color(0xFFF97316);
-        badgeIcon = LucideIcons.wallet;
+        badgeIcon = Icons.account_balance_wallet;
         break;
     }
 
@@ -637,7 +636,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                   child: Center(
                     child: isTop3
                         ? Icon(
-                            index == 0 ? LucideIcons.crown : LucideIcons.medal,
+                            index == 0 ? Icons.emoji_events : Icons.military_tech,
                             color: rankColor,
                             size: 22,
                           )
@@ -721,7 +720,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                       Row(
                         children: [
                           Icon(
-                            LucideIcons.smartphone,
+                            Icons.phone_android,
                             size: 12,
                             color: _secondaryTextColor(isDark),
                           ),
@@ -863,7 +862,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(
-          isSearch ? LucideIcons.searchX : LucideIcons.inbox,
+          isSearch ? Icons.search_off : Icons.inbox,
           size: 56,
           color: isDark ? Colors.grey.shade700 : Colors.grey[400],
         ),
@@ -892,17 +891,17 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
 
   Widget _buildErrorState(String error, bool isDark) {
     String message = 'Something went wrong';
-    IconData icon = LucideIcons.alertCircle;
+    IconData icon = Icons.error_outline;
 
     if (error.contains('UNAUTHORIZED')) {
       message = 'Session expired. Please login again.';
-      icon = LucideIcons.lock;
+      icon = Icons.lock;
     } else if (error.contains('FORBIDDEN')) {
       message = 'Admin access required';
-      icon = LucideIcons.shieldAlert;
+      icon = Icons.gpp_bad;
     } else if (error.contains('NOT_FOUND')) {
       message = 'User not found';
-      icon = LucideIcons.userX;
+      icon = Icons.person_off;
     }
 
     return Padding(
@@ -928,7 +927,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
           const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: _refreshData,
-            icon: const Icon(LucideIcons.refreshCw, size: 16),
+            icon: const Icon(Icons.refresh, size: 16),
             label: const Text('Retry'),
             style: ElevatedButton.styleFrom(
               backgroundColor:
@@ -1058,7 +1057,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: Icon(LucideIcons.x, color: secondaryText),
+                          icon: Icon(Icons.close, color: secondaryText),
                         ),
                       ],
                     ),
@@ -1078,21 +1077,21 @@ class UserDetailBottomSheet extends ConsumerWidget {
                         _buildSectionTitle('Contact Information', isDark),
                         const SizedBox(height: 8),
                         _buildInfoTile(
-                          icon: LucideIcons.smartphone,
+                          icon: Icons.phone_android,
                           label: 'Mobile',
                           value: user['mobile'] ?? 'N/A',
                           isDark: isDark,
                           onCopy: () => _copyToClipboard(context, user['mobile']),
                         ),
                         _buildInfoTile(
-                          icon: LucideIcons.mail,
+                          icon: Icons.email,
                           label: 'Email',
                           value: user['email'] ?? 'N/A',
                           isDark: isDark,
                           onCopy: () => _copyToClipboard(context, user['email']),
                         ),
                         _buildInfoTile(
-                          icon: LucideIcons.link,
+                          icon: Icons.link,
                           label: 'Referral Code',
                           value: user['referral_code'] ?? 'N/A',
                           isDark: isDark,
@@ -1100,7 +1099,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
                               _copyToClipboard(context, user['referral_code']),
                         ),
                         _buildInfoTile(
-                          icon: LucideIcons.calendar,
+                          icon: Icons.calendar_today,
                           label: 'Member Since',
                           value: user['created_at'] != null
                               ? DateFormat('MMM dd, yyyy').format(
@@ -1181,7 +1180,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  LucideIcons.users,
+                                  Icons.people,
                                   color: Color(0xFF22C55E),
                                 ),
                               ),
@@ -1247,8 +1246,8 @@ class UserDetailBottomSheet extends ConsumerWidget {
                                     ),
                                     child: Icon(
                                       isPositive
-                                          ? LucideIcons.arrowDownLeft
-                                          : LucideIcons.arrowUpRight,
+                                          ? Icons.arrow_downward
+                                          : Icons.arrow_upward,
                                       size: 16,
                                       color: isPositive
                                           ? const Color(0xFF22C55E)
@@ -1316,7 +1315,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(LucideIcons.alertCircle,
+                    Icon(Icons.error_outline,
                         size: 48,
                         color: isDark ? Colors.red.shade300 : Colors.red[300]),
                     const SizedBox(height: 12),
@@ -1431,7 +1430,7 @@ class UserDetailBottomSheet extends ConsumerWidget {
           if (onCopy != null)
             IconButton(
               onPressed: onCopy,
-              icon: Icon(LucideIcons.copy, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey[600]),
+              icon: Icon(Icons.copy, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey[600]),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
