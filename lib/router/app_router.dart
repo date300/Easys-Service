@@ -27,7 +27,7 @@ import '../features/wallet/pages/daily_income_page.dart';
 import '../features/wallet/pages/weekly_income_page.dart';
 import '../features/wallet/pages/monthly_income_page.dart';
 import '../features/leaderboard/leaderboard_page.dart';   // ← নতুন import
-
+import '../features/withdraw/withdraw_page.dart';
 // ==================== HELPERS ====================
 
 Future<bool> _resetDetailProviders(BuildContext context, GoRouterState state) async {
@@ -104,6 +104,10 @@ final GoRouter appRouter = GoRouter(
           path: '/edit-profile',
           builder: (context, state) => const EditProfileScreen(),
         ),
+        _detailRoute(
+  path: '/withdraw',
+  builder: (context, state) => const WithdrawLedgerPage(),
+),
         _detailRoute(
           path: '/vendor-apply',
           builder: (context, state) => const VendorApplyPage(),
