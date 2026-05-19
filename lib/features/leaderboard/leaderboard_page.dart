@@ -24,13 +24,13 @@ Future<String?> _getToken() async {
   return prefs.getString('jwt_token');
 }
 
-// Helper: Format currency â FIX #1: à§³ symbol restored
+// Helper: Format currency — FIX #1: ৳ symbol restored
 String formatCurrency(dynamic amount) {
-  if (amount == null) return 'à§³0';
+  if (amount == null) return '৳0';
   final value = amount is num ? amount : num.tryParse(amount.toString()) ?? 0;
   final formatter = NumberFormat.currency(
     locale: 'bn_BD',
-    symbol: 'à§³',
+    symbol: '৳',
     decimalDigits: 0,
   );
   return formatter.format(value);
@@ -170,7 +170,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     super.dispose();
   }
 
-  // FIX #2: à¦¸à¦¬ tab à¦à¦° data refresh à¦¹à¦¬à§
+  // FIX #2: সব tab এর data refresh হবে
   Future<void> _refreshData() async {
     final tabs = ['income', 'referrals', 'matrix', 'balance'];
     for (final tab in tabs) {
@@ -179,7 +179,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     ref.invalidate(leaderboardStatsProvider);
   }
 
-  // FIX: Bottom sheet à¦à¦° à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à§ à¦¸à¦®à§à¦ªà§à¦°à§à¦£ à¦¨à¦¤à§à¦¨ à¦ªà§à¦à§ navigate à¦à¦°à¦¬à§
+  // FIX: Bottom sheet এর পরিবর্তে সম্পূর্ণ নতুন পেজে navigate করবে
   void _showUserDetail(BuildContext context, int userId, String userName) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -247,7 +247,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                         .read(leaderboardSearchProvider.notifier)
                         .state = value.toLowerCase(),
                     decoration: InputDecoration(
-                      hintText: 'à¦¨à¦¾à¦®, à¦®à§à¦¬à¦¾à¦à¦² à¦¬à¦¾ à¦à¦®à§à¦à¦² à¦¦à¦¿à¦¯à¦¼à§ à¦à§à¦à¦à§à¦¨...',
+                      hintText: 'নাম, মোবাইল বা ইমেইল দিয়ে খুঁজুন...',
                       hintStyle: TextStyle(color: secondaryTextColor),
                       prefixIcon:
                           Icon(Icons.search, color: secondaryTextColor),
@@ -431,7 +431,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
             // List Content
             leaderboardAsync.when(
               data: (data) {
-                // FIX #5: à¦¨à¦¾à¦® + à¦®à§à¦¬à¦¾à¦à¦² + à¦à¦®à§à¦à¦² à¦¦à¦¿à¦¯à¦¼à§ à¦¸à¦¾à¦°à§à¦
+                // FIX #5: নাম + মোবাইল + ইমেইল দিয়ে সার্চ
                 final filteredData = searchQuery.isEmpty
                     ? data
                     : data.where((item) {
@@ -459,8 +459,8 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                       return AnimatedBuilder(
                         animation: _animationController,
                         builder: (context, child) {
-                          // FIX #3: Animation delay overflow à¦ à¦¿à¦ à¦à¦°à¦¾
-                          // à¦¸à¦°à§à¦¬à§à¦à§à¦ 20 à¦à¦¾ item animate à¦¹à¦¬à§, à¦¬à¦¾à¦à¦¿à¦°à¦¾ à¦¸à¦°à¦¾à¦¸à¦°à¦¿ à¦¦à§à¦à¦¾à¦¬à§
+                          // FIX #3: Animation delay overflow ঠিক করা
+                          // সর্বোচ্চ 20 টা item animate হবে, বাকিরা সরাসরি দেখাবে
                           final delay = (index * 0.05).clamp(0.0, 0.95);
                           final value = (_animationController.value - delay)
                               .clamp(0.0, 1.0);
@@ -600,7 +600,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
 
     final profilePic = item['profile_picture'] as String?;
 
-    // FIX #4: item['id'] null safety â id à¦¨à¦¾ à¦¥à¦¾à¦à¦²à§ tap disable
+    // FIX #4: item['id'] null safety — id না থাকলে tap disable
     final int? userId = item['id'] is int
         ? item['id'] as int
         : int.tryParse(item['id']?.toString() ?? '');
@@ -905,7 +905,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         ),
         const SizedBox(height: 16),
         Text(
-          isSearch ? 'à¦à§à¦¨à§ à¦«à¦²à¦¾à¦«à¦² à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿' : 'à¦à§à¦¨à§ à¦¡à§à¦à¦¾ à¦¨à§à¦',
+          isSearch ? 'কোনো ফলাফল পাওয়া যায়নি' : 'কোনো ডেটা নেই',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -915,8 +915,8 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         const SizedBox(height: 8),
         Text(
           isSearch
-              ? 'à¦à¦¨à§à¦¯à¦­à¦¾à¦¬à§ à¦¸à¦¾à¦°à§à¦ à¦à¦°à§ à¦¦à§à¦à§à¦¨'
-              : 'à¦ªà¦°à§ à¦à¦¬à¦¾à¦° à¦à§à¦ à¦à¦°à§à¦¨',
+              ? 'অন্যভাবে সার্চ করে দেখুন'
+              : 'পরে আবার চেক করুন',
           style: TextStyle(
             fontSize: 13,
             color: isDark ? Colors.grey.shade600 : Colors.grey[500],
@@ -927,17 +927,17 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
   }
 
   Widget _buildErrorState(String error, bool isDark) {
-    String message = 'à¦à¦¿à¦à§ à¦à¦à¦à¦¾ à¦¸à¦®à¦¸à§à¦¯à¦¾ à¦¹à¦¯à¦¼à§à¦à§';
+    String message = 'কিছু একটা সমস্যা হয়েছে';
     IconData icon = Icons.error_outline;
 
     if (error.contains('UNAUTHORIZED')) {
-      message = 'à¦¸à§à¦¶à¦¨ à¦¶à§à¦· à¦¹à¦¯à¦¼à§ à¦à§à¦à§à¥¤ à¦à¦¬à¦¾à¦° à¦²à¦à¦à¦¨ à¦à¦°à§à¦¨à¥¤';
+      message = 'সেশন শেষ হয়ে গেছে। আবার লগইন করুন।';
       icon = Icons.lock;
     } else if (error.contains('FORBIDDEN')) {
-      message = 'à¦à§à¦¯à¦¾à¦¡à¦®à¦¿à¦¨ à¦à§à¦¯à¦¾à¦à§à¦¸à§à¦¸ à¦ªà§à¦°à¦¯à¦¼à§à¦à¦¨';
+      message = 'অ্যাডমিন অ্যাক্সেস প্রয়োজন';
       icon = Icons.gpp_bad;
     } else if (error.contains('NOT_FOUND')) {
-      message = 'à¦à¦à¦à¦¾à¦° à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿';
+      message = 'ইউজার পাওয়া যায়নি';
       icon = Icons.person_off;
     }
 
@@ -965,7 +965,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
           ElevatedButton.icon(
             onPressed: _refreshData,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('à¦à¦¬à¦¾à¦° à¦à§à¦·à§à¦à¦¾ à¦à¦°à§à¦¨'),
+            label: const Text('আবার চেষ্টা করুন'),
             style: ElevatedButton.styleFrom(
               backgroundColor:
                   isDark ? const Color(0xFF333333) : const Color(0xFF0F172A),
@@ -1047,7 +1047,7 @@ class UserDetailPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ââ Profile Header Card ââ
+                // ── Profile Header Card ──
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
@@ -1130,9 +1130,9 @@ class UserDetailPage extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
-                // ââ Contact Info ââ
+                // ── Contact Info ──
                 _buildSectionCard(
-                  title: 'à¦¯à§à¦à¦¾à¦¯à§à¦à§à¦° à¦¤à¦¥à§à¦¯',
+                  title: 'যোগাযোগের তথ্য',
                   icon: Icons.contact_phone,
                   isDark: isDark,
                   cardColor: cardColor,
@@ -1141,7 +1141,7 @@ class UserDetailPage extends ConsumerWidget {
                     children: [
                       _buildInfoRow(
                         icon: Icons.phone_android,
-                        label: 'à¦®à§à¦¬à¦¾à¦à¦²',
+                        label: 'মোবাইল',
                         value: user['mobile'] ?? 'N/A',
                         isDark: isDark,
                         textColor: textColor,
@@ -1154,7 +1154,7 @@ class UserDetailPage extends ConsumerWidget {
                       _buildDivider(isDark),
                       _buildInfoRow(
                         icon: Icons.email_outlined,
-                        label: 'à¦à¦®à§à¦à¦²',
+                        label: 'ইমেইল',
                         value: user['email'] ?? 'N/A',
                         isDark: isDark,
                         textColor: textColor,
@@ -1167,7 +1167,7 @@ class UserDetailPage extends ConsumerWidget {
                       _buildDivider(isDark),
                       _buildInfoRow(
                         icon: Icons.link,
-                        label: 'à¦°à§à¦«à¦¾à¦°à§à¦² à¦à§à¦¡',
+                        label: 'রেফারেল কোড',
                         value: user['referral_code'] ?? 'N/A',
                         isDark: isDark,
                         textColor: textColor,
@@ -1180,7 +1180,7 @@ class UserDetailPage extends ConsumerWidget {
                       _buildDivider(isDark),
                       _buildInfoRow(
                         icon: Icons.calendar_today,
-                        label: 'à¦¸à¦¦à¦¸à§à¦¯ à¦¹à¦¯à¦¼à§à¦à§à¦¨',
+                        label: 'সদস্য হয়েছেন',
                         value: user['created_at'] != null
                             ? DateFormat('dd MMM yyyy, hh:mm a').format(
                                 DateTime.parse(user['created_at']))
@@ -1195,14 +1195,14 @@ class UserDetailPage extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
-                // ââ Wallet Overview ââ
-                _buildSectionTitle('à¦à¦¯à¦¼à¦¾à¦²à§à¦ à¦à¦­à¦¾à¦°à¦­à¦¿à¦', isDark, textColor),
+                // ── Wallet Overview ──
+                _buildSectionTitle('ওয়ালেট ওভারভিউ', isDark, textColor),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
                       child: _buildBalanceCard(
-                        'à¦¬à§à¦¯à¦¾à¦²à§à¦¨à§à¦¸',
+                        'ব্যালেন্স',
                         formatCurrency(user['balance']),
                         const Color(0xFF0EA5E9),
                         isDark,
@@ -1212,7 +1212,7 @@ class UserDetailPage extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildBalanceCard(
-                        'à¦­à¦¾à¦à¦à¦¾à¦°',
+                        'ভাউচার',
                         formatCurrency(user['voucher_balance']),
                         const Color(0xFF22C55E),
                         isDark,
@@ -1224,9 +1224,9 @@ class UserDetailPage extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
-                // ââ Referral Stats ââ
+                // ── Referral Stats ──
                 _buildSectionCard(
-                  title: 'à¦°à§à¦«à¦¾à¦°à§à¦² à¦¸à§à¦à§à¦¯à¦¾à¦à¦¸',
+                  title: 'রেফারেল স্ট্যাটস',
                   icon: Icons.people_alt,
                   isDark: isDark,
                   cardColor: cardColor,
@@ -1247,7 +1247,7 @@ class UserDetailPage extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'à¦®à§à¦ à¦°à§à¦«à¦¾à¦°à§à¦²',
+                            'মোট রেফারেল',
                             style: TextStyle(
                               fontSize: 13,
                               color: secondaryText,
@@ -1267,11 +1267,11 @@ class UserDetailPage extends ConsumerWidget {
                   ),
                 ),
 
-                // ââ Income Breakdown ââ
+                // ── Income Breakdown ──
                 if (incomeBreakdown.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _buildSectionCard(
-                    title: 'à¦à¦¯à¦¼à§à¦° à¦¬à¦¿à¦­à¦¾à¦à¦¨',
+                    title: 'আয়ের বিভাজন',
                     icon: Icons.bar_chart,
                     isDark: isDark,
                     cardColor: cardColor,
@@ -1306,11 +1306,11 @@ class UserDetailPage extends ConsumerWidget {
                   ),
                 ],
 
-                // ââ Recent Transactions ââ
+                // ── Recent Transactions ──
                 if (recentHistory.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _buildSectionTitle(
-                      'à¦¸à¦¾à¦®à§à¦ªà§à¦°à¦¤à¦¿à¦ à¦²à§à¦¨à¦¦à§à¦¨', isDark, textColor),
+                      'সাম্প্রতিক লেনদেন', isDark, textColor),
                   const SizedBox(height: 12),
                   ...recentHistory.map((tx) {
                     final isPositive = (tx['amount'] ?? 0) > 0;
@@ -1404,13 +1404,13 @@ class UserDetailPage extends ConsumerWidget {
         },
         loading: () => _buildDetailShimmer(isDark),
         error: (err, _) {
-          String message = 'à¦à¦à¦à¦¾à¦° à¦¡à¦¿à¦à§à¦²à¦¸ à¦²à§à¦¡ à¦à¦°à¦¤à§ à¦¬à§à¦¯à¦°à§à¦¥ à¦¹à¦¯à¦¼à§à¦à§';
+          String message = 'ইউজার ডিটেলস লোড করতে ব্যর্থ হয়েছে';
           IconData icon = Icons.error_outline;
           if (err.toString().contains('UNAUTHORIZED')) {
-            message = 'à¦¸à§à¦¶à¦¨ à¦¶à§à¦· à¦¹à¦¯à¦¼à§ à¦à§à¦à§à¥¤ à¦à¦¬à¦¾à¦° à¦²à¦à¦à¦¨ à¦à¦°à§à¦¨à¥¤';
+            message = 'সেশন শেষ হয়ে গেছে। আবার লগইন করুন।';
             icon = Icons.lock;
           } else if (err.toString().contains('NOT_FOUND')) {
-            message = 'à¦à¦à¦à¦¾à¦° à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿';
+            message = 'ইউজার পাওয়া যায়নি';
             icon = Icons.person_off;
           }
           return Center(
@@ -1440,7 +1440,7 @@ class UserDetailPage extends ConsumerWidget {
                     onPressed: () =>
                         ref.invalidate(userDetailProvider(userId)),
                     icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('à¦à¦¬à¦¾à¦° à¦à§à¦·à§à¦à¦¾ à¦à¦°à§à¦¨'),
+                    label: const Text('আবার চেষ্টা করুন'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isDark
                           ? const Color(0xFF333333)
@@ -1462,7 +1462,7 @@ class UserDetailPage extends ConsumerWidget {
     );
   }
 
-  // ââ Helpers ââ
+  // ── Helpers ──
 
   Widget _buildSectionCard({
     required String title,
@@ -1749,4 +1749,41 @@ class UserDetailPage extends ConsumerWidget {
             // Profile card shimmer
             Container(
               height: 180,
-              de
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Info rows shimmer
+            ...List.generate(
+              4,
+              (i) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _copyToClipboard(BuildContext context, String? text) {
+    if (text == null || text.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('ক্লিপবোর্ডে কপি হয়েছে'),
+        behavior: SnackBarBehavior.floating,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+}
