@@ -199,7 +199,6 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     final searchQuery = ref.watch(leaderboardSearchProvider);
 
     final leaderboardAsync = ref.watch(leaderboardDataProvider(activeTab));
-    final statsAsync = ref.watch(leaderboardStatsProvider);
 
     final bgColor = isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF8FAFC);
     final cardColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
