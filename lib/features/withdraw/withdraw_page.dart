@@ -67,7 +67,6 @@ class WithdrawItem {
 class WithdrawApiService {
   static const String _baseUrl = 'https://api.easysarvice.com/api';
 
-  /// GET /withdraw/history
   static Future<List<WithdrawItem>> fetchHistory(String token) async {
     final response = await http.get(
       Uri.parse('$_baseUrl/withdraw/history'),
@@ -92,7 +91,6 @@ class WithdrawApiService {
     }
   }
 
-  /// POST /withdraw/submit
   static Future<Map<String, dynamic>> submitWithdraw({
     required String token,
     required String method,
@@ -119,8 +117,7 @@ class WithdrawApiService {
     if (response.statusCode == 201 && json['status'] == 'success') {
       return json;
     } else {
-      throw Exception(
-          json['message'] ?? 'Failed to submit withdraw request.');
+      throw Exception(json['message'] ?? 'Failed to submit withdraw request.');
     }
   }
 }
@@ -223,22 +220,23 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
   IconData _statusIcon(String s)  => s == 'approved' ? CupertinoIcons.checkmark_seal_fill : s == 'rejected' ? CupertinoIcons.xmark_circle_fill : CupertinoIcons.clock_fill;
   String   _statusLabel(String s) => s == 'approved' ? 'Approved' : s == 'rejected' ? 'Rejected' : 'Pending';
 
-  void _openSubmitSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _WithdrawSubmitSheet(
-        token: _token,
-        onSuccess: (msg) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(msg, style: GoogleFonts.poppins(fontSize: 13)),
-            backgroundColor: _approved,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
-          ));
-          _fetchHistory();
-        },
+  // ========== FAB এখন ফুল পেজ ওপেন করবে ==========
+  void _openSubmitPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WithdrawSubmitPage(
+          token: _token,
+          onSuccess: (msg) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(msg, style: GoogleFonts.poppins(fontSize: 13)),
+              backgroundColor: _approved,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+            ));
+            _fetchHistory(); // ফিরে এলে ইতিহাস রিফ্রেশ
+          },
+        ),
       ),
     );
   }
@@ -262,7 +260,7 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
     return Scaffold(
       backgroundColor: bgColor,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openSubmitSheet,
+        onPressed: _openSubmitPage,  // ✅ এখন ফুল পেজ ওপেন হবে
         backgroundColor: _primary,
         icon: const Icon(CupertinoIcons.add, color: Colors.white),
         label: Text('Withdraw', style: GoogleFonts.poppins(
@@ -348,7 +346,7 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
     );
   }
 
-  // ───── Sub-widgets ─────
+  // ───── Sub-widgets (অপরিবর্তিত) ─────
   Widget _buildHeader(Color textColor, Color sub, bool isSmall, bool isDesktop) =>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -623,19 +621,19 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage> {
 }
 
 // ==========================================
-// 5. Withdraw Submit Bottom Sheet
+// 5. WithdrawSubmitPage (Full Page) NEW
 // ==========================================
-class _WithdrawSubmitSheet extends StatefulWidget {
+class WithdrawSubmitPage extends StatefulWidget {
   final String token;
   final void Function(String message) onSuccess;
 
-  const _WithdrawSubmitSheet({required this.token, required this.onSuccess});
+  const WithdrawSubmitPage({super.key, required this.token, required this.onSuccess});
 
   @override
-  State<_WithdrawSubmitSheet> createState() => _WithdrawSubmitSheetState();
+  State<WithdrawSubmitPage> createState() => _WithdrawSubmitPageState();
 }
 
-class _WithdrawSubmitSheetState extends State<_WithdrawSubmitSheet> {
+class _WithdrawSubmitPageState extends State<WithdrawSubmitPage> {
   static const Color _primary = Color(0xFF0F172A);
   static const List<String> _methods = ['bKash', 'Nagad', 'Rocket', 'Upay', 'Bank'];
 
@@ -689,8 +687,10 @@ class _WithdrawSubmitSheetState extends State<_WithdrawSubmitSheet> {
           ? 'Request submitted! Remaining balance: ৳${NumberFormat('#,##0', 'en_US').format(remaining)}'
           : result['message'] ?? 'Withdraw submitted successfully.';
 
-      if (mounted) Navigator.pop(context);
-      widget.onSuccess(msg);
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onSuccess(msg);
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -711,33 +711,24 @@ class _WithdrawSubmitSheetState extends State<_WithdrawSubmitSheet> {
     final fill      = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7);
     final isSmall   = MediaQuery.of(context).size.width < 360;
 
-    return Container(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
+      appBar: AppBar(
+        backgroundColor: cardColor,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(CupertinoIcons.chevron_left, color: textColor, size: 20.sp),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text('Withdraw Funds', style: GoogleFonts.poppins(
+            color: textColor, fontWeight: FontWeight.w700, fontSize: 17.sp)),
       ),
-      child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20.w),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Center(
-            child: Container(
-              width: 36.w, height: 4.h,
-              decoration: BoxDecoration(
-                  color: sub.withOpacity(0.4), borderRadius: BorderRadius.circular(2.r)),
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Text('New Withdraw Request', style: GoogleFonts.poppins(
-              fontSize: isSmall ? 16.sp : 18.sp, fontWeight: FontWeight.w700, color: textColor)),
-          SizedBox(height: 4.h),
-          Text('Fill in your payment details below', style: GoogleFonts.poppins(
-              fontSize: isSmall ? 11.sp : 12.sp, color: sub)),
-          SizedBox(height: 20.h),
-
-          // Method chips
           Text('Payment Method *', style: GoogleFonts.poppins(
-              fontSize: isSmall ? 11.sp : 12.sp, color: sub, fontWeight: FontWeight.w500)),
+              fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
           SizedBox(height: 8.h),
           Wrap(spacing: 8.w, runSpacing: 8.h,
             children: _methods.map((m) {
@@ -759,44 +750,99 @@ class _WithdrawSubmitSheetState extends State<_WithdrawSubmitSheet> {
               );
             }).toList(),
           ),
+          SizedBox(height: 20.h),
+
+          // Account Number
+          Text('Account Number *', style: GoogleFonts.poppins(
+              fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
+          SizedBox(height: 6.h),
+          Container(
+            decoration: BoxDecoration(
+              color: fill, borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: border, width: 0.5),
+            ),
+            child: TextField(
+              controller: _accountNoCtrl,
+              keyboardType: TextInputType.phone,
+              style: GoogleFonts.poppins(fontSize: isSmall ? 13.sp : 14.sp, color: textColor),
+              decoration: InputDecoration(
+                hintText: 'e.g. 01XXXXXXXXX',
+                hintStyle: GoogleFonts.poppins(color: sub),
+                prefixIcon: Icon(CupertinoIcons.phone, size: 18.sp, color: sub),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+              ),
+            ),
+          ),
           SizedBox(height: 16.h),
 
-          _buildInput(
-            ctrl: _accountNoCtrl, label: 'Account Number *', hint: 'e.g. 01XXXXXXXXX',
-            icon: CupertinoIcons.phone, textColor: textColor, sub: sub, border: border, fill: fill,
-            isSmall: isSmall, keyboard: TextInputType.phone,
-          ),
-          SizedBox(height: 12.h),
-          _buildInput(
-            ctrl: _accountHolderCtrl, label: 'Account Holder (optional)', hint: 'Name of account owner',
-            icon: CupertinoIcons.person, textColor: textColor, sub: sub, border: border, fill: fill,
-            isSmall: isSmall,
-          ),
-          SizedBox(height: 12.h),
-          _buildInput(
-            ctrl: _amountCtrl, label: 'Amount (৳) *', hint: 'e.g. 500',
-            icon: CupertinoIcons.money_dollar_circle, textColor: textColor, sub: sub, border: border, fill: fill,
-            isSmall: isSmall, keyboard: const TextInputType.numberWithOptions(decimal: true),
+          // Account Holder (optional)
+          Text('Account Holder (optional)', style: GoogleFonts.poppins(
+              fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
+          SizedBox(height: 6.h),
+          Container(
+            decoration: BoxDecoration(
+              color: fill, borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: border, width: 0.5),
+            ),
+            child: TextField(
+              controller: _accountHolderCtrl,
+              style: GoogleFonts.poppins(fontSize: isSmall ? 13.sp : 14.sp, color: textColor),
+              decoration: InputDecoration(
+                hintText: 'Name of account owner',
+                hintStyle: GoogleFonts.poppins(color: sub),
+                prefixIcon: Icon(CupertinoIcons.person, size: 18.sp, color: sub),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+              ),
+            ),
           ),
           SizedBox(height: 16.h),
 
+          // Amount
+          Text('Amount (৳) *', style: GoogleFonts.poppins(
+              fontSize: isSmall ? 12.sp : 13.sp, color: sub, fontWeight: FontWeight.w500)),
+          SizedBox(height: 6.h),
+          Container(
+            decoration: BoxDecoration(
+              color: fill, borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: border, width: 0.5),
+            ),
+            child: TextField(
+              controller: _amountCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: GoogleFonts.poppins(fontSize: isSmall ? 13.sp : 14.sp, color: textColor),
+              decoration: InputDecoration(
+                hintText: 'e.g. 500',
+                hintStyle: GoogleFonts.poppins(color: sub),
+                prefixIcon: Icon(CupertinoIcons.money_dollar_circle, size: 18.sp, color: sub),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+              ),
+            ),
+          ),
+          SizedBox(height: 24.h),
+
+          // Error box
           if (_errorMsg != null) ...[
             Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.08), borderRadius: BorderRadius.circular(10.r),
+                color: Colors.red.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(color: Colors.red.withOpacity(0.2)),
               ),
               child: Row(children: [
                 Icon(CupertinoIcons.exclamationmark_circle, color: Colors.red, size: 15.sp),
                 SizedBox(width: 8.w),
                 Flexible(child: Text(_errorMsg!, style: GoogleFonts.poppins(
-                    fontSize: isSmall ? 11.sp : 12.sp, color: Colors.red))),
+                    fontSize: isSmall ? 12.sp : 13.sp, color: Colors.red))),
               ]),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 16.h),
           ],
 
+          // Submit Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -804,54 +850,25 @@ class _WithdrawSubmitSheetState extends State<_WithdrawSubmitSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
                 disabledBackgroundColor: _primary.withOpacity(0.5),
-                padding: EdgeInsets.symmetric(vertical: isSmall ? 13.h : 15.h),
+                padding: EdgeInsets.symmetric(vertical: isSmall ? 14.h : 16.h),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
                 elevation: 0,
               ),
               child: _isSubmitting
-                  ? SizedBox(width: 20.w, height: 20.w,
+                  ? SizedBox(width: 22.w, height: 22.w,
                       child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : Text('Submit Request', style: GoogleFonts.poppins(
-                      color: Colors.white, fontWeight: FontWeight.w700, fontSize: isSmall ? 13.sp : 14.sp)),
+                      color: Colors.white, fontWeight: FontWeight.w700, fontSize: isSmall ? 14.sp : 15.sp)),
             ),
           ),
         ]),
       ),
     );
   }
-
-  Widget _buildInput({
-    required TextEditingController ctrl, required String label, required String hint,
-    required IconData icon, required Color textColor, required Color sub,
-    required Color border, required Color fill, required bool isSmall,
-    TextInputType keyboard = TextInputType.text,
-  }) =>
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.poppins(
-            fontSize: isSmall ? 11.sp : 12.sp, color: sub, fontWeight: FontWeight.w500)),
-        SizedBox(height: 6.h),
-        Container(
-          decoration: BoxDecoration(
-            color: fill, borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: border, width: 0.5),
-          ),
-          child: TextField(
-            controller: ctrl, keyboardType: keyboard,
-            style: GoogleFonts.poppins(fontSize: isSmall ? 12.sp : 13.sp, color: textColor),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: GoogleFonts.poppins(color: sub, fontSize: isSmall ? 12.sp : 13.sp),
-              prefixIcon: Icon(icon, size: 18.sp, color: sub),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
-            ),
-          ),
-        ),
-      ]);
 }
 
 // ==========================================
-// 6. WithdrawDetailPage
+// 6. WithdrawDetailPage (অপরিবর্তিত)
 // ==========================================
 class WithdrawDetailPage extends StatelessWidget {
   final WithdrawItem item;
