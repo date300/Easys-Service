@@ -45,7 +45,7 @@ String formatNumber(dynamic number) {
 }
 
 final leaderboardDataProvider =
-    FutureProvider.family<List<<dynamic>, String>((ref, tab) async {
+    FutureProvider.family<List<dynamic>, String>((ref, tab) async {
   final period = ref.watch(leaderboardPeriodProvider);
   final limit = ref.watch(leaderboardLimitProvider);
   final balanceType = ref.watch(leaderboardBalanceTypeProvider);
@@ -139,10 +139,10 @@ class LeaderboardPage extends ConsumerStatefulWidget {
   const LeaderboardPage({super.key});
 
   @override
-  ConsumerState<<LeaderboardPage> createState() => _LeaderboardPageState();
+  ConsumerState<LeaderboardPage> createState() => _LeaderboardPageState();
 }
 
-class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
+class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   final TextEditingController _searchController = TextEditingController();
@@ -465,8 +465,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
                           cardColor,
                           textColor,
                           borderColor,
-                          () => _showUserDetail(
-                              context, item['id'] as int),
+                          () => _showUserDetail(context, item['id'] as int),
                         ),
                       );
                     },
@@ -495,7 +494,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
   // ==================== Dropdown ====================
   Widget _buildDropdown({
     required String value,
-    required List<<DropdownMenuItem<String>> items,
+    required List<DropdownMenuItem<String>> items,
     required Function(String?) onChanged,
     required bool isDark,
     required Color cardColor,
@@ -978,10 +977,10 @@ class UserDetailBottomSheet extends ConsumerWidget {
             data: (data) {
               final user = data['user'] as Map<String, dynamic>? ?? {};
               final incomeBreakdown =
-                  data['income_breakdown'] as List<<dynamic>? ?? [];
+                  data['income_breakdown'] as List<dynamic>? ?? [];
               final referralCount = data['referral_count'] ?? 0;
               final recentHistory =
-                  data['recent_history'] as List<<dynamic>? ?? [];
+                  data['recent_history'] as List<dynamic>? ?? [];
 
               return Column(
                 children: [
