@@ -24,13 +24,13 @@ Future<String?> _getToken() async {
   return prefs.getString('jwt_token');
 }
 
-// Helper: Format currency
+// Helper: Format currency â FIX #1: à§³ symbol restored
 String formatCurrency(dynamic amount) {
-  if (amount == null) return '?0';
+  if (amount == null) return 'à§³0';
   final value = amount is num ? amount : num.tryParse(amount.toString()) ?? 0;
   final formatter = NumberFormat.currency(
     locale: 'bn_BD',
-    symbol: '?',
+    symbol: 'à§³',
     decimalDigits: 0,
   );
   return formatter.format(value);
@@ -170,17 +170,21 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     super.dispose();
   }
 
+  // FIX #2: à¦¸à¦¬ tab à¦à¦° data refresh à¦¹à¦¬à§
   Future<void> _refreshData() async {
-    ref.invalidate(leaderboardDataProvider(ref.read(leaderboardTabProvider)));
+    final tabs = ['income', 'referrals', 'matrix', 'balance'];
+    for (final tab in tabs) {
+      ref.invalidate(leaderboardDataProvider(tab));
+    }
     ref.invalidate(leaderboardStatsProvider);
   }
 
-  void _showUserDetail(BuildContext context, int userId) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => UserDetailBottomSheet(userId: userId),
+  // FIX: Bottom sheet à¦à¦° à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à§ à¦¸à¦®à§à¦ªà§à¦°à§à¦£ à¦¨à¦¤à§à¦¨ à¦ªà§à¦à§ navigate à¦à¦°à¦¬à§
+  void _showUserDetail(BuildContext context, int userId, String userName) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UserDetailPage(userId: userId, userName: userName),
+      ),
     );
   }
 
@@ -211,7 +215,11 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
       {'key': 'income', 'label': 'Top Earners', 'icon': Icons.emoji_events},
       {'key': 'referrals', 'label': 'Referrers', 'icon': Icons.people},
       {'key': 'matrix', 'label': 'Matrix', 'icon': Icons.grid_view},
-      {'key': 'balance', 'label': 'Balance', 'icon': Icons.account_balance_wallet},
+      {
+        'key': 'balance',
+        'label': 'Balance',
+        'icon': Icons.account_balance_wallet
+      },
     ];
 
     return Scaffold(
@@ -239,7 +247,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                         .read(leaderboardSearchProvider.notifier)
                         .state = value.toLowerCase(),
                     decoration: InputDecoration(
-                      hintText: 'Search by name...',
+                      hintText: 'à¦¨à¦¾à¦®, à¦®à§à¦¬à¦¾à¦à¦² à¦¬à¦¾ à¦à¦®à§à¦à¦² à¦¦à¦¿à¦¯à¦¼à§ à¦à§à¦à¦à§à¦¨...',
                       hintStyle: TextStyle(color: secondaryTextColor),
                       prefixIcon:
                           Icon(Icons.search, color: secondaryTextColor),
@@ -423,12 +431,19 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
             // List Content
             leaderboardAsync.when(
               data: (data) {
+                // FIX #5: à¦¨à¦¾à¦® + à¦®à§à¦¬à¦¾à¦à¦² + à¦à¦®à§à¦à¦² à¦¦à¦¿à¦¯à¦¼à§ à¦¸à¦¾à¦°à§à¦
                 final filteredData = searchQuery.isEmpty
                     ? data
                     : data.where((item) {
                         final name =
                             (item['full_name'] ?? '').toString().toLowerCase();
-                        return name.contains(searchQuery);
+                        final mobile =
+                            (item['mobile'] ?? '').toString().toLowerCase();
+                        final email =
+                            (item['email'] ?? '').toString().toLowerCase();
+                        return name.contains(searchQuery) ||
+                            mobile.contains(searchQuery) ||
+                            email.contains(searchQuery);
                       }).toList();
 
                 if (filteredData.isEmpty) {
@@ -444,7 +459,9 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                       return AnimatedBuilder(
                         animation: _animationController,
                         builder: (context, child) {
-                          final delay = index * 0.05;
+                          // FIX #3: Animation delay overflow à¦ à¦¿à¦ à¦à¦°à¦¾
+                          // à¦¸à¦°à§à¦¬à§à¦à§à¦ 20 à¦à¦¾ item animate à¦¹à¦¬à§, à¦¬à¦¾à¦à¦¿à¦°à¦¾ à¦¸à¦°à¦¾à¦¸à¦°à¦¿ à¦¦à§à¦à¦¾à¦¬à§
+                          final delay = (index * 0.05).clamp(0.0, 0.95);
                           final value = (_animationController.value - delay)
                               .clamp(0.0, 1.0);
                           return Transform.translate(
@@ -463,7 +480,6 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                           cardColor,
                           textColor,
                           borderColor,
-                          () => _showUserDetail(context, item['id'] as int),
                         ),
                       );
                     },
@@ -534,7 +550,6 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     Color cardColor,
     Color textColor,
     Color borderColor,
-    VoidCallback onTap,
   ) {
     final rankColors = [
       const Color(0xFFFFD700), // Gold
@@ -547,8 +562,8 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         ? rankColors[index]
         : (isDark ? Colors.grey.shade600 : Colors.grey.shade400);
 
-    String title = item['full_name'] ?? 'Unknown';
-    String subtitle = item['mobile'] ?? item['email'] ?? '';
+    final String title = item['full_name'] ?? 'Unknown';
+    final String subtitle = item['mobile'] ?? item['email'] ?? '';
     String amount = '';
     String badge = '';
     Color badgeColor = Colors.grey;
@@ -563,7 +578,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         break;
       case 'referrals':
         final refCount = item['referral_count'] ?? 0;
-        amount = refCount.toString() + ' refs';
+        amount = '$refCount refs';
         badge = formatCurrency(item['referral_commission']);
         badgeColor = const Color(0xFF22C55E);
         badgeIcon = Icons.people;
@@ -571,7 +586,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
       case 'matrix':
         amount = formatCurrency(item['matrix_income']);
         final payouts = item['matrix_payouts'] ?? 0;
-        badge = payouts.toString() + ' payouts';
+        badge = '$payouts payouts';
         badgeColor = const Color(0xFFA855F7);
         badgeIcon = Icons.grid_view;
         break;
@@ -584,6 +599,11 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     }
 
     final profilePic = item['profile_picture'] as String?;
+
+    // FIX #4: item['id'] null safety â id à¦¨à¦¾ à¦¥à¦¾à¦à¦²à§ tap disable
+    final int? userId = item['id'] is int
+        ? item['id'] as int
+        : int.tryParse(item['id']?.toString() ?? '');
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -607,7 +627,10 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: onTap,
+          // FIX #4: null safe tap
+          onTap: userId != null
+              ? () => _showUserDetail(context, userId, title)
+              : null,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -636,7 +659,9 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                   child: Center(
                     child: isTop3
                         ? Icon(
-                            index == 0 ? Icons.emoji_events : Icons.military_tech,
+                            index == 0
+                                ? Icons.emoji_events
+                                : Icons.military_tech,
                             color: rankColor,
                             size: 22,
                           )
@@ -661,7 +686,8 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isTop3 ? rankColor.withOpacity(0.5) : borderColor,
+                      color:
+                          isTop3 ? rankColor.withOpacity(0.5) : borderColor,
                       width: 2,
                     ),
                   ),
@@ -672,8 +698,8 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                             width: 48,
                             height: 48,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _buildFallbackAvatar(
-                                title, isDark, rankColor),
+                            errorBuilder: (_, __, ___) =>
+                                _buildFallbackAvatar(title, isDark, rankColor),
                             loadingBuilder: (_, child, progress) =>
                                 progress == null
                                     ? child
@@ -768,14 +794,25 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
 
                 const SizedBox(width: 10),
 
-                // Amount
-                Text(
-                  amount,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: isTop3 ? rankColor : textColor,
-                  ),
+                // Amount + Arrow
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      amount,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isTop3 ? rankColor : textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 12,
+                      color: _secondaryTextColor(isDark),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -868,7 +905,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         ),
         const SizedBox(height: 16),
         Text(
-          isSearch ? 'No results found' : 'No data available',
+          isSearch ? 'à¦à§à¦¨à§ à¦«à¦²à¦¾à¦«à¦² à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿' : 'à¦à§à¦¨à§ à¦¡à§à¦à¦¾ à¦¨à§à¦',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -878,8 +915,8 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         const SizedBox(height: 8),
         Text(
           isSearch
-              ? 'Try adjusting your search query'
-              : 'Check back later for updates',
+              ? 'à¦à¦¨à§à¦¯à¦­à¦¾à¦¬à§ à¦¸à¦¾à¦°à§à¦ à¦à¦°à§ à¦¦à§à¦à§à¦¨'
+              : 'à¦ªà¦°à§ à¦à¦¬à¦¾à¦° à¦à§à¦ à¦à¦°à§à¦¨',
           style: TextStyle(
             fontSize: 13,
             color: isDark ? Colors.grey.shade600 : Colors.grey[500],
@@ -890,17 +927,17 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
   }
 
   Widget _buildErrorState(String error, bool isDark) {
-    String message = 'Something went wrong';
+    String message = 'à¦à¦¿à¦à§ à¦à¦à¦à¦¾ à¦¸à¦®à¦¸à§à¦¯à¦¾ à¦¹à¦¯à¦¼à§à¦à§';
     IconData icon = Icons.error_outline;
 
     if (error.contains('UNAUTHORIZED')) {
-      message = 'Session expired. Please login again.';
+      message = 'à¦¸à§à¦¶à¦¨ à¦¶à§à¦· à¦¹à¦¯à¦¼à§ à¦à§à¦à§à¥¤ à¦à¦¬à¦¾à¦° à¦²à¦à¦à¦¨ à¦à¦°à§à¦¨à¥¤';
       icon = Icons.lock;
     } else if (error.contains('FORBIDDEN')) {
-      message = 'Admin access required';
+      message = 'à¦à§à¦¯à¦¾à¦¡à¦®à¦¿à¦¨ à¦à§à¦¯à¦¾à¦à§à¦¸à§à¦¸ à¦ªà§à¦°à¦¯à¦¼à§à¦à¦¨';
       icon = Icons.gpp_bad;
     } else if (error.contains('NOT_FOUND')) {
-      message = 'User not found';
+      message = 'à¦à¦à¦à¦¾à¦° à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿';
       icon = Icons.person_off;
     }
 
@@ -928,12 +965,13 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
           ElevatedButton.icon(
             onPressed: _refreshData,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Retry'),
+            label: const Text('à¦à¦¬à¦¾à¦° à¦à§à¦·à§à¦à¦¾ à¦à¦°à§à¦¨'),
             style: ElevatedButton.styleFrom(
               backgroundColor:
                   isDark ? const Color(0xFF333333) : const Color(0xFF0F172A),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -945,386 +983,477 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
   }
 }
 
-// ==================== User Detail Bottom Sheet ====================
-class UserDetailBottomSheet extends ConsumerWidget {
+// ==================== User Detail Full Page ====================
+class UserDetailPage extends ConsumerWidget {
   final int userId;
+  final String userName;
 
-  const UserDetailBottomSheet({super.key, required this.userId});
+  const UserDetailPage(
+      {super.key, required this.userId, required this.userName});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userDetailAsync = ref.watch(userDetailProvider(userId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final bgColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final bgColor = isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF8FAFC);
+    final cardColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final secondaryText = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final secondaryText =
+        isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final borderColor =
+        isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade200;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+    return Scaffold(
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: cardColor,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: textColor, size: 20),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          userName,
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh, color: textColor),
+            onPressed: () => ref.invalidate(userDetailProvider(userId)),
+          ),
+        ],
       ),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) {
-          return userDetailAsync.when(
-            data: (data) {
-              final user = data['user'] as Map<String, dynamic>? ?? {};
-              final incomeBreakdown =
-                  data['income_breakdown'] as List<dynamic>? ?? [];
-              final referralCount = data['referral_count'] ?? 0;
-              final recentHistory =
-                  data['recent_history'] as List<dynamic>? ?? [];
+      body: userDetailAsync.when(
+        data: (data) {
+          final user = data['user'] as Map<String, dynamic>? ?? {};
+          final incomeBreakdown =
+              data['income_breakdown'] as List<dynamic>? ?? [];
+          final referralCount = data['referral_count'] ?? 0;
+          final recentHistory =
+              data['recent_history'] as List<dynamic>? ?? [];
 
-              return Column(
-                children: [
-                  // Handle
-                  Container(
-                    margin: const EdgeInsets.only(top: 12, bottom: 8),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.grey.shade700 : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+          final profilePic = user['profile_picture'] as String?;
+          final isActive = user['is_active'] == true;
+          final isVerified = user['id_verified'] == true;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ââ Profile Header Card ââ
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: borderColor),
+                    boxShadow: [
+                      if (!isDark)
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                    ],
                   ),
-
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: user['is_active'] == true
-                                  ? const Color(0xFF22C55E)
-                                  : Colors.grey,
-                              width: 2,
-                            ),
+                  child: Column(
+                    children: [
+                      // Avatar
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isActive
+                                ? const Color(0xFF22C55E)
+                                : Colors.grey,
+                            width: 3,
                           ),
-                          child: ClipOval(
-                            child: user['profile_picture'] != null
-                                ? Image.network(
-                                    user['profile_picture'],
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        _buildAvatarFallback(
-                                            user['full_name'] ?? '?', textColor),
-                                  )
-                                : _buildAvatarFallback(
-                                    user['full_name'] ?? '?', textColor),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user['full_name'] ?? 'Unknown',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  _buildStatusBadge(
-                                    'Active',
-                                    user['is_active'] == true,
-                                    const Color(0xFF22C55E),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  _buildStatusBadge(
-                                    'Verified',
-                                    user['id_verified'] == true,
-                                    const Color(0xFF6366F1),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(Icons.close, color: secondaryText),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-                  Divider(color: isDark ? Colors.grey.shade800 : Colors.grey[200]),
-                  const SizedBox(height: 8),
-
-                  // Scrollable Content
-                  Expanded(
-                    child: ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      children: [
-                        // Contact Info
-                        _buildSectionTitle('Contact Information', isDark),
-                        const SizedBox(height: 8),
-                        _buildInfoTile(
-                          icon: Icons.phone_android,
-                          label: 'Mobile',
-                          value: user['mobile'] ?? 'N/A',
-                          isDark: isDark,
-                          onCopy: () => _copyToClipboard(context, user['mobile']),
-                        ),
-                        _buildInfoTile(
-                          icon: Icons.email,
-                          label: 'Email',
-                          value: user['email'] ?? 'N/A',
-                          isDark: isDark,
-                          onCopy: () => _copyToClipboard(context, user['email']),
-                        ),
-                        _buildInfoTile(
-                          icon: Icons.link,
-                          label: 'Referral Code',
-                          value: user['referral_code'] ?? 'N/A',
-                          isDark: isDark,
-                          onCopy: () =>
-                              _copyToClipboard(context, user['referral_code']),
-                        ),
-                        _buildInfoTile(
-                          icon: Icons.calendar_today,
-                          label: 'Member Since',
-                          value: user['created_at'] != null
-                              ? DateFormat('MMM dd, yyyy').format(
-                                  DateTime.parse(user['created_at']))
-                              : 'N/A',
-                          isDark: isDark,
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Balance Cards
-                        _buildSectionTitle('Wallet Overview', isDark),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildBalanceCard(
-                                'Balance',
-                                formatCurrency(user['balance']),
-                                const Color(0xFF0EA5E9),
-                                isDark,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildBalanceCard(
-                                'Voucher',
-                                formatCurrency(user['voucher_balance']),
-                                const Color(0xFF22C55E),
-                                isDark,
-                              ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isActive
+                                      ? const Color(0xFF22C55E)
+                                      : Colors.grey)
+                                  .withOpacity(0.3),
+                              blurRadius: 12,
+                              spreadRadius: 2,
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: 20),
-
-                        // Income Breakdown
-                        if (incomeBreakdown.isNotEmpty) ...[
-                          _buildSectionTitle('Income Breakdown', isDark),
-                          const SizedBox(height: 12),
-                          ...incomeBreakdown.map((income) {
-                            final type = income['type'] ?? 'unknown';
-                            final color = type == 'referral'
-                                ? const Color(0xFF22C55E)
-                                : type == 'matrix'
-                                    ? const Color(0xFFA855F7)
-                                    : const Color(0xFF0EA5E9);
-                            final incomeCount = income['count'] ?? 0;
-                            return _buildIncomeRow(
-                              type.toString().toUpperCase(),
-                              formatCurrency(income['total']),
-                              incomeCount.toString() + ' txs',
-                              color,
-                              isDark,
-                            );
-                          }),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Referral Count
-                        _buildSectionTitle('Referral Stats', isDark),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF252525)
-                                : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF22C55E).withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.people,
-                                  color: Color(0xFF22C55E),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Total Referrals',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: secondaryText,
-                                      ),
-                                    ),
-                                    Text(
-                                      referralCount.toString(),
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: textColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: ClipOval(
+                          child: profilePic != null && profilePic.isNotEmpty
+                              ? Image.network(
+                                  profilePic,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _buildAvatarFallback(
+                                          user['full_name'] ?? '?'),
+                                )
+                              : _buildAvatarFallback(
+                                  user['full_name'] ?? '?'),
                         ),
-
-                        const SizedBox(height: 20),
-
-                        // Recent History
-                        if (recentHistory.isNotEmpty) ...[
-                          _buildSectionTitle('Recent Transactions', isDark),
-                          const SizedBox(height: 12),
-                          ...recentHistory.map((tx) {
-                            final isPositive = (tx['amount'] ?? 0) > 0;
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF252525)
-                                    : const Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isDark
-                                      ? const Color(0xFF333333)
-                                      : Colors.grey.shade200,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: isPositive
-                                          ? const Color(0xFF22C55E).withOpacity(0.1)
-                                          : const Color(0xFFEF4444)
-                                              .withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      isPositive
-                                          ? Icons.arrow_downward
-                                          : Icons.arrow_upward,
-                                      size: 16,
-                                      color: isPositive
-                                          ? const Color(0xFF22C55E)
-                                          : const Color(0xFFEF4444),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          tx['description'] ?? 'Transaction',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                            color: textColor,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          tx['created_at'] != null
-                                              ? DateFormat('MMM dd, hh:mm a')
-                                                  .format(DateTime.parse(
-                                                      tx['created_at']))
-                                              : '',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: secondaryText,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    formatCurrency(tx['amount']),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: isPositive
-                                          ? const Color(0xFF22C55E)
-                                          : const Color(0xFFEF4444),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        user['full_name'] ?? 'Unknown',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      // Status badges
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildStatusBadge('Active', isActive,
+                              const Color(0xFF22C55E)),
+                          const SizedBox(width: 8),
+                          _buildStatusBadge('Verified', isVerified,
+                              const Color(0xFF6366F1)),
                         ],
-
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              );
-            },
-            loading: () => _buildDetailShimmer(isDark),
-            error: (err, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                ),
+
+                const SizedBox(height: 16),
+
+                // ââ Contact Info ââ
+                _buildSectionCard(
+                  title: 'à¦¯à§à¦à¦¾à¦¯à§à¦à§à¦° à¦¤à¦¥à§à¦¯',
+                  icon: Icons.contact_phone,
+                  isDark: isDark,
+                  cardColor: cardColor,
+                  borderColor: borderColor,
+                  child: Column(
+                    children: [
+                      _buildInfoRow(
+                        icon: Icons.phone_android,
+                        label: 'à¦®à§à¦¬à¦¾à¦à¦²',
+                        value: user['mobile'] ?? 'N/A',
+                        isDark: isDark,
+                        textColor: textColor,
+                        secondaryText: secondaryText,
+                        onCopy: user['mobile'] != null
+                            ? () =>
+                                _copyToClipboard(context, user['mobile'])
+                            : null,
+                      ),
+                      _buildDivider(isDark),
+                      _buildInfoRow(
+                        icon: Icons.email_outlined,
+                        label: 'à¦à¦®à§à¦à¦²',
+                        value: user['email'] ?? 'N/A',
+                        isDark: isDark,
+                        textColor: textColor,
+                        secondaryText: secondaryText,
+                        onCopy: user['email'] != null
+                            ? () =>
+                                _copyToClipboard(context, user['email'])
+                            : null,
+                      ),
+                      _buildDivider(isDark),
+                      _buildInfoRow(
+                        icon: Icons.link,
+                        label: 'à¦°à§à¦«à¦¾à¦°à§à¦² à¦à§à¦¡',
+                        value: user['referral_code'] ?? 'N/A',
+                        isDark: isDark,
+                        textColor: textColor,
+                        secondaryText: secondaryText,
+                        onCopy: user['referral_code'] != null
+                            ? () => _copyToClipboard(
+                                context, user['referral_code'])
+                            : null,
+                      ),
+                      _buildDivider(isDark),
+                      _buildInfoRow(
+                        icon: Icons.calendar_today,
+                        label: 'à¦¸à¦¦à¦¸à§à¦¯ à¦¹à¦¯à¦¼à§à¦à§à¦¨',
+                        value: user['created_at'] != null
+                            ? DateFormat('dd MMM yyyy, hh:mm a').format(
+                                DateTime.parse(user['created_at']))
+                            : 'N/A',
+                        isDark: isDark,
+                        textColor: textColor,
+                        secondaryText: secondaryText,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // ââ Wallet Overview ââ
+                _buildSectionTitle('à¦à¦¯à¦¼à¦¾à¦²à§à¦ à¦à¦­à¦¾à¦°à¦­à¦¿à¦', isDark, textColor),
+                const SizedBox(height: 12),
+                Row(
                   children: [
-                    Icon(Icons.error_outline,
-                        size: 48,
-                        color: isDark ? Colors.red.shade300 : Colors.red[300]),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Failed to load user details',
-                      style: TextStyle(color: textColor),
+                    Expanded(
+                      child: _buildBalanceCard(
+                        'à¦¬à§à¦¯à¦¾à¦²à§à¦¨à§à¦¸',
+                        formatCurrency(user['balance']),
+                        const Color(0xFF0EA5E9),
+                        isDark,
+                        Icons.account_balance_wallet,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildBalanceCard(
+                        'à¦­à¦¾à¦à¦à¦¾à¦°',
+                        formatCurrency(user['voucher_balance']),
+                        const Color(0xFF22C55E),
+                        isDark,
+                        Icons.card_giftcard,
+                      ),
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 16),
+
+                // ââ Referral Stats ââ
+                _buildSectionCard(
+                  title: 'à¦°à§à¦«à¦¾à¦°à§à¦² à¦¸à§à¦à§à¦¯à¦¾à¦à¦¸',
+                  icon: Icons.people_alt,
+                  isDark: isDark,
+                  cardColor: cardColor,
+                  borderColor: borderColor,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF22C55E).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.people,
+                            color: Color(0xFF22C55E), size: 28),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'à¦®à§à¦ à¦°à§à¦«à¦¾à¦°à§à¦²',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: secondaryText,
+                            ),
+                          ),
+                          Text(
+                            referralCount.toString(),
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF22C55E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ââ Income Breakdown ââ
+                if (incomeBreakdown.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: 'à¦à¦¯à¦¼à§à¦° à¦¬à¦¿à¦­à¦¾à¦à¦¨',
+                    icon: Icons.bar_chart,
+                    isDark: isDark,
+                    cardColor: cardColor,
+                    borderColor: borderColor,
+                    child: Column(
+                      children: incomeBreakdown.asMap().entries.map((entry) {
+                        final i = entry.key;
+                        final income = entry.value;
+                        final type = income['type'] ?? 'unknown';
+                        final color = type == 'referral'
+                            ? const Color(0xFF22C55E)
+                            : type == 'matrix'
+                                ? const Color(0xFFA855F7)
+                                : const Color(0xFF0EA5E9);
+                        final incomeCount = income['count'] ?? 0;
+                        return Column(
+                          children: [
+                            if (i > 0) _buildDivider(isDark),
+                            _buildIncomeRow(
+                              type.toString().toUpperCase(),
+                              formatCurrency(income['total']),
+                              '$incomeCount txs',
+                              color,
+                              isDark,
+                              textColor,
+                              secondaryText,
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+
+                // ââ Recent Transactions ââ
+                if (recentHistory.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildSectionTitle(
+                      'à¦¸à¦¾à¦®à§à¦ªà§à¦°à¦¤à¦¿à¦ à¦²à§à¦¨à¦¦à§à¦¨', isDark, textColor),
+                  const SizedBox(height: 12),
+                  ...recentHistory.map((tx) {
+                    final isPositive = (tx['amount'] ?? 0) > 0;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: borderColor),
+                        boxShadow: [
+                          if (!isDark)
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isPositive
+                                  ? const Color(0xFF22C55E).withOpacity(0.1)
+                                  : const Color(0xFFEF4444).withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isPositive
+                                  ? Icons.arrow_downward
+                                  : Icons.arrow_upward,
+                              size: 18,
+                              color: isPositive
+                                  ? const Color(0xFF22C55E)
+                                  : const Color(0xFFEF4444),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  tx['description'] ?? 'Transaction',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: textColor,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  tx['created_at'] != null
+                                      ? DateFormat('dd MMM yyyy, hh:mm a')
+                                          .format(DateTime.parse(
+                                              tx['created_at']))
+                                      : '',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: secondaryText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            formatCurrency(tx['amount']),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: isPositive
+                                  ? const Color(0xFF22C55E)
+                                  : const Color(0xFFEF4444),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+
+                const SizedBox(height: 32),
+              ],
+            ),
+          );
+        },
+        loading: () => _buildDetailShimmer(isDark),
+        error: (err, _) {
+          String message = 'à¦à¦à¦à¦¾à¦° à¦¡à¦¿à¦à§à¦²à¦¸ à¦²à§à¦¡ à¦à¦°à¦¤à§ à¦¬à§à¦¯à¦°à§à¦¥ à¦¹à¦¯à¦¼à§à¦à§';
+          IconData icon = Icons.error_outline;
+          if (err.toString().contains('UNAUTHORIZED')) {
+            message = 'à¦¸à§à¦¶à¦¨ à¦¶à§à¦· à¦¹à¦¯à¦¼à§ à¦à§à¦à§à¥¤ à¦à¦¬à¦¾à¦° à¦²à¦à¦à¦¨ à¦à¦°à§à¦¨à¥¤';
+            icon = Icons.lock;
+          } else if (err.toString().contains('NOT_FOUND')) {
+            message = 'à¦à¦à¦à¦¾à¦° à¦ªà¦¾à¦à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿';
+            icon = Icons.person_off;
+          }
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon,
+                      size: 64,
+                      color:
+                          isDark ? Colors.red.shade300 : Colors.red[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    message,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? Colors.grey.shade300
+                          : Colors.grey[700],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        ref.invalidate(userDetailProvider(userId)),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('à¦à¦¬à¦¾à¦° à¦à§à¦·à§à¦à¦¾ à¦à¦°à§à¦¨'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark
+                          ? const Color(0xFF333333)
+                          : const Color(0xFF0F172A),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -1333,27 +1462,239 @@ class UserDetailBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildAvatarFallback(String name, Color textColor) {
+  // ââ Helpers ââ
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required bool isDark,
+    required Color cardColor,
+    required Color borderColor,
+    required Widget child,
+  }) {
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
     return Container(
-      color: Colors.grey.shade200,
-      child: Center(
-        child: Text(
-          name.isNotEmpty ? name[0].toUpperCase() : '?',
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: const Color(0xFF0EA5E9)),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(
+            height: 1,
+            color: isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade200,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, bool isDark, Color textColor) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0EA5E9),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
           style: TextStyle(
+            fontSize: 16,
             fontWeight: FontWeight.bold,
-            fontSize: 24,
             color: textColor,
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isDark,
+    required Color textColor,
+    required Color secondaryText,
+    VoidCallback? onCopy,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: secondaryText),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 11, color: secondaryText),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onCopy != null)
+            IconButton(
+              onPressed: onCopy,
+              icon: Icon(Icons.copy_outlined, size: 18, color: secondaryText),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider(bool isDark) {
+    return Divider(
+      height: 16,
+      color: isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
+    );
+  }
+
+  Widget _buildBalanceCard(
+    String label,
+    String value,
+    Color color,
+    bool isDark,
+    IconData icon,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIncomeRow(
+    String type,
+    String amount,
+    String count,
+    Color color,
+    bool isDark,
+    Color textColor,
+    Color secondaryText,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              type,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+          ),
+          Text(
+            count,
+            style: TextStyle(
+              fontSize: 12,
+              color: secondaryText,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            amount,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStatusBadge(String label, bool isActive, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? color.withOpacity(0.15) : Colors.grey.withOpacity(0.15),
+        color: isActive
+            ? color.withOpacity(0.15)
+            : Colors.grey.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -1367,11 +1708,11 @@ class UserDetailBottomSheet extends ConsumerWidget {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: isActive ? color : Colors.grey,
             ),
@@ -1381,201 +1722,31 @@ class UserDetailBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title, bool isDark) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: isDark ? Colors.white : const Color(0xFF0F172A),
-      ),
-    );
-  }
-
-  Widget _buildInfoTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    required bool isDark,
-    VoidCallback? onCopy,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey[600]),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.grey.shade500 : Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (onCopy != null)
-            IconButton(
-              onPressed: onCopy,
-              icon: Icon(Icons.copy, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey[600]),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBalanceCard(
-      String label, String value, Color color, bool isDark) {
+  Widget _buildAvatarFallback(String name) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(isDark ? 0.15 : 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.grey.shade400 : Colors.grey[600],
-            ),
+      color: const Color(0xFF0EA5E9).withOpacity(0.15),
+      child: Center(
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : '?',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+            color: Color(0xFF0EA5E9),
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIncomeRow(
-      String type, String amount, String count, Color color, bool isDark) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF252525) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              type,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-              ),
-            ),
-          ),
-          Text(
-            count,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.grey.shade500 : Colors.grey[600],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            amount,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailShimmer(bool isDark) {
-    return Shimmer.fromColors(
-      baseColor: isDark ? const Color(0xFF1A1A1A) : Colors.grey[300]!,
-      highlightColor: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100]!,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: 150,
-              height: 20,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ...List.generate(
-              5,
-              (index) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
 
-  void _copyToClipboard(BuildContext context, String? text) {
-    if (text == null || text.isEmpty) return;
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Copied to clipboard'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-}
+  Widget _buildDetailShimmer(bool isDark) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Shimmer.fromColors(
+        baseColor: isDark ? const Color(0xFF1A1A1A) : Colors.grey[300]!,
+        highlightColor: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100]!,
+        child: Column(
+          children: [
+            // Profile card shimmer
+            Container(
+              height: 180,
+              de
