@@ -27,11 +27,11 @@ Future<String?> _getToken() async {
 
 // Helper: Format currency
 String formatCurrency(dynamic amount) {
-  if (amount == null) return '?0';
+  if (amount == null) return '৳0';
   final value = amount is num ? amount : num.tryParse(amount.toString()) ?? 0;
   final formatter = NumberFormat.currency(
     locale: 'bn_BD',
-    symbol: '?',
+    symbol: '৳',
     decimalDigits: 0,
   );
   return formatter.format(value);
@@ -45,7 +45,7 @@ String formatNumber(dynamic number) {
 }
 
 final leaderboardDataProvider =
-    FutureProvider.family<List<<dynamic>, String>((ref, tab) async {
+    FutureProvider.family<List<dynamic>, String>((ref, tab) async {
   final period = ref.watch(leaderboardPeriodProvider);
   final limit = ref.watch(leaderboardLimitProvider);
   final balanceType = ref.watch(leaderboardBalanceTypeProvider);
@@ -139,10 +139,10 @@ class LeaderboardPage extends ConsumerStatefulWidget {
   const LeaderboardPage({super.key});
 
   @override
-  ConsumerState<<LeaderboardPage> createState() => _LeaderboardPageState();
+  ConsumerState<LeaderboardPage> createState() => _LeaderboardPageState();
 }
 
-class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
+class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   final TextEditingController _searchController = TextEditingController();
@@ -225,10 +225,19 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
+            // Stats Section
+            SliverToBoxAdapter(
+              child: statsAsync.when(
+                data: (stats) => _buildStatsSection(stats, isDark, cardColor),
+                loading: () => _buildStatsShimmer(isDark),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+            ),
+
             // Search Bar
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Container(
                   decoration: BoxDecoration(
                     color: cardColor,
@@ -241,7 +250,7 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
                         .read(leaderboardSearchProvider.notifier)
                         .state = value.toLowerCase(),
                     decoration: InputDecoration(
-                      hintText: 'Search by name...',
+                      hintText: 'Search by name or mobile...',
                       hintStyle: TextStyle(color: secondaryTextColor),
                       prefixIcon:
                           Icon(LucideIcons.search, color: secondaryTextColor),
@@ -430,7 +439,13 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
                     : data.where((item) {
                         final name =
                             (item['full_name'] ?? '').toString().toLowerCase();
-                        return name.contains(searchQuery);
+                        final mobile =
+                            (item['mobile'] ?? '').toString().toLowerCase();
+                        final email =
+                            (item['email'] ?? '').toString().toLowerCase();
+                        return name.contains(searchQuery) ||
+                            mobile.contains(searchQuery) ||
+                            email.contains(searchQuery);
                       }).toList();
 
                 if (filteredData.isEmpty) {
@@ -492,10 +507,134 @@ class _LeaderboardPageState extends ConsumerState<<LeaderboardPage>
     );
   }
 
+  // ==================== Stats Section ====================
+  Widget _buildStatsSection(
+      Map<String, dynamic> stats, bool isDark, Color cardColor) {
+    final items = [
+      {
+        'label': 'Total Users',
+        'value': formatNumber(stats['total_users']),
+        'icon': LucideIcons.users,
+        'color': const Color(0xFF0EA5E9),
+        'bgColor': const Color(0xFF0EA5E9).withOpacity(0.1),
+      },
+      {
+        'label': 'Total Balance',
+        'value': formatCurrency(stats['total_balance']),
+        'icon': LucideIcons.wallet,
+        'color': const Color(0xFF22C55E),
+        'bgColor': const Color(0xFF22C55E).withOpacity(0.1),
+      },
+      {
+        'label': 'Referral Payouts',
+        'value': formatCurrency(stats['total_referral_payouts']),
+        'icon': LucideIcons.arrowLeftRight,
+        'color': const Color(0xFF6366F1),
+        'bgColor': const Color(0xFF6366F1).withOpacity(0.1),
+      },
+      {
+        'label': 'Matrix Payouts',
+        'value': formatCurrency(stats['total_matrix_payouts']),
+        'icon': LucideIcons.layoutGrid,
+        'color': const Color(0xFFF97316),
+        'bgColor': const Color(0xFFF97316).withOpacity(0.1),
+      },
+    ];
+
+    return Container(
+      height: 100,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: items
+            .map((item) => Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? (item['bgColor'] as Color).withOpacity(0.15)
+                          : item['bgColor'] as Color,
+                      borderRadius: BorderRadius.circular(16),
+                      border: isDark
+                          ? Border.all(
+                              color: (item['color'] as Color).withOpacity(0.3))
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              item['icon'] as IconData,
+                              size: 14,
+                              color: item['color'] as Color,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              item['label'] as String,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: isDark
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item['value'] as String,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: item['color'] as Color,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ))
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildStatsShimmer(bool isDark) {
+    return Container(
+      height: 100,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: List.generate(
+          4,
+          (index) => Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              child: Shimmer.fromColors(
+                baseColor: isDark ? const Color(0xFF1A1A1A) : Colors.grey[300]!,
+                highlightColor:
+                    isDark ? const Color(0xFF2A2A2A) : Colors.grey[100]!,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ==================== Dropdown ====================
   Widget _buildDropdown({
     required String value,
-    required List<<DropdownMenuItem<String>> items,
+    required List<DropdownMenuItem<String>> items,
     required Function(String?) onChanged,
     required bool isDark,
     required Color cardColor,
@@ -978,10 +1117,10 @@ class UserDetailBottomSheet extends ConsumerWidget {
             data: (data) {
               final user = data['user'] as Map<String, dynamic>? ?? {};
               final incomeBreakdown =
-                  data['income_breakdown'] as List<<dynamic>? ?? [];
+                  data['income_breakdown'] as List<dynamic>? ?? [];
               final referralCount = data['referral_count'] ?? 0;
               final recentHistory =
-                  data['recent_history'] as List<<dynamic>? ?? [];
+                  data['recent_history'] as List<dynamic>? ?? [];
 
               return Column(
                 children: [
