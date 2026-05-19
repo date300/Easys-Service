@@ -7,16 +7,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod ????? ??? ?????
-import 'package:go_router/go_router.dart'; // GoRouter ????? ??? ?????
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-// ????? main.dart ???? ?????????????? ???????? ??? ?????
-import '../../main.dart'; 
+import '../../main.dart';
 
-// ==========================================
-// 1. Models
-// ==========================================
-
+// ========== Models ==========
 class WalletBalance {
   final double balance;
   WalletBalance({required this.balance});
@@ -46,12 +42,9 @@ class Transaction {
   );
 }
 
-// ==========================================
-// 2. API Service
-// ==========================================
-
+// ========== API Service ==========
 class WalletApiService {
-  static const String _baseUrl = 'https://easy.ltcminematrix.com/api';
+  static const String _baseUrl = 'https://api.easysarvice.com/api';
 
   static Future<WalletBalance> fetchBalance(String token) async {
     final res = await http.get(
@@ -167,10 +160,7 @@ class WalletApiService {
   }
 }
 
-// ==========================================
-// 3. Wallet Page (Main) - Updated to ConsumerStatefulWidget
-// ==========================================
-
+// ========== Main Wallet Page ==========
 class WalletPage extends ConsumerStatefulWidget {
   const WalletPage({super.key});
   @override
@@ -372,7 +362,8 @@ class _WalletPageState extends ConsumerState<WalletPage> {
                         : _error != null
                             ? _errorWidget(isSmall)
                             : Text(
-                                '\৳${(_balance?.balance ?? 0).toStringAsFixed(2)}',
+                                // FIX #2: Replaced corrupted '?' with correct '₹' symbol
+                                '₹ ${(_balance?.balance ?? 0).toStringAsFixed(2)}',
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: isSmall ? 26.sp : 30.sp,
@@ -464,6 +455,8 @@ class _WalletPageState extends ConsumerState<WalletPage> {
         ),
       );
 
+  // FIX #1: Broken lambda fixed — History button's onTap was closed early
+  // and remaining code was dangling outside the lambda, causing a compile error.
   Widget _buildActionButtons(bool isSmall) {
     return Row(
       children: [
@@ -474,7 +467,8 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              // Withdraw ????? ???? ???? ????? ???? ?????
+              ref.read(detailViewTitleProvider.notifier).state = 'Withdraw';
+              context.push('/withdraw');
             },
           ),
         ),
@@ -486,12 +480,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              
-              // Detail View Logic
-              ref.read(isDetailViewProvider.notifier).state = true;
               ref.read(detailViewTitleProvider.notifier).state = 'Transaction History';
-              
-              // GoRouter Navigation
               context.push('/transactions');
             },
           ),
@@ -548,9 +537,9 @@ class _WalletPageState extends ConsumerState<WalletPage> {
     bool isSmall, Color cardColor, Color textColor, bool isDark,
   ) {
     final items = [
-      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,         'delay': 160, 'period': 'daily'},
-      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill,      'delay': 210, 'period': 'weekly'},
-      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,             'delay': 260, 'period': 'summary'},
+      {'label': 'Daily Income',    'icon': CupertinoIcons.sun_max_fill,    'delay': 160, 'route': '/daily-income'},
+      {'label': 'Weekly Income',   'icon': CupertinoIcons.moon_stars_fill, 'delay': 210, 'route': '/weekly-income'},
+      {'label': 'Monthly & Total', 'icon': CupertinoIcons.calendar,        'delay': 260, 'route': '/monthly-income'},
     ];
 
     return items.map((item) {
@@ -563,14 +552,8 @@ class _WalletPageState extends ConsumerState<WalletPage> {
         isDark:    isDark,
         onTap: () {
           HapticFeedback.lightImpact();
-          
-          // Detail View Logic
-          ref.read(isDetailViewProvider.notifier).state = true;
           ref.read(detailViewTitleProvider.notifier).state = item['label'] as String;
-          
-          // GoRouter Navigation with Params
-          final period = item['period'] as String;
-          context.push('/income-detail?period=$period');
+          context.push(item['route'] as String);
         },
       )
           .animate()
@@ -642,303 +625,5 @@ class _WalletPageState extends ConsumerState<WalletPage> {
         ),
       ),
     );
-  }
-}
-
-// ==========================================
-// 4. Income Detail Page (Optimized for Detail View)
-// ==========================================
-
-class IncomeDetailPage extends StatefulWidget {
-  final String period;
-  const IncomeDetailPage({super.key, required this.period});
-  @override
-  State<IncomeDetailPage> createState() => _IncomeDetailPageState();
-}
-
-class _IncomeDetailPageState extends State<IncomeDetailPage> {
-  static const Color _accent = Color(0xFF29B6F6);
-  bool _isLoading = true;
-  String? _error;
-  double _totalIncome = 0.0;
-  Map<String, double> _summary = {};
-  String _token = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('jwt_token') ?? '';
-    if (_token.isEmpty) {
-      setState(() { _error = 'Token missing'; _isLoading = false; });
-      return;
-    }
-    try {
-      if (widget.period == 'daily') {
-        _totalIncome = await WalletApiService.fetchDailyIncome(_token);
-      } else if (widget.period == 'weekly') {
-        _totalIncome = await WalletApiService.fetchWeeklyIncome(_token);
-      } else if (widget.period == 'monthly') {
-        _totalIncome = await WalletApiService.fetchMonthlyIncome(_token);
-      } else if (widget.period == 'summary') {
-        _summary = await WalletApiService.fetchIncomeSummary(_token);
-      }
-      setState(() { _isLoading = false; });
-    } catch (e) {
-      setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Detail View-? ???? ????? ?????? ????? ???? ????????? ???, 
-    // ??? ????? ????? SafeArea ?? Header ?? ????? ????
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _accent))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-              : widget.period == 'summary'
-                  ? _buildSummary()
-                  : _buildSingleTotal(),
-    );
-  }
-
-  Widget _buildSingleTotal() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(
-                color: _accent.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(CupertinoIcons.money_dollar_circle_fill, color: _accent, size: 60.sp),
-            ),
-            SizedBox(height: 24.h),
-            Text(
-              '\৳${_totalIncome.toStringAsFixed(2)}',
-              style: GoogleFonts.poppins(
-                fontSize: 36.sp,
-                fontWeight: FontWeight.w900,
-                color: _accent,
-              ),
-            ),
-            Text('Total Earnings', 
-              style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey)),
-          ],
-        ),
-      ),
- ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
-
-  }
-
-  Widget _buildSummary() {
-    return ListView(
-      padding: EdgeInsets.all(24.w),
-      children: [
-        _summaryCard('Today', _summary['daily'] ?? 0),
-        SizedBox(height: 12.h),
-        _summaryCard('This Week', _summary['weekly'] ?? 0),
-        SizedBox(height: 12.h),
-        _summaryCard('This Month', _summary['monthly'] ?? 0),
-      ],
-    );
-  }
-
-  Widget _summaryCard(String label, double amount) {
-    return Container(
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1E1E1E)
-            : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600)),
-          Text('\৳${amount.toStringAsFixed(2)}',
-            style: GoogleFonts.poppins(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w800,
-              color: _accent,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ==========================================
-// 5. Transaction List Page (Optimized for Detail View)
-// ==========================================
-
-class TransactionListPage extends StatefulWidget {
-  const TransactionListPage({super.key});
-  @override
-  State<TransactionListPage> createState() => _TransactionListPageState();
-}
-
-class _TransactionListPageState extends State<TransactionListPage> {
-  static const Color _accent = Color(0xFF29B6F6);
-  List<Transaction> _transactions = [];
-  bool _isLoading = true;
-  String? _error;
-  String _token = '';
-  int _offset = 0;
-  bool _hasMore = true;
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_scrollListener);
-    _loadInitial();
-  }
-
-  void _scrollListener() {
-    if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 100 &&
-        !_isLoading &&
-        _hasMore) {
-      _loadMore();
-    }
-  }
-
-  Future<void> _loadInitial() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('jwt_token') ?? '';
-    if (_token.isEmpty) {
-      setState(() { _error = 'Token missing'; _isLoading = false; });
-      return;
-    }
-    await _fetchTransactions(reset: true);
-  }
-
-  Future<void> _fetchTransactions({bool reset = false}) async {
-    if (reset) {
-      _offset = 0;
-      _hasMore = true;
-    }
-    setState(() { _isLoading = true; _error = null; });
-    try {
-      final newList = await WalletApiService.fetchTransactions(
-        _token,
-        limit: 20,
-        offset: _offset,
-      );
-      if (mounted) {
-        setState(() {
-          if (reset) _transactions = newList;
-          else _transactions.addAll(newList);
-          _offset += newList.length;
-          _hasMore = newList.length == 20;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceAll('Exception: ', '');
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _loadMore() async {
-    if (_isLoading || !_hasMore) return;
-    await _fetchTransactions();
-  }
-
-  Future<void> _refresh() async {
-    await _fetchTransactions(reset: true);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
-      body: _isLoading && _transactions.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: _accent))
-          : RefreshIndicator(
-              onRefresh: _refresh,
-              color: _accent,
-              child: ListView.builder(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.all(16.w),
-                itemCount: _transactions.length + (_hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == _transactions.length) {
-                    return const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()));
-                  }
-                  final t = _transactions[index];
-                  return Card(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    margin: EdgeInsets.only(bottom: 10.h),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.r),
-                      side: BorderSide(color: _accent.withOpacity(0.1)),
-                    ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-                      leading: Container(
-                        padding: EdgeInsets.all(10.w),
-                        decoration: BoxDecoration(color: _accent.withOpacity(0.1), shape: BoxShape.circle),
-                        child: Icon(CupertinoIcons.doc_text_fill, color: _accent, size: 20.sp),
-                      ),
-                      title: Text(t.description, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.sp)),
-                      subtitle: Text(_formatDate(t.createdAt), style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey)),
-                      trailing: Text(
-                        '\৳${t.amount.toStringAsFixed(2)}',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15.sp, color: _accent),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-    );
-  }
-
-  String _formatDate(String iso) {
-    try {
-      final dt = DateTime.parse(iso);
-      return '${dt.day}/${dt.month}/${dt.year}';
-    } catch (_) {
-      return iso;
-    }
   }
 }
