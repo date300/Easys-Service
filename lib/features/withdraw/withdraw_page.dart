@@ -1662,3 +1662,4 @@ class _WithdrawDetailPageState extends ConsumerState<<WithdrawDetailPage> {
             : Colors.grey.shade100,
       );
 }
+
