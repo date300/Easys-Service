@@ -64,7 +64,7 @@ class WithdrawItem {
 class WithdrawApiService {
   static const String _baseUrl = 'https://api.easysarvice.com/api';
 
-  static Future<List<<WithdrawItem>> fetchHistory(String token) async {
+  static Future<List<WithdrawItem>> fetchHistory(String token) async {
     final response = await http.get(
       Uri.parse('$_baseUrl/withdraw/history'),
       headers: {
@@ -131,16 +131,16 @@ String formatDate(DateTime? dt) {
 }
 
 // ==========================================
-// 4. WithdrawLedgerPage
+// 4. WithdrawLedgerPage (Leaderboard Style)
 // ==========================================
 class WithdrawLedgerPage extends StatefulWidget {
   const WithdrawLedgerPage({super.key});
 
   @override
-  State<<WithdrawLedgerPage> createState() => _WithdrawLedgerPageState();
+  State<WithdrawLedgerPage> createState() => _WithdrawLedgerPageState();
 }
 
-class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
+class _WithdrawLedgerPageState extends State<WithdrawLedgerPage>
     with SingleTickerProviderStateMixin {
   static const Color _primary = Color(0xFF0F172A);
   static const Color _approved = Color(0xFF22C55E);
@@ -154,7 +154,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
   bool _isSubmitting = false;
   String? _formError;
 
-  List<<WithdrawItem> _withdraws = [];
+  List<WithdrawItem> _withdraws = [];
   bool _isLoadingHistory = true;
   String? _historyError;
   String _token = '';
@@ -284,7 +284,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
     }
   }
 
-  List<<WithdrawItem> get _filtered {
+  List<WithdrawItem> get _filtered {
     if (_searchQuery.isEmpty) return _withdraws;
     final q = _searchQuery.toLowerCase();
     return _withdraws.where((w) =>
@@ -339,6 +339,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
           controller: _scrollController,
           physics: const BouncingScrollPhysics(),
           slivers: [
+            // Header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -388,6 +389,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
               ),
             ),
 
+            // Withdraw Form
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -570,6 +572,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
               ),
             ),
 
+            // Stats
             if (!_isLoadingHistory && _historyError == null) ...[
               SliverToBoxAdapter(
                 child: Padding(
@@ -619,6 +622,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                 ),
               ),
 
+              // Search Bar
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -656,6 +660,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
                 ),
               ),
 
+              // Section Title
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -684,6 +689,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
               ),
             ],
 
+            // History List
             if (_isLoadingHistory)
               SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -1232,7 +1238,7 @@ class _WithdrawLedgerPageState extends State<<WithdrawLedgerPage>
 }
 
 // ==========================================
-// 5. WithdrawDetailPage
+// 5. WithdrawDetailPage (Leaderboard Style)
 // ==========================================
 class WithdrawDetailPage extends StatelessWidget {
   final WithdrawItem item;
