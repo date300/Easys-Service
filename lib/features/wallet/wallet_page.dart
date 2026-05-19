@@ -467,7 +467,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
             isSmall: isSmall,
             onTap: () {
               HapticFeedback.mediumImpact();
-              ref.read(detailViewTitleProvider.notifier).state = 'Withdraw Ledger';
+              ref.read(detailViewTitleProvider.notifier).state = 'Withdraw';
               context.push('/withdraw');
             },
           ),
