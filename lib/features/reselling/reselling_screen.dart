@@ -10,10 +10,10 @@ import 'package:go_router/go_router.dart';                // ✅ go_router impor
 import 'package:http/http.dart' as http;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
-import 'product_model.dart';
-import 'resell_bottom_sheet.dart';
-import 'product_details_page.dart';
-import 'add_product_bottom_sheet.dart';
+import 'product_model/product_model.dart';
+import 'resell/resell_bottom_sheet.dart';
+import 'product_details/product_details_page.dart';
+import 'add_product/add_product_bottom_sheet.dart';
 
 // ✅ MainWrapper এর প্রোভাইডার
 import '../../main.dart';
