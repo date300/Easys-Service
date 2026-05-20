@@ -52,22 +52,6 @@ class BannerItem {
     this.bgColor,
     this.route,
   });
-
-  /// API JSON থেকে BannerItem তৈরি করে
-  factory BannerItem.fromJson(Map<String, dynamic> json) {
-    return BannerItem(
-      id: json['id']?.toString() ?? '',
-      // API তে image_url বা image যেকোনো field name হতে পারে
-      imageUrl: json['image_url'] ?? json['image'] ?? json['banner_image'] ?? '',
-      title: json['title'],
-      subtitle: json['subtitle'],
-      // API তে #RRGGBB ফরম্যাটে color আসলে Flutter Color-এ কনভার্ট
-      bgColor: json['bg_color'] != null
-          ? Color(int.tryParse(json['bg_color'].toString().replaceAll('#', '0xFF')) ?? 0xFF6366F1)
-          : null,
-      route: json['route'] ?? json['link'],
-    );
-  }
 }
 
 // ==================== HOME PROFILE PROVIDER ====================
@@ -134,85 +118,12 @@ final servicesProvider = Provider<List<Service>>((ref) {
 
 final isExpandedProvider = StateProvider<bool>((ref) => false);
 
-// ==================== BANNER API PROVIDER ====================
-/// এডমিন প্যানেল থেকে ব্যানার লোড করে
-/// API endpoint: GET /api/banners
-/// Response format:
-/// {
-///   "status": "success",
-///   "banners": [
-///     {
-///       "id": "1",
-///       "image_url": "https://...",
-///       "title": "Mega Sale",
-///       "subtitle": "Up to 50% off",
-///       "bg_color": "#6366F1",
-///       "route": "/sale"
-///     }
-///   ]
-/// }
-final bannerProvider = FutureProvider<List<BannerItem>>((ref) async {
-  const String baseUrl = "https://api.easysarvice.com/api";
-
-  try {
-    final response = await http.get(
-      Uri.parse("$baseUrl/banners"),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    ).timeout(const Duration(seconds: 15));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      if (data['status'] == 'success' && data['banners'] is List) {
-        final List<dynamic> bannersJson = data['banners'];
-        return bannersJson.map((json) => BannerItem.fromJson(json)).toList();
-      }
-    }
-
-    debugPrint("Banner API Error: ${response.statusCode} - ${response.body}");
-    // API ফেল হলে খালি লিস্ট রিটার্ন (fallback)
-    return [];
-  } catch (e) {
-    debugPrint("Banner Fetch Error: $e");
-    // ইন্টারনেট বা অন্য কোনো এরর হলে খালি লিস্ট
-    return [];
-  }
-});
-
-// ==================== ADMIN BANNER PROVIDER (alternative) ====================
-/// যদি এডমিন প্যানেলের আলাদা endpoint থাকে, যেমন: /api/admin/banners
-/// এই provider টি ব্যবহার করতে পারেন
-final adminBannerProvider = FutureProvider<List<BannerItem>>((ref) async {
-  const String baseUrl = "https://api.easysarvice.com/api";
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('jwt_token');
-
-  try {
-    final response = await http.get(
-      Uri.parse("$baseUrl/admin/banners"),
-      headers: {
-        "Content-Type": "application/json",
-        if (token != null) "Authorization": "Bearer $token",
-      },
-    ).timeout(const Duration(seconds: 15));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      if (data['status'] == 'success' && data['banners'] is List) {
-        final List<dynamic> bannersJson = data['banners'];
-        return bannersJson.map((json) => BannerItem.fromJson(json)).toList();
-      }
-    }
-
-    debugPrint("Admin Banner API Error: ${response.statusCode} - ${response.body}");
-    return [];
-  } catch (e) {
-    debugPrint("Admin Banner Fetch Error: $e");
-    return [];
-  }
+final bannerProvider = Provider<List<BannerItem>>((ref) {
+  return const [
+    BannerItem(id: '1', imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800', title: 'Mega Sale', subtitle: 'Up to 50% off', bgColor: Color(0xFF6366F1)),
+    BannerItem(id: '2', imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800', title: 'New Arrivals', subtitle: 'Latest gadgets', bgColor: Color(0xFFEA580C)),
+    BannerItem(id: '3', imageUrl: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800', title: 'Free Delivery', subtitle: 'On orders over ?500', bgColor: Color(0xFF16A34A)),
+  ];
 });
 
 final currentBannerIndexProvider = StateProvider<int>((ref) => 0);
@@ -228,7 +139,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  PageController? _bannerController;
+  late PageController _bannerController;
 
   @override
   void initState() {
@@ -243,32 +154,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
-    _bannerController?.dispose();
+    _bannerController.dispose();
     super.dispose();
   }
 
   void _startAutoSlide() {
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
-      
-      // FutureProvider থেকে banners লোড হচ্ছে কিনা চেক
-      final bannersAsync = ref.read(bannerProvider);
-      bannersAsync.whenData((banners) {
-        if (banners.isEmpty || !mounted) return;
-        
-        final currentIndex = ref.read(currentBannerIndexProvider);
-        final nextIndex = (currentIndex + 1) % banners.length;
+      final banners = ref.read(bannerProvider);
+      final currentIndex = ref.read(currentBannerIndexProvider);
+      final nextIndex = (currentIndex + 1) % banners.length;
 
-        if (_bannerController != null && _bannerController!.hasClients) {
-          _bannerController!.animateToPage(
-            nextIndex,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        }
-        ref.read(currentBannerIndexProvider.notifier).state = nextIndex;
-      });
-      
+      if (_bannerController.hasClients) {
+        _bannerController.animateToPage(
+          nextIndex,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+      ref.read(currentBannerIndexProvider.notifier).state = nextIndex;
       _startAutoSlide();
     });
   }
@@ -277,7 +181,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final services = ref.watch(servicesProvider);
     final products = ref.watch(productListProvider);
-    final bannersAsync = ref.watch(bannerProvider);
+    final banners = ref.watch(bannerProvider);
     final currentBannerIndex = ref.watch(currentBannerIndexProvider);
     final profileAsync = ref.watch(homeProfileProvider);
     final screenWidth = MediaQuery.of(context).size.width;
@@ -312,86 +216,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ==================== BANNER SLIDER (API থেকে) ====================
-                      bannersAsync.when(
-                        data: (banners) {
-                          if (banners.isEmpty) {
-                            // API থেকে কিছু পাওয়া যায়নি — fallback placeholder দেখান
-                            return Container(
-                              height: isDesktop ? 180.h : isTablet ? 140.h : isSmall ? 100.h : 120.h,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12.r),
-                                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE2E8F0),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      CupertinoIcons.photo,
-                                      size: 32.sp,
-                                      color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
-                                    ),
-                                    SizedBox(height: 8.h),
-                                    Text(
-                                      'No banners available',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12.sp,
-                                        color: isDark ? Colors.grey.shade500 : Colors.grey.shade500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
-
-                          return _buildBannerSlider(
-                            context,
-                            banners,
-                            currentBannerIndex,
-                            isDesktop: isDesktop,
-                            isTablet: isTablet,
-                            isSmall: isSmall,
-                          );
-                        },
-                        loading: () => Container(
-                          height: isDesktop ? 180.h : isTablet ? 140.h : isSmall ? 100.h : 120.h,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE2E8F0),
-                          ),
-                          child: Center(
-                            child: CupertinoActivityIndicator(radius: 14.r),
-                          ),
-                        ),
-                        error: (error, stack) => Container(
-                          height: isDesktop ? 180.h : isTablet ? 140.h : isSmall ? 100.h : 120.h,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE2E8F0),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.exclamationmark_triangle,
-                                  size: 28.sp,
-                                  color: Colors.orange,
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  'Failed to load banners',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11.sp,
-                                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      _buildBannerSlider(
+                        context,
+                        banners,
+                        currentBannerIndex,
+                        isDesktop: isDesktop,
+                        isTablet: isTablet,
+                        isSmall: isSmall,
                       ),
                       SizedBox(height: isDesktop ? 24.h : 16.h),
 
@@ -563,12 +394,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               itemBuilder: (context, index) {
                 final banner = banners[index];
                 return GestureDetector(
-                  onTap: () {
-                    debugPrint('Banner tapped: ${banner.title}');
-                    if (banner.route != null && banner.route!.isNotEmpty) {
-                      context.go(banner.route!);
-                    }
-                  },
+                  onTap: () => debugPrint('Banner: ${banner.title}'),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -578,11 +404,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         loadingBuilder: (context, child, loadingProgress) => loadingProgress == null
                             ? child
                             : Container(
-                                color: banner.bgColor ?? Theme.of(context).primaryColor,
+                                color: banner.bgColor,
                                 child: Center(child: CupertinoActivityIndicator(radius: 12.r)),
                               ),
                         errorBuilder: (context, error, stackTrace) => Container(
-                          color: banner.bgColor ?? Colors.grey,
+                          color: banner.bgColor,
                           child: Icon(CupertinoIcons.photo, size: 32.sp, color: Colors.white),
                         ),
                       ),
@@ -1072,7 +898,7 @@ class _ProductCard extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    '\u09F3${product.wholesalePrice.toInt()}',
+                    '?${product.wholesalePrice.toInt()}',
                     style: GoogleFonts.poppins(
                       fontSize: isSmall ? 11.sp : 12.sp,
                       fontWeight: FontWeight.bold,
@@ -1082,7 +908,7 @@ class _ProductCard extends StatelessWidget {
                   if (hasDiscount) ...[
                     SizedBox(height: 1.h),
                     Text(
-                      '\u09F3${product.originalPrice!.toInt()}',
+                      '?${product.originalPrice!.toInt()}',
                       style: GoogleFonts.poppins(
                         fontSize: 9.sp,
                         fontWeight: FontWeight.w400,
@@ -1100,4 +926,3 @@ class _ProductCard extends StatelessWidget {
     );
   }
 }
-
