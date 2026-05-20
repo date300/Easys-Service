@@ -123,7 +123,7 @@ class WithdrawApiService {
 // 3. Helpers
 // ==========================================
 String formatCurrency(double amount) =>
-    '?${NumberFormat('#,##0', 'en_US').format(amount)}';
+    '৳${NumberFormat('#,##0', 'en_US').format(amount)}';
 
 String formatDate(DateTime? dt) {
   if (dt == null) return 'N/A';
@@ -496,8 +496,8 @@ class _WithdrawLedgerPageState extends State<WithdrawLedgerPage>
 
                       _buildFormField(
                         ctrl: _amountCtrl,
-                        label: 'Amount (?) *',
-                        hint: 'e.g. 500',
+                        label: 'Amount (৳) *',
+                        hint: 'e.g. 100',
                         icon: Icons.attach_money,
                         textColor: textColor,
                         sub: secondaryTextColor,
@@ -1560,4 +1560,3 @@ class WithdrawDetailPage extends StatelessWidget {
     );
   }
 }
-
