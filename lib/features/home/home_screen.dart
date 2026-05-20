@@ -1100,4 +1100,3 @@ class _ProductCard extends StatelessWidget {
     );
   }
 }
-
